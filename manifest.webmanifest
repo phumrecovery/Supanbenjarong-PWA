@@ -1,0 +1,9 @@
+{
+  "name": "สุพรรณบุรีเบญจรงค์",
+  "short_name": "เบญจรงค์",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff8f1",
+  "theme_color": "#8b4b1f",
+  "icons": [{"src":"./assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
