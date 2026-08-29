@@ -1,4 +1,4 @@
-const VERSION="suphan-pwa-v2";
+const VERSION="suphan-pwa-v3";
 const APP_SHELL=["./","./index.html","./css/app.css","./js/app.js","./js/api.js","./assets/icon.svg","./manifest.webmanifest"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==VERSION).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
@@ -7,9 +7,14 @@ self.addEventListener("fetch",event=>{
   if(request.method!=="GET")return;
   const url=new URL(request.url);
   if(url.origin!==self.location.origin)return;
-  event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{
-    const copy=response.clone();
-    caches.open(VERSION).then(cache=>cache.put(request,copy));
+  const isAppCode=request.mode==="navigate"||/\.(?:html|css|js|webmanifest)$/.test(url.pathname);
+  const cacheResponse=response=>{
+    if(response.ok)caches.open(VERSION).then(cache=>cache.put(request,response.clone()));
     return response;
-  })));
+  };
+  if(isAppCode){
+    event.respondWith(fetch(request).then(cacheResponse).catch(()=>caches.match(request)));
+    return;
+  }
+  event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(cacheResponse)));
 });
