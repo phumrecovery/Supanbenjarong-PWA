@@ -18,6 +18,8 @@ function render(route){
 document.querySelector(".bottom-nav").addEventListener("click",event=>{const button=event.target.closest("[data-route]");if(button)render(button.dataset.route);});
 window.addEventListener("hashchange",()=>render(location.hash.slice(1)||"home"));
 render(location.hash.slice(1)||"home");
-if("serviceWorker" in navigator){navigator.serviceWorker.register("./service-worker.js").then(()=>connection.textContent="PWA shell พร้อม").catch(()=>connection.textContent="PWA shell ยังไม่พร้อม");}
-else connection.textContent="เปิดผ่านเบราว์เซอร์";
-api.bootstrap().catch(()=>{});
+if("serviceWorker" in navigator){navigator.serviceWorker.register("./service-worker.js").then(()=>connection.textContent="กำลังตรวจสอบ GAS").catch(()=>connection.textContent="PWA shell ยังไม่พร้อม");}
+else connection.textContent="กำลังตรวจสอบ GAS";
+api.bootstrap()
+  .then(()=>connection.textContent="เชื่อม GAS สำเร็จ")
+  .catch(()=>connection.textContent="ยังเชื่อม GAS ไม่ได้");
