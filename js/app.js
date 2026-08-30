@@ -70,7 +70,7 @@ function thaiDate(){return new Date().toLocaleDateString("th-TH",{weekday:"long"
 function currentRoute(){const hash=location.hash.replace(/^#/,"");return hash&&(["home","sales",...Object.keys(PAGES)].includes(hash))?hash:"home";}
 function pageDirection(next){const order=["home","sales","workshop","outsource","expense","preorder","report","product","stock","settings"];return order.indexOf(next)<order.indexOf(activeRoute)?"back":"forward";}
 function animatePage(direction){main.classList.remove("page-enter-forward","page-enter-back");void main.offsetWidth;main.classList.add(direction==="back"?"page-enter-back":"page-enter-forward");}
-function setShell(visible){appHeader.hidden=!visible;}
+function setShell(visible){appHeader.hidden=!visible;appHeader.style.display=visible?"":"none";}
 function showToast(message){toast.textContent=message;toast.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
 function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};}
 
