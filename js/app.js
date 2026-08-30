@@ -8,6 +8,7 @@ const logoutButton=document.querySelector("#logout");
 const SESSION_KEY="suphanbenjarong.pwa.session";
 let sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
 let currentSession=null;
+let activeRoute="";
 const routes={
   home:{title:"ยินดีต้อนรับ",body:"PWA shell พร้อมใช้งานแล้ว ระบบเดิมบน GAS ยังทำงานคู่กันระหว่าง migration"},
   sales:{title:"ขายของ",body:"จะใช้ bootstrap สินค้าและตะกร้าจาก GAS API เมื่อย้ายโมดูลนี้พร้อม"},
@@ -16,21 +17,40 @@ const routes={
   expense:{title:"ค่าใช้จ่าย",body:"รายการรับ-จ่ายจะแสดงสำเร็จหลัง GAS ยืนยันเท่านั้น"}
 };
 
-function render(route){
+function getDirection(nextRoute){
+  const order=["home","sales","stock","workshop","expense"];
+  const current=order.indexOf(activeRoute);
+  const next=order.indexOf(nextRoute);
+  return current>=0&&next>=0&&next<current?"back":"forward";
+}
+
+function animatePage(direction){
+  main.classList.remove("page-enter-forward","page-enter-back");
+  void main.offsetWidth;
+  main.classList.add(direction==="back"?"page-enter-back":"page-enter-forward");
+}
+
+function setRouteActive(route){
+  document.querySelectorAll("[data-route]").forEach(button=>button.classList.toggle("active",button.dataset.route===route));
+}
+
+function render(route,{animate=true,direction}={}){
   if(!currentSession||!currentSession.user){
     showLogin("กรุณาเข้าสู่ระบบก่อนใช้งาน");
     return;
   }
+  route=(routes[route]||route==="sales")?route:"home";
+  const pageDirection=direction||getDirection(route);
+  activeRoute=route;
+  if(animate) animatePage(pageDirection);
+  history.replaceState({route},"",`#${route}`);
+  setRouteActive(route);
   if(route==="sales"){
-    history.replaceState({route},"",`#${route}`);
-    document.querySelectorAll("[data-route]").forEach(button=>button.classList.toggle("active",button.dataset.route===route));
     renderPos(main,api,sessionToken);
     return;
   }
   const page=routes[route]||routes.home;
-  history.replaceState({route},"",`#${route}`);
   main.innerHTML=`<section class="card"><h1>${page.title}</h1><p>${page.body}</p><p class="hint">โครงหน้า PWA พร้อมแล้ว ส่วนข้อมูลและธุรกรรมจะเปิดใช้ทีละโมดูลหลังตรวจสอบครบถ้วน</p></section>`;
-  document.querySelectorAll("[data-route]").forEach(button=>button.classList.toggle("active",button.dataset.route===route));
 }
 
 function setAuthenticatedHeader(){
@@ -102,7 +122,7 @@ async function selectUser(name){
     sessionStorage.setItem(SESSION_KEY,sessionToken);
     currentSession=result.session;
     setAuthenticatedHeader();
-    render(location.hash.slice(1)||"home");
+    render(location.hash.slice(1)||"home",{animate:true});
   }catch(error){showLogin("เลือกชื่อไม่สำเร็จ โปรดลองเข้าสู่ระบบใหม่");}
 }
 
@@ -110,7 +130,7 @@ document.querySelector(".bottom-nav").addEventListener("click",event=>{
   const button=event.target.closest("[data-route]");
   if(button) render(button.dataset.route);
 });
-window.addEventListener("hashchange",()=>render(location.hash.slice(1)||"home"));
+window.addEventListener("hashchange",()=>render(location.hash.slice(1)||"home",{animate:true}));
 
 async function initialize(){
   try{
@@ -121,7 +141,7 @@ async function initialize(){
     currentSession=result.session;
     if(!currentSession.user){connection.textContent="เลือกชื่อผู้ใช้งาน";showLogin("กรุณาเข้าสู่ระบบใหม่เพื่อเลือกชื่อผู้ใช้งาน");return;}
     setAuthenticatedHeader();
-    render(location.hash.slice(1)||"home");
+    render(location.hash.slice(1)||"home",{animate:false});
   }catch(error){
     sessionStorage.removeItem(SESSION_KEY);
     sessionToken="";
