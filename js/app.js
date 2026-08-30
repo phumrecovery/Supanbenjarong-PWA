@@ -50,7 +50,7 @@ let barcodeBuffer="";
 let barcodeTimer=0;
 
 // เสียงสั้นจาก Web Audio: ไม่ต้องโหลดไฟล์เพิ่ม และเริ่มได้หลังผู้ใช้แตะหน้าจอเท่านั้น
-function playTone(frequency,duration=0.045,volume=0.025){
+function playTone(frequency,duration=0.045,volume=0.125){
   try{
     audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)();
     if(audioContext.state==="suspended")audioContext.resume();
@@ -63,7 +63,7 @@ function playTone(frequency,duration=0.045,volume=0.025){
     oscillator.start();oscillator.stop(audioContext.currentTime+duration);
   }catch(error){}
 }
-const sound={tap:()=>playTone(520),success:()=>{playTone(660,.055);setTimeout(()=>playTone(880,.07),60);},error:()=>playTone(180,.12,.035)};
+const sound={tap:()=>playTone(520),success:()=>{playTone(660,.055);setTimeout(()=>playTone(880,.07),60);},error:()=>playTone(180,.12,.175)};
 window.SuphanSound=sound;
 document.addEventListener("pointerdown",event=>{const button=event.target.closest("button");if(button&&!button.disabled) sound.tap();},{capture:true});
 
