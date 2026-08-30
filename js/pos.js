@@ -59,7 +59,9 @@ function ensureClickHandler(root){
   root.dataset.posCaptureBound="1";
   root.addEventListener("click",event=>{
     const button=event.target.closest("button");
-    if(!button)return;
+    // The listener remains on the shared <main> after leaving POS.  It must
+    // never intercept Home or another module's navigation controls.
+    if(!button||!button.closest(".legacy-pos-page"))return;
     event.stopImmediatePropagation();
     handleClick(button,root);
   },true);
