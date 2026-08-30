@@ -81,6 +81,8 @@ async function selectUser(name){
   try{
     const result=await api.selectUser(sessionToken,name);
     if(!result.ok) throw new Error(result.error);
+    sessionToken=result.token;
+    sessionStorage.setItem(SESSION_KEY,sessionToken);
     currentSession=result.session;
     setAuthenticatedHeader();
     render(location.hash.slice(1)||"home");
