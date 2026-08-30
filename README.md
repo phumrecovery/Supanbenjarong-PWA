@@ -5,12 +5,13 @@ Static PWA frontend for the Suphanburi Benjarong migration. This public reposito
 ## Current state
 
 - Application shell, manifest, service-worker versioning, and safe static-asset cache are ready.
-- Live API calls and every transaction are deliberately disabled.
+- A signed Cloudflare gateway provides health checks and PIN/session entry; the PIN is validated only by GAS.
+- Live shop data and every transaction are deliberately disabled.
 - The existing GAS Web App remains the production system.
 
 ## Authentication direction
 
-The intended model supports shop PIN/session access for staff and optional Google sign-in for privileged administrators. Authentication decisions and checks remain on the GAS backend; no credential is committed here.
+The model supports shop PIN/session access for staff and optional Google sign-in for privileged administrators. Authentication decisions and checks remain on the GAS backend; no credential is committed here.
 
 ## Rollback
 
