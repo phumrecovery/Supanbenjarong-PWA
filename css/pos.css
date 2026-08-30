@@ -20,3 +20,41 @@
   @keyframes mobileCartFade{from{opacity:0}to{opacity:1}}
   @keyframes mobileCartSlide{from{transform:translateY(100%)}to{transform:translateY(0)}}
 }
+
+/* `.main` animates other pages. A transformed/will-change ancestor would make
+   position:fixed behave like it is fixed to the end of the product list. */
+.main.pos-main{will-change:auto}
+
+@media(max-width:767px){
+  /* Keep the cart control attached to the viewport, even after a long product list. */
+  .main.pos-main .cart-floating{position:fixed!important;inset:auto 0 0 0!important;bottom:env(safe-area-inset-bottom,0)!important;transform:translateZ(0);min-height:76px;padding:13px 20px;font-size:20px}
+  .main.pos-main .cart-floating .cart-count{min-width:60px;min-height:34px;padding:3px 10px;font-size:15px}
+  .legacy-pos-page{padding-bottom:92px}
+
+  /* The earlier desktop readability enlargement is deliberately scaled down
+     only inside the mobile slide-up cart. */
+  .mobile-cart-sheet>header{padding:12px 16px;font-size:19px}
+  .mobile-cart-sheet>header button{width:36px;height:36px;font-size:28px}
+  .mobile-cart-sheet .cart-step{padding:0 12px 18px}
+  .mobile-cart-sheet .cart-title{font-size:17px}
+  .mobile-cart-sheet .cart-item{gap:6px;padding:9px 0;font-size:15px}
+  .mobile-cart-sheet .cart-item .ci-name{font-size:14px;line-height:1.3}
+  .mobile-cart-sheet .cart-item .ci-sub{font-size:12px;line-height:1.35}
+  .mobile-cart-sheet .cart-item .ci-price{font-size:15px}
+  .mobile-cart-sheet .qty-btn{width:34px;height:34px;border-radius:8px;font-size:20px}
+  .mobile-cart-sheet .qty-val{min-width:25px;font-size:17px}
+  .mobile-cart-sheet .item-remove{width:34px;height:34px;border-radius:8px;font-size:25px}
+  .mobile-cart-sheet .item-disc-btn,.mobile-cart-sheet .item-discount-inline button{margin:4px 3px 0 0;padding:4px 7px;border-radius:7px;font-size:12px}
+  .mobile-cart-sheet .pkg-row select{min-height:34px;padding:4px 7px;font-size:12px}
+  .mobile-cart-sheet .pkg-qty button{width:28px;height:28px;font-size:18px}
+  .mobile-cart-sheet .pkg-qty b{font-size:14px}
+  .mobile-cart-sheet .legacy-checkout{padding:12px;font-size:19px}
+  .mobile-cart-sheet .legacy-edit-cart{padding:10px;font-size:17px}
+  .mobile-cart-sheet .checkout-section h3{font-size:17px}
+  .mobile-cart-sheet .discount-pill,.mobile-cart-sheet .pay-pill,.mobile-cart-sheet .cash-pills button{padding:7px 10px;font-size:13px}
+  .mobile-cart-sheet .checkout-input-label,.mobile-cart-sheet .cash-section,.mobile-cart-sheet .shipping-section{font-size:14px}
+  .mobile-cart-sheet .checkout-input-label input,.mobile-cart-sheet .cash-section input,.mobile-cart-sheet .shipping-section input{min-height:40px;font-size:18px}
+  .mobile-cart-sheet .checkout-summary>div{font-size:15px}
+  .mobile-cart-sheet .checkout-summary .grand{font-size:20px}
+  .mobile-cart-sheet .legacy-cart-note{font-size:12px}
+}
