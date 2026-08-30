@@ -43,7 +43,9 @@ export class ApiClient {
   logout(session){
     return this.request({action:"logout",session});
   }
-  async transaction(){
-    throw new Error("ธุรกรรมถูกปิดไว้จนกว่า API authentication จะพร้อม");
+  async saveSale(session,sale,requestId){
+    const payload=await this.request({action:"saveSale",session,sale,requestId});
+    if(!payload.ok) throw new Error(payload.message||"บันทึกบิลไม่สำเร็จ");
+    return payload.result;
   }
 }

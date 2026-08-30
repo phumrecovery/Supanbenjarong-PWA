@@ -6,8 +6,12 @@ Static PWA frontend for the Suphanburi Benjarong migration. This public reposito
 
 - Application shell, manifest, service-worker versioning, and safe static-asset cache are ready.
 - A signed Cloudflare gateway provides health checks and PIN/session entry; the PIN is validated only by GAS.
-- Live shop data and every transaction are deliberately disabled.
-- The existing GAS Web App remains the production system.
+- POS bootstrap and POS sales use the signed gateway. The gateway forwards a
+  validated session to the original GAS `saveSale` flow, which remains the
+  authority for invoice numbers, LockService, stock validation, stock movement,
+  and cache invalidation.
+- The existing GAS Web App remains available during migration, including the
+  receipt-history and cancel-bill workflow for reversing test bills safely.
 
 ## Authentication direction
 
