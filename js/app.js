@@ -12,7 +12,9 @@ const sidebarOverlay=document.querySelector("#sidebarOverlay");
 const sidebarUser=document.querySelector("#sidebarUser");
 const toast=document.querySelector("#toast");
 const SESSION_KEY="suphanbenjarong.pwa.session";
-const LOGO_FALLBACK="./assets/icon.svg";
+const DISPLAY_USER_KEY="suphanbenjarong.pwa.display-user";
+// URL เดียวกับ Web App เดิม เพื่อให้ก่อนโหลดข้อมูลร้าน PWA ยังใช้ตราร้านจริง
+const LOGO_FALLBACK="https://lh3.googleusercontent.com/d/18rwkqytClqwNtg0PReV1ILLFwkiIKa01";
 const MENU=[
   ["sales","🧾","ขายของ","ออกบิลเงินสด"],
   ["workshop","🖌️","จัดการงานช่าง","จ่ายงาน / บันทึกวัน / จ่ายค่าจ้าง"],
@@ -37,6 +39,7 @@ const PAGES={
 
 let sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
 let currentSession=null;
+let displayUser=null;
 let activeRoute="";
 let pinInput="";
 let homeData=null;
@@ -107,16 +110,20 @@ async function submitPin(){
 function showUserPicker(users){
   const colors=["#e91e63","#9c27b0","#2196f3","#ff9800","#4caf50","#00bcd4","#f44336","#3f51b5"];
   main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน"><div class="picker-icon">👤</div><h1 class="picker-title">คุณคือใคร?</h1><div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn" type="button" data-user-index="${index}"><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>'}</div></section>`;
-  main.querySelectorAll("[data-user-index]").forEach(button=>button.addEventListener("click",()=>selectUser(users[Number(button.dataset.userIndex)].name)));
+  main.querySelectorAll("[data-user-index]").forEach(button=>button.addEventListener("click",()=>selectUser(users[Number(button.dataset.userIndex)])));
 }
 
-async function selectUser(name){
+async function selectUser(user){
   try{
-    const result=await api.selectUser(sessionToken,name);
+    const result=await api.selectUser(sessionToken,user.name);
     if(!result.ok)throw new Error(result.error);
     sessionToken=result.token;
     sessionStorage.setItem(SESSION_KEY,sessionToken);
     currentSession=result.session;
+    // เก็บชื่อสำหรับแสดงผลจากรายการที่ผู้ใช้เลือกโดยตรง เพื่อไม่ให้ Unicode
+    // เพี้ยนระหว่าง response chain ของ gateway แม้สิทธิ์จริงยังยืนยันจาก token เดิม
+    displayUser={name:user.name,role:user.role||""};
+    sessionStorage.setItem(DISPLAY_USER_KEY,JSON.stringify(displayUser));
     setAuthenticatedHeader();
     navigate(currentRoute(),{replace:true,animate:true});
   }catch(error){showLogin("เลือกชื่อไม่สำเร็จ โปรดลองเข้าสู่ระบบใหม่");}
@@ -124,7 +131,8 @@ async function selectUser(name){
 
 function setAuthenticatedHeader(){
   setShell(true);
-  const user=currentSession.user||{};
+  const serverUser=currentSession.user||{};
+  const user=displayUser&&displayUser.name?displayUser:serverUser;
   connection.textContent=`👤 ${user.name||""}`;
   sidebarUser.textContent=`👤 ${user.name||""}${user.role?` (${user.role})`:""}`;
   document.querySelector("#currentDate").textContent=thaiDate();
@@ -163,7 +171,8 @@ function render(route,{animate=true,direction}={}){
   if(!currentSession||!currentSession.user){showLogin("กรุณาเข้าสู่ระบบก่อนใช้งาน");return;}
   route=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
   const travel=direction||pageDirection(route);activeRoute=route;if(animate)animatePage(travel);
-  if(route==="sales"){renderPos(main,api,sessionToken);return;}
+  main.classList.toggle("pos-main",route==="sales");
+  if(route==="sales"){renderPos(main,api,sessionToken,()=>navigate("home"));return;}
   if(route==="home"){renderHome();return;}
   renderPlaceholder(route);
 }
@@ -173,7 +182,7 @@ document.addEventListener("keydown",event=>{if(!appHeader.hidden)return;if(event
 
 document.querySelector("#logout").addEventListener("click",async()=>{
   try{if(sessionToken)await api.logout(sessionToken);}catch(error){}
-  sessionStorage.removeItem(SESSION_KEY);sessionToken="";currentSession=null;homeData=null;showLogin("ออกจากระบบแล้ว");
+  sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;homeData=null;showLogin("ออกจากระบบแล้ว");
 });
 
 async function initialize(){
@@ -182,8 +191,10 @@ async function initialize(){
     if(!sessionToken){showLogin();return;}
     const result=await api.bootstrap(sessionToken);
     if(!result.ok||!result.session||!result.session.user)throw new Error("SESSION_EXPIRED");
-    currentSession=result.session;setAuthenticatedHeader();navigate(currentRoute(),{replace:true,animate:false});
-  }catch(error){sessionStorage.removeItem(SESSION_KEY);sessionToken="";currentSession=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
+    currentSession=result.session;
+    try{displayUser=JSON.parse(sessionStorage.getItem(DISPLAY_USER_KEY)||"null");}catch(error){displayUser=null;}
+    setAuthenticatedHeader();navigate(currentRoute(),{replace:true,animate:false});
+  }catch(error){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
 if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
