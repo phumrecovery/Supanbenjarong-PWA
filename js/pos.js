@@ -70,7 +70,11 @@ function ensureClickHandler(root){
   root.addEventListener("input",event=>{
     const input=event.target.closest("input");
     if(!input||!input.closest(".legacy-pos-page"))return;
-    if(input.matches("[data-lump]"))state.lumpDiscount=Math.max(0,Number(input.value)||0);
+    if(input.matches("[data-search]")){
+      state.query=input.value;
+      refreshProductResults(root);
+    }
+    else if(input.matches("[data-lump]"))state.lumpDiscount=Math.max(0,Number(input.value)||0);
     else if(input.matches("[data-cash]"))state.cash=Math.max(0,Number(input.value)||0);
     else if(input.matches("[data-shipping]"))state.shipping=Math.max(0,Number(input.value)||0);
     else return;
@@ -82,6 +86,13 @@ function ensureClickHandler(root){
     event.stopImmediatePropagation();
     draw(root);
   },true);
+}
+function refreshProductResults(root){
+  const products=filteredProducts(state.data.products||[]);
+  const grid=root.querySelector(".legacy-product-grid");
+  const count=root.querySelector(".legacy-results span");
+  if(grid)grid.innerHTML=products.map(productCard).join("")||'<div class="legacy-empty">🔎<br>ไม่พบสินค้า</div>';
+  if(count)count.textContent=`${products.length.toLocaleString("th-TH")} รายการ`;
 }
 function handleClick(button,root){
   const action=button.dataset.action;
