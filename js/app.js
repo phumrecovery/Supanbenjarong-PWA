@@ -13,6 +13,7 @@ const sidebarUser=document.querySelector("#sidebarUser");
 const toast=document.querySelector("#toast");
 const SESSION_KEY="suphanbenjarong.pwa.session";
 const DISPLAY_USER_KEY="suphanbenjarong.pwa.display-user";
+const PENDING_BARCODE_KEY="suphanbenjarong.pwa.pending-barcode";
 // URL เดียวกับ Web App เดิม เพื่อให้ก่อนโหลดข้อมูลร้าน PWA ยังใช้ตราร้านจริง
 const LOGO_FALLBACK="https://lh3.googleusercontent.com/d/18rwkqytClqwNtg0PReV1ILLFwkiIKa01";
 const MENU=[
@@ -45,6 +46,8 @@ let pinInput="";
 let homeData=null;
 let toastTimer=0;
 let audioContext=null;
+let barcodeBuffer="";
+let barcodeTimer=0;
 
 // เสียงสั้นจาก Web Audio: ไม่ต้องโหลดไฟล์เพิ่ม และเริ่มได้หลังผู้ใช้แตะหน้าจอเท่านั้น
 function playTone(frequency,duration=0.045,volume=0.025){
@@ -200,12 +203,46 @@ function render(route,{animate=true,direction}={}){
 }
 function navigate(route,{replace=false,animate=true}={}){const clean=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";const url=`#${clean}`;if(replace)history.replaceState({route:clean},"",url);else history.pushState({route:clean},"",url);render(clean,{animate});}
 window.addEventListener("popstate",()=>render(currentRoute(),{animate:true}));
+function barcodeChar(event){
+  if(event.key&&event.key.length===1&&/[A-Za-z0-9\-_]/.test(event.key))return event.key;
+  const code=event.code||"";
+  if(code.startsWith("Key"))return code.slice(3);
+  if(code.startsWith("Digit"))return code.slice(5);
+  if(code.startsWith("Numpad")&&/^[0-9]$/.test(code.slice(6)))return code.slice(6);
+  if(code==="Minus")return "-";
+  return "";
+}
+function receiveBarcode(code){
+  const value=String(code||"").trim().toUpperCase();
+  if(value.length<4)return;
+  if(activeRoute==="sales"){
+    window.dispatchEvent(new CustomEvent("suphan-barcode",{detail:value}));
+    return;
+  }
+  sessionStorage.setItem(PENDING_BARCODE_KEY,value);
+  navigate("sales",{animate:true});
+}
 document.addEventListener("keydown",event=>{
   // POS also hides the App Shell header.  Only the visible PIN keypad may
   // claim number keys; otherwise number inputs in POS must receive them.
-  if(!document.querySelector("#pinPad"))return;
-  if(event.key>="0"&&event.key<="9"){enterPin(event.key);event.preventDefault();}
-  else if(event.key==="Backspace"||event.key==="Delete"){enterPin("del");event.preventDefault();}
+  if(document.querySelector("#pinPad")){
+    if(event.key>="0"&&event.key<="9"){enterPin(event.key);event.preventDefault();}
+    else if(event.key==="Backspace"||event.key==="Delete"){enterPin("del");event.preventDefault();}
+    return;
+  }
+  if(!currentSession||!currentSession.user)return;
+  const target=event.target;
+  if(target&&/^(input|textarea|select)$/i.test(target.tagName||""))return;
+  if(event.key==="Enter"||event.code==="Enter"||event.code==="NumpadEnter"){
+    if(barcodeBuffer.length>=4){event.preventDefault();receiveBarcode(barcodeBuffer);}
+    barcodeBuffer="";
+    return;
+  }
+  const char=barcodeChar(event);
+  if(!char)return;
+  barcodeBuffer+=char;
+  clearTimeout(barcodeTimer);
+  barcodeTimer=setTimeout(()=>{barcodeBuffer="";},1000);
 });
 
 document.querySelector("#logout").addEventListener("click",async()=>{

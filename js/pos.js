@@ -2,11 +2,11 @@
 // The PWA calls the original GAS saveSale path through the authenticated API.
 const DEFAULT_CHANNELS=["หน้าร้าน","โทรสั่ง","Line","Facebook","Lot/ส่ง","อื่นๆ"];
 const PAYMENTS=["💵 เงินสด","🏦 โอนธนาคาร"];
-let state={data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false,mobileCartOpen:false,submitting:false,submitError:"",lastBill:null,successOpen:false,printOpen:false,printSize:"size-a4",buyerEnabled:false,receiptHtml:"",requestId:""};
-let runtime={api:null,session:"",onBack:null,level:"",userName:""};
+let state={data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false,mobileCartOpen:false,submitting:false,submitError:"",lastBill:null,successOpen:false,printOpen:false,printSize:"size-a4",buyerEnabled:false,receiptHtml:"",requestId:"",scanNotice:""};
+let runtime={api:null,session:"",onBack:null,level:"",userName:"",root:null};
 
 export async function renderPos(root,api,session,onBack,context={}){
-  runtime={api,session,onBack,level:context.level||"",userName:(context.displayUser&&context.displayUser.name)||(context.user&&context.user.name)||""};
+  runtime={api,session,onBack,level:context.level||"",userName:(context.displayUser&&context.displayUser.name)||(context.user&&context.user.name)||"",root};
   const header=document.querySelector("#appHeader");
   if(header){header.hidden=true;header.style.display="none";}
   if(!state.data){
@@ -14,6 +14,8 @@ export async function renderPos(root,api,session,onBack,context={}){
     try{state.data=await api.posBootstrap(session);}catch(error){root.innerHTML='<section class="card"><h1>เปิดหน้าขายของไม่สำเร็จ</h1><p class="hint">ไม่สามารถโหลดสินค้าหน้าร้านได้ โปรดลองใหม่อีกครั้ง</p></section>';return;}
   }
   draw(root);
+  const pending=sessionStorage.getItem("suphanbenjarong.pwa.pending-barcode")||"";
+  if(pending){sessionStorage.removeItem("suphanbenjarong.pwa.pending-barcode");handleBarcodeScan(pending);}
 }
 
 function draw(root){
@@ -27,6 +29,7 @@ function draw(root){
     <header class="legacy-pos-topbar"><div class="legacy-pos-heading"><button class="legacy-back-btn" type="button" data-action="back">← กลับ</button><h1>🧾 ขายของ</h1></div><div class="legacy-pos-actions"><select data-channel aria-label="ช่องทางการขาย">${channels.map(value=>`<option value="${escAttr(value)}" ${state.channel===value?"selected":""}>${esc(value)}</option>`).join("")}</select>${family?`<button class="legacy-lock-btn ${state.unlockStock?"active":""}" type="button" data-action="unlock">🔓 ${state.unlockStock?"ปิดปลดล็อก":"ปลดล็อกสต๊อก"}</button><button class="legacy-history-btn ${state.backdate?"active":""}" type="button" data-action="backdate">🕘 ย้อนหลัง</button>`:""}</div></header>
     ${state.unlockStock?'<div class="stock-unlock-banner show">🔓 เปิดขายสินค้าที่สต๊อกไม่พอ ระบบจะปรับเฉพาะจำนวนที่ขาดให้อัตโนมัติก่อนออกบิล</div>':""}
     ${state.backdate?`<div class="back-sale-banner show">🕘 บันทึกยอดขายย้อนหลัง: ${state.backdateValue||"กรุณาเลือกวันที่ขายจริง"}<button type="button" data-action="choose-backdate">เลือกวันที่</button><button type="button" data-action="backdate">ปิด</button></div>`:""}
+    ${state.scanNotice?`<div class="pwa-scan-notice ${state.scanNotice.error?"error":""}">${esc(state.scanNotice.text)}</div>`:""}
     ${state.showBackdatePicker?backdatePicker() : ""}
     <div class="legacy-pos-content"><div class="legacy-pos-layout"><section class="legacy-pos-products"><div class="category-tools">${family?'<button type="button" data-action="category-order">⚙️ จัดเรียงหมวด</button>':""}</div><div class="category-bar" role="tablist">${categoryButtons(data.categories||[])}</div><label class="legacy-search"><span>🔍</span><input data-search type="search" placeholder="ค้นหาสินค้า..." value="${escAttr(state.query)}"></label><div class="legacy-results"><span>${products.length.toLocaleString("th-TH")} รายการ</span><span>ข้อมูลล่าสุดจาก GAS</span></div><div class="legacy-product-grid">${products.map(productCard).join("")||'<div class="legacy-empty">🔎<br>ไม่พบสินค้า</div>'}</div></section><aside class="legacy-pos-cart pos-cart-desktop" aria-label="ตะกร้าสินค้า"><div class="cart-step ${state.animation}">${cartMarkup()}</div></aside></div></div>
   </section>`;
@@ -102,6 +105,30 @@ function refreshProductResults(root){
   if(grid)grid.innerHTML=products.map(productCard).join("")||'<div class="legacy-empty">🔎<br>ไม่พบสินค้า</div>';
   if(count)count.textContent=`${products.length.toLocaleString("th-TH")} รายการ`;
 }
+function handleBarcodeScan(code){
+  const root=runtime.root;
+  if(!root||!state.data||!root.querySelector(".legacy-pos-page"))return;
+  if(state.successOpen||state.printOpen||state.submitting||state.showBackdatePicker)return;
+  const value=String(code||"").trim().toUpperCase();
+  const product=(state.data.products||[]).find(item=>String(item.code||"").toUpperCase()===value);
+  if(!product){showScanNotice(`ไม่พบสินค้า: ${value}`,true);return;}
+  const stock=Number(product.stock)||0;
+  const inCart=(find(product.code)&&Number(find(product.code).qty))||0;
+  if(!state.unlockStock&&(stock<=0||inCart>=stock)){showScanNotice(`${product.name} มีสต๊อกไม่พอ`,true);return;}
+  state.scanNotice={text:`📟 ${product.name} ✅`,error:false};
+  add(product.code,root);
+  try{window.SuphanSound?.success();}catch(error){}
+  const notice=state.scanNotice;
+  setTimeout(()=>{if(state.scanNotice===notice){state.scanNotice="";draw(root);}},2200);
+}
+function showScanNotice(text,error){
+  const root=runtime.root;if(!root)return;
+  state.scanNotice={text,error:!!error};draw(root);
+  const notice=state.scanNotice;
+  try{window.SuphanSound?.error();}catch(ignore){}
+  setTimeout(()=>{if(state.scanNotice===notice){state.scanNotice="";draw(root);}},2600);
+}
+window.addEventListener("suphan-barcode",event=>handleBarcodeScan(event.detail));
 function handleClick(button,root){
   const action=button.dataset.action;
   if(action==="submit-sale"){void submitSale(root);return;}
