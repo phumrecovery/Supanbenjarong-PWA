@@ -12,6 +12,7 @@ const sidebar=document.querySelector("#sidebar");
 const sidebarOverlay=document.querySelector("#sidebarOverlay");
 const sidebarUser=document.querySelector("#sidebarUser");
 const toast=document.querySelector("#toast");
+const floatingLayer=document.querySelector("#floatingLayer");
 const SESSION_KEY="suphanbenjarong.pwa.session";
 const DISPLAY_USER_KEY="suphanbenjarong.pwa.display-user";
 const PENDING_BARCODE_KEY="suphanbenjarong.pwa.pending-barcode";
@@ -206,6 +207,9 @@ function render(route,{animate=true,direction}={}){
   if(!currentSession||!currentSession.user){showLogin("กรุณาเข้าสู่ระบบก่อนใช้งาน");return;}
   route=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
   const travel=direction||pageDirection(route);activeRoute=route;if(animate)animatePage(travel);
+  // A module may add viewport-pinned actions. Never let those controls leak
+  // into another route (especially the POS command bar).
+  if(floatingLayer)floatingLayer.replaceChildren();
   // POS มีแถบคำสั่งเฉพาะของตนเอง จึงไม่ซ้อนกับ header หลักของ App Shell.
   setShell(route!=="sales");
   main.classList.toggle("pos-main",route==="sales");

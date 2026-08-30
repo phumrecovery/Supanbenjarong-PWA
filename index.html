@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="./css/app.css?v=product-v1">
   <link rel="stylesheet" href="./css/pos.css?v=product-v1">
   <link rel="stylesheet" href="./css/product.css?v=product-v1">
+  <link rel="stylesheet" href="./css/product-overrides.css?v=product-v2">
   <title>สุพรรณบุรีเบญจรงค์</title>
 </head>
 <body>
@@ -33,6 +34,8 @@
       <div class="header-right"><span id="currentDate" class="header-date"></span><span id="connection" class="connection" aria-live="polite"></span></div>
     </header>
     <main id="main" class="main" aria-live="polite"></main>
+    <!-- Floating actions live outside page content so they stay pinned to the viewport. -->
+    <div id="floatingLayer" class="floating-layer" aria-live="polite"></div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </div>
   <script type="module" src="./js/app.js?v=product-v1"></script>
