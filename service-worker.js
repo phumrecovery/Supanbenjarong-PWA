@@ -1,5 +1,5 @@
-const VERSION="suphan-pwa-v30";
-const APP_SHELL=["./","./index.html","./css/app.css","./js/app.js","./js/api.js","./assets/icon.svg","./manifest.webmanifest"];
+const VERSION="suphan-pwa-v31";
+const APP_SHELL=["./","./index.html","./css/app.css","./js/app.js","./js/api.js","./assets/icon-48.png","./assets/icon-192.png","./assets/icon-512.png","./manifest.webmanifest"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==VERSION).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",event=>{
