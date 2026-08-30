@@ -1,6 +1,8 @@
 let posState={data:null,category:"",query:"",cart:[]};
+let posRuntime={api:null,session:""};
 
 export async function renderPos(root,api,session){
+  posRuntime={api,session};
   if(!posState.data){
     root.innerHTML='<section class="pos-loading"><span class="spinner"></span><p>กำลังโหลดสินค้าหน้าร้าน…</p></section>';
     try{posState.data=await api.posBootstrap(session);}catch(error){
@@ -58,22 +60,25 @@ function cartMarkup(){
 }
 
 function bind(root,api,session){
-  root.querySelectorAll('[data-pos-category]').forEach(button=>button.addEventListener('click',()=>{posState.category=button.dataset.posCategory;draw(root,api,session);}));
   const search=root.querySelector('[data-pos-search]');
   search.addEventListener('input',()=>{posState.query=search.value;refreshProducts(root,api,session);});
-  root.querySelectorAll('[data-pos-add]').forEach(button=>button.addEventListener('click',()=>add(button.dataset.posAdd,root,api,session)));
-  root.querySelectorAll('[data-pos-qty]').forEach(button=>button.addEventListener('click',()=>changeQty(button.dataset.posQty,Number(button.dataset.step),root,api,session)));
-  root.querySelectorAll('[data-pos-action]').forEach(button=>button.addEventListener('click',async()=>{
-    if(button.dataset.posAction==='clear'){posState.cart=[];draw(root,api,session);}
-    if(button.dataset.posAction==='refresh'){posState.data=null;await renderPos(root,api,session);}
-  }));
+  if(root.dataset.posEventsBound)return;
+  root.dataset.posEventsBound='1';
+  root.addEventListener('click',async event=>{
+    const button=event.target.closest('button');
+    if(!button)return;
+    if(button.dataset.posCategory!==undefined){posState.category=button.dataset.posCategory;draw(root,posRuntime.api,posRuntime.session);return;}
+    if(button.dataset.posAdd){add(button.dataset.posAdd,root,posRuntime.api,posRuntime.session);return;}
+    if(button.dataset.posQty){changeQty(button.dataset.posQty,Number(button.dataset.step),root,posRuntime.api,posRuntime.session);return;}
+    if(button.dataset.posAction==='clear'){posState.cart=[];draw(root,posRuntime.api,posRuntime.session);return;}
+    if(button.dataset.posAction==='refresh'){posState.data=null;await renderPos(root,posRuntime.api,posRuntime.session);}
+  });
 }
 
 function refreshProducts(root,api,session){
   const products=filteredProducts(posState.data.products||[]);
   root.querySelector('.product-grid').innerHTML=products.map(productCard).join('')||'<p class="empty-state">ไม่พบสินค้าที่ค้นหา</p>';
   root.querySelector('.pos-results span').textContent=`${products.length.toLocaleString("th-TH")} รายการ`;
-  root.querySelectorAll('[data-pos-add]').forEach(button=>button.addEventListener('click',()=>add(button.dataset.posAdd,root,api,session)));
 }
 
 function add(code,root,api,session){
