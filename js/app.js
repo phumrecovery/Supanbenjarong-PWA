@@ -200,7 +200,13 @@ function render(route,{animate=true,direction}={}){
 }
 function navigate(route,{replace=false,animate=true}={}){const clean=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";const url=`#${clean}`;if(replace)history.replaceState({route:clean},"",url);else history.pushState({route:clean},"",url);render(clean,{animate});}
 window.addEventListener("popstate",()=>render(currentRoute(),{animate:true}));
-document.addEventListener("keydown",event=>{if(!appHeader.hidden)return;if(event.key>="0"&&event.key<="9"){enterPin(event.key);event.preventDefault();}else if(event.key==="Backspace"||event.key==="Delete"){enterPin("del");event.preventDefault();}});
+document.addEventListener("keydown",event=>{
+  // POS also hides the App Shell header.  Only the visible PIN keypad may
+  // claim number keys; otherwise number inputs in POS must receive them.
+  if(!document.querySelector("#pinPad"))return;
+  if(event.key>="0"&&event.key<="9"){enterPin(event.key);event.preventDefault();}
+  else if(event.key==="Backspace"||event.key==="Delete"){enterPin("del");event.preventDefault();}
+});
 
 document.querySelector("#logout").addEventListener("click",async()=>{
   try{if(sessionToken)await api.logout(sessionToken);}catch(error){}
