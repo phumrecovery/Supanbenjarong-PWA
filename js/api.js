@@ -28,6 +28,9 @@ export class ApiClient {
   posBootstrap(session){
     return this.request({action:"posBootstrap",session});
   }
+  homeBootstrap(session){
+    return this.request({action:"homeBootstrap",session});
+  }
   selectUser(session,name){
     return this.request({action:"selectUser",session,name});
   }
