@@ -3,10 +3,10 @@
 const DEFAULT_CHANNELS=["หน้าร้าน","โทรสั่ง","Line","Facebook","Lot/ส่ง","อื่นๆ"];
 const PAYMENTS=["💵 เงินสด","🏦 โอนธนาคาร"];
 let state={data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false,mobileCartOpen:false,submitting:false,submitError:"",lastBill:null,successOpen:false,printOpen:false,printSize:"size-a4",buyerEnabled:false,receiptHtml:"",requestId:""};
-let runtime={api:null,session:"",onBack:null,level:""};
+let runtime={api:null,session:"",onBack:null,level:"",userName:""};
 
 export async function renderPos(root,api,session,onBack,context={}){
-  runtime={api,session,onBack,level:context.level||""};
+  runtime={api,session,onBack,level:context.level||"",userName:(context.displayUser&&context.displayUser.name)||(context.user&&context.user.name)||""};
   const header=document.querySelector("#appHeader");
   if(header){header.hidden=true;header.style.display="none";}
   if(!state.data){
@@ -147,13 +147,13 @@ async function submitSale(root){
   try{
     const result=await runtime.api.saveSale(runtime.session,sale,state.requestId);
     state.submitting=false;state.requestId="";state.mobileCartOpen=false;
-    state.lastBill={...result,items:buildSaleItems(),pcs:totals().pieces,payment:sale.payment,channel:sale.channel,shippingCost:totals().shipping,discountType:state.discountType,lumpSum:state.discountType===1?(Number(state.lumpDiscount)||0):0,cash:state.cash};
+    state.lastBill={...result,seller:runtime.userName||result.seller||"ไม่ระบุ",items:buildSaleItems(),pcs:totals().pieces,payment:sale.payment,channel:sale.channel,shippingCost:totals().shipping,discountType:state.discountType,lumpSum:state.discountType===1?(Number(state.lumpDiscount)||0):0,cash:state.cash};
     state.successOpen=true;draw(root);
   }catch(error){state.submitting=false;state.submitError=String(error&&error.message?error.message:error);draw(root);}
 }
 async function newSale(root){
   state.cart=[];state.step=0;state.cash=0;state.shipping=0;state.shippingOpen=false;state.discountType=0;state.discountAll=0;state.lumpDiscount=0;state.editingDiscount=null;state.unlockStock=false;state.backdate=false;state.backdateValue="";state.successOpen=false;state.printOpen=false;state.receiptHtml="";state.lastBill=null;state.data=null;
-  await renderPos(root,runtime.api,runtime.session,runtime.onBack,{level:runtime.level});
+  await renderPos(root,runtime.api,runtime.session,runtime.onBack,{level:runtime.level,displayUser:{name:runtime.userName}});
 }
 function receiptMarkup(buyer){
   const bill=state.lastBill||{},shop=state.data.shop||{},items=bill.items||[];let gross=0,itemDiscount=0,packaging=0;

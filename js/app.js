@@ -194,7 +194,7 @@ function render(route,{animate=true,direction}={}){
   // POS มีแถบคำสั่งเฉพาะของตนเอง จึงไม่ซ้อนกับ header หลักของ App Shell.
   setShell(route!=="sales");
   main.classList.toggle("pos-main",route==="sales");
-  if(route==="sales"){renderPos(main,api,sessionToken,()=>navigate("home"),currentSession||{});return;}
+  if(route==="sales"){renderPos(main,api,sessionToken,()=>navigate("home"),{...(currentSession||{}),displayUser});return;}
   if(route==="home"){renderHome();return;}
   renderPlaceholder(route);
 }
