@@ -50,20 +50,31 @@ let barcodeBuffer="";
 let barcodeTimer=0;
 
 // เสียงสั้นจาก Web Audio: ไม่ต้องโหลดไฟล์เพิ่ม และเริ่มได้หลังผู้ใช้แตะหน้าจอเท่านั้น
-function playTone(frequency,duration=0.045,volume=0.125){
+// รูปแบบและลำดับโน้ตเดียวกับ bjSound ใน 03_Style.html ของ GAS เดิม
+// ปรับระดับรวมขึ้น 3 เท่าจาก PWA รุ่นก่อน โดยลดสัดส่วนจากเสียงเดิม
+// เพื่อไม่ให้ Web Audio clipping.
+function playTone(frequency,duration=.1,volume=.3,type="sine",delay=0){
   try{
     audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)();
     if(audioContext.state==="suspended")audioContext.resume();
     const oscillator=audioContext.createOscillator();
     const gain=audioContext.createGain();
-    oscillator.type="sine";oscillator.frequency.value=frequency;
-    gain.gain.setValueAtTime(volume,audioContext.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.0001,audioContext.currentTime+duration);
+    const start=audioContext.currentTime+delay;
+    oscillator.type=type;oscillator.frequency.value=frequency;
+    gain.gain.setValueAtTime(0.0001,start);
+    gain.gain.exponentialRampToValueAtTime(Math.min(.5,volume),start+.012);
+    gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
     oscillator.connect(gain).connect(audioContext.destination);
-    oscillator.start();oscillator.stop(audioContext.currentTime+duration);
+    oscillator.start(start);oscillator.stop(start+duration);
   }catch(error){}
 }
-const sound={tap:()=>playTone(520),success:()=>{playTone(660,.055);setTimeout(()=>playTone(880,.07),60);},error:()=>playTone(180,.12,.175)};
+const sound={
+  tap:()=>{const now=Date.now();if(now-(sound.lastTap||0)<60)return;sound.lastTap=now;playTone(600,.08,.375,"sine");playTone(800,.06,.23,"sine",.02);},
+  success:()=>{playTone(523,.18,.447,"sine");playTone(659,.18,.447,"sine",.12);playTone(784,.25,.296,"sine",.25);},
+  error:()=>{playTone(250,.18,.493,"sine");playTone(200,.25,.375,"sine",.1);},
+  add:()=>{playTone(880,.1,.375,"sine");playTone(1100,.08,.27,"sine",.05);},
+  notify:()=>playTone(700,.15,.296,"sine")
+};
 window.SuphanSound=sound;
 document.addEventListener("pointerdown",event=>{const button=event.target.closest("button");if(button&&!button.disabled) sound.tap();},{capture:true});
 
@@ -74,7 +85,7 @@ function currentRoute(){const hash=location.hash.replace(/^#/,"");return hash&&(
 function pageDirection(next){const order=["home","sales","workshop","outsource","expense","preorder","report","product","stock","settings"];return order.indexOf(next)<order.indexOf(activeRoute)?"back":"forward";}
 function animatePage(direction){main.classList.remove("page-enter-forward","page-enter-back");void main.offsetWidth;main.classList.add(direction==="back"?"page-enter-back":"page-enter-forward");}
 function setShell(visible){appHeader.hidden=!visible;appHeader.style.display=visible?"":"none";}
-function showToast(message){toast.textContent=message;toast.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
+function showToast(message){toast.textContent=message;toast.classList.add("show");try{sound.notify();}catch(error){}clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
 function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};}
 
 function openSidebar(){sidebar.classList.add("open");sidebarOverlay.classList.add("show");}

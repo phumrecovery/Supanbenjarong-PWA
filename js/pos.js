@@ -167,8 +167,9 @@ function newRequestId(){return globalThis.crypto&&crypto.randomUUID?crypto.rando
 function buildSalePayload(){const total=totals(),items=buildSaleItems(),lump=state.discountType===1?Number(state.lumpDiscount)||0:0;return {channel:state.channel,customer:"ลูกค้าทั่วไป",itemsJSON:JSON.stringify(items),totalPcs:total.pieces,priceBeforeDiscount:total.gross,discountItem:total.itemDiscount,totalDiscount:total.itemDiscount+lump,packagingCost:total.packaging,shippingCost:total.shipping,netTotal:total.net,payment:state.payIndex===0?"เงินสด":"โอนธนาคาร",note:lump?`ลดเหมา ฿${lump}`:"",saleDate:state.backdate?state.backdateValue:"",unlockStock:state.unlockStock,clientRequestId:state.requestId};}
 async function submitSale(root){
   if(state.submitting)return;
-  if(!state.cart.length){state.submitError="ยังไม่มีสินค้าในตะกร้า";draw(root);return;}
-  if(state.backdate&&!state.backdateValue){state.submitError="กรุณาเลือกวันที่ขายย้อนหลัง";draw(root);return;}
+  try{window.SuphanSound?.success();}catch(error){}
+  if(!state.cart.length){state.submitError="ยังไม่มีสินค้าในตะกร้า";try{window.SuphanSound?.error();}catch(error){}draw(root);return;}
+  if(state.backdate&&!state.backdateValue){state.submitError="กรุณาเลือกวันที่ขายย้อนหลัง";try{window.SuphanSound?.error();}catch(error){}draw(root);return;}
   state.submitting=true;state.submitError="";state.requestId=state.requestId||newRequestId();draw(root);
   const sale=buildSalePayload();
   try{
@@ -176,7 +177,7 @@ async function submitSale(root){
     state.submitting=false;state.requestId="";state.mobileCartOpen=false;
     state.lastBill={...result,seller:runtime.userName||result.seller||"ไม่ระบุ",items:buildSaleItems(),pcs:totals().pieces,payment:sale.payment,channel:sale.channel,shippingCost:totals().shipping,discountType:state.discountType,lumpSum:state.discountType===1?(Number(state.lumpDiscount)||0):0,cash:state.cash};
     state.successOpen=true;draw(root);
-  }catch(error){state.submitting=false;state.submitError=String(error&&error.message?error.message:error);draw(root);}
+  }catch(error){state.submitting=false;state.submitError=String(error&&error.message?error.message:error);try{window.SuphanSound?.error();}catch(ignore){}draw(root);}
 }
 async function newSale(root){
   state.cart=[];state.step=0;state.cash=0;state.shipping=0;state.shippingOpen=false;state.discountType=0;state.discountAll=0;state.lumpDiscount=0;state.editingDiscount=null;state.unlockStock=false;state.backdate=false;state.backdateValue="";state.successOpen=false;state.printOpen=false;state.receiptHtml="";state.lastBill=null;state.data=null;
@@ -190,7 +191,7 @@ function receiptMarkup(buyer){
 }
 function printBill(root){const buyer=state.buyerEnabled?{name:root.querySelector("[data-buyer-name]")?.value||"",addr:root.querySelector("[data-buyer-addr]")?.value||"",tax:root.querySelector("[data-buyer-tax]")?.value||"",phone:root.querySelector("[data-buyer-phone]")?.value||""}:null;state.receiptHtml=receiptMarkup(buyer);state.printOpen=false;draw(root);setTimeout(()=>{const cleanup=()=>{state.receiptHtml="";draw(root);window.removeEventListener("afterprint",cleanup);};window.addEventListener("afterprint",cleanup);try{window.focus();window.print();}catch(error){cleanup();state.submitError="เปิดหน้าพิมพ์ไม่สำเร็จ";draw(root);}},200);}
 function find(code){return state.cart.find(item=>item.code===code);}
-function add(code,root){const product=state.data.products.find(item=>item.code===code);const item=find(code);if(!product)return;if(item){if(state.unlockStock||item.qty<Number(product.stock))item.qty++;}else state.cart.push({...product,qty:1,discount:state.discountAll,packageCode:"",packageQty:0});state.step=0;draw(root);}
+function add(code,root){const product=state.data.products.find(item=>item.code===code);const item=find(code);if(!product)return;if(item){if(state.unlockStock||item.qty<Number(product.stock))item.qty++;}else state.cart.push({...product,qty:1,discount:state.discountAll,packageCode:"",packageQty:0});try{window.SuphanSound?.add();}catch(error){}state.step=0;draw(root);}
 function changeQty(code,step,root){const item=find(code),product=state.data.products.find(value=>value.code===code);if(!item||!product)return;const max=state.unlockStock?99999:Number(product.stock)||0;item.qty=Math.max(0,Math.min(max,item.qty+step));if(item.packageQty>item.qty)item.packageQty=item.qty;state.cart=state.cart.filter(value=>value.qty>0);draw(root);}
 function changePackageQty(code,step,root){const item=find(code);if(!item)return;item.packageQty=Math.max(0,Math.min(item.qty,(Number(item.packageQty)||0)+step));if(!item.packageQty)item.packageCode="";draw(root);}
 function money(value){return (Number(value)||0).toLocaleString("th-TH");}
