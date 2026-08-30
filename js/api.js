@@ -4,9 +4,9 @@
 const GATEWAY_API_URL="https://suphanbenjarong-api.phum-recovery.workers.dev/api";
 
 export class ApiClient {
-  async request(payload){
+  async request(payload,timeoutMs=15000){
     const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),15000);
+    const timeout=setTimeout(()=>controller.abort(),timeoutMs);
     let response;
     try{
       response=await fetch(GATEWAY_API_URL,{
@@ -56,7 +56,7 @@ export class ApiClient {
     return this.request({action:"productStar",session,code});
   }
   productUploadImage(session,row,layer,data,fileName){
-    return this.request({action:"productUploadImage",session,row,layer,data,fileName});
+    return this.request({action:"productUploadImage",session,row,layer,data,fileName},60000);
   }
   selectUser(session,name){
     return this.request({action:"selectUser",session,name});
