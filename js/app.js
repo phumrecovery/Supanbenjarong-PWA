@@ -3,6 +3,7 @@ import {ApiClient} from "./api.js";
 const api=new ApiClient();
 const main=document.querySelector("#main");
 const connection=document.querySelector("#connection");
+const logoutButton=document.querySelector("#logout");
 const SESSION_KEY="suphanbenjarong.pwa.session";
 let sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
 let currentSession=null;
@@ -19,6 +20,11 @@ function render(route){
   history.replaceState({route},"",`#${route}`);
   main.innerHTML=`<section class="card"><h1>${page.title}</h1><p>${page.body}</p><p class="hint">โครงหน้า PWA พร้อมแล้ว ส่วนข้อมูลและธุรกรรมจะเปิดใช้ทีละโมดูลหลังตรวจสอบครบถ้วน</p></section>`;
   document.querySelectorAll("[data-route]").forEach(button=>button.classList.toggle("active",button.dataset.route===route));
+}
+
+function setAuthenticatedHeader(){
+  connection.textContent=`เข้าสู่ระบบ: ${currentSession.user.name}`;
+  logoutButton.hidden=false;
 }
 
 function showLogin(message=""){
@@ -76,7 +82,7 @@ async function selectUser(name){
     const result=await api.selectUser(sessionToken,name);
     if(!result.ok) throw new Error(result.error);
     currentSession=result.session;
-    connection.textContent=`เข้าสู่ระบบ: ${currentSession.user.name}`;
+    setAuthenticatedHeader();
     render(location.hash.slice(1)||"home");
   }catch(error){showLogin("เลือกชื่อไม่สำเร็จ โปรดลองเข้าสู่ระบบใหม่");}
 }
@@ -95,7 +101,7 @@ async function initialize(){
     if(!result.ok) throw new Error(result.error);
     currentSession=result.session;
     if(!currentSession.user){connection.textContent="เลือกชื่อผู้ใช้งาน";showLogin("กรุณาเข้าสู่ระบบใหม่เพื่อเลือกชื่อผู้ใช้งาน");return;}
-    connection.textContent=`เข้าสู่ระบบ: ${currentSession.user.name}`;
+    setAuthenticatedHeader();
     render(location.hash.slice(1)||"home");
   }catch(error){
     sessionStorage.removeItem(SESSION_KEY);
@@ -104,6 +110,18 @@ async function initialize(){
     showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");
   }
 }
+
+logoutButton.addEventListener("click",async()=>{
+  logoutButton.disabled=true;
+  try{if(sessionToken) await api.logout(sessionToken);}catch(error){}
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionToken="";
+  currentSession=null;
+  logoutButton.hidden=true;
+  logoutButton.disabled=false;
+  connection.textContent="กรุณาเข้าสู่ระบบ";
+  showLogin("ออกจากระบบแล้ว");
+});
 
 if("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
 initialize();
