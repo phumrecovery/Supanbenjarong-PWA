@@ -1,11 +1,17 @@
 // API boundary for PART 3. Credentials, PINs, and tokens never belong here.
-// This public, read-only health probe is used only to prove browser ↔ GAS transport.
-const GAS_API_URL="https://script.google.com/macros/s/AKfycbx_kKQiTjU_HTx2rPIPOXQVhaqBnXtvvodsnM0Bmhbh-D2T81-1GYuIAIwQTjWnIhORzg/exec";
+// The Worker accepts requests only from this GitHub Pages origin and signs the
+// server-to-server request before forwarding it to GAS.
+const GATEWAY_API_URL="https://suphanbenjarong-api.phum-recovery.workers.dev/api";
 
 export class ApiClient {
   async bootstrap(){
-    const response=await fetch(`${GAS_API_URL}?api=health`,{cache:"no-store"});
-    if(!response.ok) throw new Error(`GAS API ตอบกลับ ${response.status}`);
+    const response=await fetch(GATEWAY_API_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"health"}),
+      cache:"no-store"
+    });
+    if(!response.ok) throw new Error(`Gateway ตอบกลับ ${response.status}`);
     const payload=await response.json();
     if(!payload.ok) throw new Error("GAS API ไม่พร้อมใช้งาน");
     return payload;
