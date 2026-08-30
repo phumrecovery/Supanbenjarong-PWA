@@ -3,7 +3,7 @@
 // path is exposed through the authenticated PWA API.
 const DEFAULT_CHANNELS=["หน้าร้าน","โทรสั่ง","Line","Facebook","Lot/ส่ง","อื่นๆ"];
 const PAYMENTS=["💵 เงินสด","🏦 โอนธนาคาร"];
-let state={data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false};
+let state={data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false,mobileCartOpen:false};
 let runtime={api:null,session:"",onBack:null,level:""};
 
 export async function renderPos(root,api,session,onBack,context={}){
@@ -34,14 +34,15 @@ function draw(root){
   const cartPieces=state.cart.reduce((sum,item)=>sum+(Number(item.qty)||0),0);
   if(cartPieces){
     root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",`<button class="cart-floating" type="button" data-action="mobile-cart">🛒 ฿${money(totals().net)} <span class="cart-count">${cartPieces} ชิ้น</span></button>`);
-    root.querySelector("[data-action=mobile-cart]")?.addEventListener("click",()=>root.querySelector(".legacy-pos-cart")?.scrollIntoView({behavior:"smooth",block:"start"}));
   }
+  if(state.mobileCartOpen)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",mobileCartMarkup());
   state.animation="";
   ensureClickHandler(root);
   bind(root);
 }
 
 function backdatePicker(){return `<div class="legacy-pos-modal"><section><h2>🕘 บันทึกยอดขายย้อนหลัง</h2><label>วันที่ขายจริง<input type="date" data-backdate-input value="${escAttr(state.backdateValue)}"></label><p>ใช้สำหรับยอดขายย้อนหลังเท่านั้น</p><div><button type="button" data-action="cancel-backdate">ยกเลิก</button><button type="button" data-action="apply-backdate">ตกลง</button></div></section></div>`;}
+function mobileCartMarkup(){return `<div class="mobile-cart-overlay"><section class="mobile-cart-sheet"><header><strong>🛒 ตะกร้าสินค้า</strong><button type="button" data-action="close-mobile-cart" aria-label="ปิดตะกร้า">×</button></header><div class="cart-step ${state.animation}">${cartMarkup()}</div></section></div>`;}
 function categoryButtons(categories){return ["",...categories].map(value=>`<button class="legacy-category-btn ${state.category===value?"active":""}" type="button" data-category="${escAttr(value)}" role="tab">${value?esc(value):"ทั้งหมด"}</button>`).join("");}
 function filteredProducts(products){const term=state.query.trim().toLocaleLowerCase("th");return products.filter(product=>{if(state.category&&product.category!==state.category)return false;return !term||[product.code,product.name,product.pattern,product.size,product.category].join(" ").toLocaleLowerCase("th").includes(term);}).slice(0,120);}
 function patternCode(pattern){const value=String(pattern||"");if(value.includes("ครึ่ง"))return "HF";if(value.includes("เต็ม"))return "FU";if(value.includes("มุก")&&value.includes("ดอก"))return "MP-FLOWER";if(value.includes("มุก"))return "MP-GOLD";if(value.includes("คราม"))return "KR";return "OT";}
@@ -96,7 +97,8 @@ function refreshProductResults(root){
 }
 function handleClick(button,root){
   const action=button.dataset.action;
-  if(action==="mobile-cart"){root.querySelector(".legacy-pos-cart")?.scrollIntoView({behavior:"smooth",block:"start"});return;}
+  if(action==="mobile-cart"){state.mobileCartOpen=true;draw(root);return;}
+  if(action==="close-mobile-cart"){state.mobileCartOpen=false;draw(root);return;}
   if(action==="back"){runtime.onBack?.();return;}
   if(action==="unlock"){state.unlockStock=!state.unlockStock;draw(root);return;}
   if(action==="backdate"){state.backdate=!state.backdate;state.showBackdatePicker=state.backdate;draw(root);return;}
