@@ -44,6 +44,25 @@ let activeRoute="";
 let pinInput="";
 let homeData=null;
 let toastTimer=0;
+let audioContext=null;
+
+// เสียงสั้นจาก Web Audio: ไม่ต้องโหลดไฟล์เพิ่ม และเริ่มได้หลังผู้ใช้แตะหน้าจอเท่านั้น
+function playTone(frequency,duration=0.045,volume=0.025){
+  try{
+    audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)();
+    if(audioContext.state==="suspended")audioContext.resume();
+    const oscillator=audioContext.createOscillator();
+    const gain=audioContext.createGain();
+    oscillator.type="sine";oscillator.frequency.value=frequency;
+    gain.gain.setValueAtTime(volume,audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.0001,audioContext.currentTime+duration);
+    oscillator.connect(gain).connect(audioContext.destination);
+    oscillator.start();oscillator.stop(audioContext.currentTime+duration);
+  }catch(error){}
+}
+const sound={tap:()=>playTone(520),success:()=>{playTone(660,.055);setTimeout(()=>playTone(880,.07),60);},error:()=>playTone(180,.12,.035)};
+window.SuphanSound=sound;
+document.addEventListener("pointerdown",event=>{const button=event.target.closest("button");if(button&&!button.disabled) sound.tap();},{capture:true});
 
 function escapeHtml(value){return String(value??"").replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
 function money(value){return (Number(value)||0).toLocaleString("th-TH");}
@@ -104,12 +123,12 @@ async function submitPin(){
     sessionStorage.setItem(SESSION_KEY,sessionToken);
     currentSession={level:result.level,user:null};
     showUserPicker(result.users||[]);
-  }catch(error){pinInput="";renderPin();const el=document.querySelector("#pinError");if(el)el.textContent="รหัสไม่ถูกต้อง";}
+  }catch(error){sound.error();pinInput="";renderPin();const el=document.querySelector("#pinError");if(el)el.textContent="รหัสไม่ถูกต้อง";}
 }
 
 function showUserPicker(users){
   const colors=["#e91e63","#9c27b0","#2196f3","#ff9800","#4caf50","#00bcd4","#f44336","#3f51b5"];
-  main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน"><div class="picker-icon">👤</div><h1 class="picker-title">คุณคือใคร?</h1><div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn" type="button" data-user-index="${index}"><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>'}</div></section>`;
+  main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน"><div class="picker-icon" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="32" cy="17" r="10"/><path d="M19 34c4-6 8-9 13-9s9 3 13 9l7 21H12l7-21Z"/><path d="m26 29 6 8 6-8 4 26H22l4-26Z" fill="currentColor" opacity=".82"/><path d="m32 34 4 7-4 5-4-5 4-7Z" fill="#fff8f0"/></svg></div><h1 class="picker-title">คุณคือใคร?</h1><div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn" type="button" data-user-index="${index}"><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>'}</div></section>`;
   main.querySelectorAll("[data-user-index]").forEach(button=>button.addEventListener("click",()=>selectUser(users[Number(button.dataset.userIndex)])));
 }
 
@@ -125,8 +144,9 @@ async function selectUser(user){
     displayUser={name:user.name,role:user.role||""};
     sessionStorage.setItem(DISPLAY_USER_KEY,JSON.stringify(displayUser));
     setAuthenticatedHeader();
+    sound.success();
     navigate(currentRoute(),{replace:true,animate:true});
-  }catch(error){showLogin("เลือกชื่อไม่สำเร็จ โปรดลองเข้าสู่ระบบใหม่");}
+  }catch(error){sound.error();showLogin("เลือกชื่อไม่สำเร็จ โปรดลองเข้าสู่ระบบใหม่");}
 }
 
 function setAuthenticatedHeader(){
