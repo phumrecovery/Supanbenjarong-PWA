@@ -1,5 +1,6 @@
 import {ApiClient} from "./api.js";
 import {renderPos} from "./pos.js";
+import {renderProduct} from "./product.js";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -209,11 +210,14 @@ function render(route,{animate=true,direction}={}){
   setShell(route!=="sales");
   main.classList.toggle("pos-main",route==="sales");
   if(route==="sales"){renderPos(main,api,sessionToken,()=>navigate("home"),{...(currentSession||{}),displayUser});return;}
+  if(route==="product"){renderProduct(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
   if(route==="home"){renderHome();return;}
   renderPlaceholder(route);
 }
 function navigate(route,{replace=false,animate=true}={}){const clean=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";const url=`#${clean}`;if(replace)history.replaceState({route:clean},"",url);else history.pushState({route:clean},"",url);render(clean,{animate});}
 window.addEventListener("popstate",()=>render(currentRoute(),{animate:true}));
+// Product mutations must never leave dashboard/POS master data looking current.
+window.addEventListener("suphan-data-mutated",()=>{homeData=null;});
 function barcodeChar(event){
   if(event.key&&event.key.length===1&&/[A-Za-z0-9\-_]/.test(event.key))return event.key;
   const code=event.code||"";

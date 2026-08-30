@@ -129,6 +129,10 @@ function showScanNotice(text,error){
   setTimeout(()=>{if(state.scanNotice===notice){state.scanNotice="";draw(root);}},2600);
 }
 window.addEventListener("suphan-barcode",event=>handleBarcodeScan(event.detail));
+// Any product mutation from management invalidates the master-data snapshot.
+// The current cart stays in memory, but the next POS entry reads stock, price,
+// status, categories and images from GAS again.
+window.addEventListener("suphan-data-mutated",()=>{state.data=null;});
 function handleClick(button,root){
   const action=button.dataset.action;
   if(action==="submit-sale"){void submitSale(root);return;}

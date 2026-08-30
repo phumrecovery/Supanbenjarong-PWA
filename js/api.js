@@ -37,6 +37,27 @@ export class ApiClient {
   homeBootstrap(session){
     return this.request({action:"homeBootstrap",session});
   }
+  productBootstrap(session,layer="store"){
+    return this.request({action:"productBootstrap",session,layer});
+  }
+  productAdd(session,product){
+    return this.request({action:"productAdd",session,product});
+  }
+  productUpdate(session,row,product){
+    return this.request({action:"productUpdate",session,row,product});
+  }
+  productStatus(session,row,status,layer){
+    return this.request({action:"productStatus",session,row,status,layer});
+  }
+  productDuplicate(session,row,layer){
+    return this.request({action:"productDuplicate",session,row,layer});
+  }
+  productStar(session,code){
+    return this.request({action:"productStar",session,code});
+  }
+  productUploadImage(session,row,layer,data,fileName){
+    return this.request({action:"productUploadImage",session,row,layer,data,fileName});
+  }
   selectUser(session,name){
     return this.request({action:"selectUser",session,name});
   }
