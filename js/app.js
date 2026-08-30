@@ -191,6 +191,8 @@ function render(route,{animate=true,direction}={}){
   if(!currentSession||!currentSession.user){showLogin("กรุณาเข้าสู่ระบบก่อนใช้งาน");return;}
   route=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
   const travel=direction||pageDirection(route);activeRoute=route;if(animate)animatePage(travel);
+  // POS มีแถบคำสั่งเฉพาะของตนเอง จึงไม่ซ้อนกับ header หลักของ App Shell.
+  setShell(route!=="sales");
   main.classList.toggle("pos-main",route==="sales");
   if(route==="sales"){renderPos(main,api,sessionToken,()=>navigate("home"));return;}
   if(route==="home"){renderHome();return;}
@@ -206,9 +208,11 @@ document.querySelector("#logout").addEventListener("click",async()=>{
 });
 
 async function initialize(){
+  // Never leave a blank canvas while the gateway is slow or unavailable.
+  // A first-time user can always start at the PIN screen without waiting for health.
+  if(!sessionToken){showLogin();api.health().catch(()=>{});return;}
+  main.innerHTML='<section class="card app-loading"><div class="spinner" aria-hidden="true"></div><p>กำลังเปิดข้อมูลร้าน…</p></section>';
   try{
-    await api.health();
-    if(!sessionToken){showLogin();return;}
     const result=await api.bootstrap(sessionToken);
     if(!result.ok||!result.session||!result.session.user)throw new Error("SESSION_EXPIRED");
     currentSession=result.session;

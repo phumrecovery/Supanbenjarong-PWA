@@ -5,12 +5,18 @@ const GATEWAY_API_URL="https://suphanbenjarong-api.phum-recovery.workers.dev/api
 
 export class ApiClient {
   async request(payload){
-    const response=await fetch(GATEWAY_API_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(payload),
-      cache:"no-store"
-    });
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),15000);
+    let response;
+    try{
+      response=await fetch(GATEWAY_API_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload),
+        cache:"no-store",
+        signal:controller.signal
+      });
+    }finally{clearTimeout(timeout);}
     if(!response.ok) throw new Error(`Gateway ตอบกลับ ${response.status}`);
     return response.json();
   }
