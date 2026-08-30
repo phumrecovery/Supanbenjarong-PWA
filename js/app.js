@@ -1,4 +1,5 @@
 import {ApiClient} from "./api.js";
+import {renderPos} from "./pos.js";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -16,6 +17,16 @@ const routes={
 };
 
 function render(route){
+  if(!currentSession||!currentSession.user){
+    showLogin("กรุณาเข้าสู่ระบบก่อนใช้งาน");
+    return;
+  }
+  if(route==="sales"){
+    history.replaceState({route},"",`#${route}`);
+    document.querySelectorAll("[data-route]").forEach(button=>button.classList.toggle("active",button.dataset.route===route));
+    renderPos(main,api,sessionToken);
+    return;
+  }
   const page=routes[route]||routes.home;
   history.replaceState({route},"",`#${route}`);
   main.innerHTML=`<section class="card"><h1>${page.title}</h1><p>${page.body}</p><p class="hint">โครงหน้า PWA พร้อมแล้ว ส่วนข้อมูลและธุรกรรมจะเปิดใช้ทีละโมดูลหลังตรวจสอบครบถ้วน</p></section>`;
@@ -63,7 +74,13 @@ function showUserPicker(users){
     const button=document.createElement("button");
     button.type="button";
     button.className="user-button";
-    button.textContent=user.role?`${user.name} — ${user.role}`:user.name;
+    const icon=document.createElement("span");
+    icon.className="user-avatar";
+    icon.setAttribute("aria-hidden","true");
+    icon.innerHTML='<svg viewBox="0 0 24 24" focusable="false"><path d="M12 11.3a4.15 4.15 0 1 0 0-8.3 4.15 4.15 0 0 0 0 8.3Zm-7 9.7a7 7 0 0 1 14 0H5Zm8.4-8.1 2.1 1.4-1 1.1 1.2 1.1-2.1 2.5-2.1-2.5 1.2-1.1-1-1.1 2.1-1.4Z"/></svg>';
+    const text=document.createElement("span");
+    text.textContent=user.role?`${user.name} — ${user.role}`:user.name;
+    button.append(icon,text);
     button.addEventListener("click",()=>selectUser(user.name));
     list.append(button);
   });
