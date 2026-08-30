@@ -58,3 +58,27 @@
   .mobile-cart-sheet .checkout-summary .grand{font-size:20px}
   .mobile-cart-sheet .legacy-cart-note{font-size:12px}
 }
+
+/* Desktop/tablet cart text: retain readable controls while avoiding an
+   oversized panel beside the product grid. */
+@media(min-width:768px){
+  .legacy-pos-cart .cart-title{font-size:21px}
+  .legacy-pos-cart .cart-item{font-size:18px}
+  .legacy-pos-cart .cart-item .ci-name{font-size:21px}
+  .legacy-pos-cart .cart-item .ci-sub{font-size:17px}
+  .legacy-pos-cart .cart-item .ci-price{font-size:19px}
+  .legacy-pos-cart .item-disc-btn,.legacy-pos-cart .item-discount-inline button{font-size:14px}
+  .legacy-pos-cart .pkg-row select{font-size:14px}
+  .legacy-pos-cart .pkg-qty b{font-size:15px}
+  .legacy-pos-cart .qty-val{font-size:20px}
+  .legacy-pos-cart .legacy-checkout{font-size:20px}
+  .legacy-pos-cart .legacy-edit-cart{font-size:18px}
+  .legacy-pos-cart .checkout-section h3{font-size:18px}
+  .legacy-pos-cart .discount-pill,.legacy-pos-cart .pay-pill,.legacy-pos-cart .cash-pills button{font-size:15px}
+  .legacy-pos-cart .checkout-input-label,.legacy-pos-cart .cash-section,.legacy-pos-cart .shipping-section{font-size:15px}
+  .legacy-pos-cart .checkout-input-label input,.legacy-pos-cart .cash-section input,.legacy-pos-cart .shipping-section input{font-size:19px}
+  .legacy-pos-cart .change-display{font-size:20px}
+  .legacy-pos-cart .checkout-summary>div{font-size:17px}
+  .legacy-pos-cart .checkout-summary .grand{font-size:22px}
+  .legacy-pos-cart .legacy-cart-note{font-size:13px}
+}
