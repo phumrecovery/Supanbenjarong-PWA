@@ -65,6 +65,23 @@ function ensureClickHandler(root){
     event.stopImmediatePropagation();
     handleClick(button,root);
   },true);
+  // Inputs used to redraw the whole cart for every keystroke. That destroys
+  // focus, so only keep state while typing and redraw when the value is done.
+  root.addEventListener("input",event=>{
+    const input=event.target.closest("input");
+    if(!input||!input.closest(".legacy-pos-page"))return;
+    if(input.matches("[data-lump]"))state.lumpDiscount=Math.max(0,Number(input.value)||0);
+    else if(input.matches("[data-cash]"))state.cash=Math.max(0,Number(input.value)||0);
+    else if(input.matches("[data-shipping]"))state.shipping=Math.max(0,Number(input.value)||0);
+    else return;
+    event.stopImmediatePropagation();
+  },true);
+  root.addEventListener("change",event=>{
+    const input=event.target.closest("input");
+    if(!input||!input.closest(".legacy-pos-page")||!input.matches("[data-lump],[data-cash],[data-shipping]"))return;
+    event.stopImmediatePropagation();
+    draw(root);
+  },true);
 }
 function handleClick(button,root){
   const action=button.dataset.action;
