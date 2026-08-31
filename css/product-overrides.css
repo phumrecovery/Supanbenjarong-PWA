@@ -1,6 +1,7 @@
 /* Kept outside the animated main element: fixed actions now remain viewport-pinned. */
 .floating-layer{position:relative;z-index:800}
 .product-page + .product-fab{display:none}
+.product-main > .product-modal{display:none}
 .product-fab{position:fixed;right:max(25px,calc(env(safe-area-inset-right) + 16px));bottom:max(25px,calc(env(safe-area-inset-bottom) + 16px));z-index:800}
 .product-modal{z-index:900}
 @media(max-width:650px){.product-fab{right:max(18px,calc(env(safe-area-inset-right) + 12px));bottom:max(18px,calc(env(safe-area-inset-bottom) + 12px))}}
