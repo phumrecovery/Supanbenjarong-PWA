@@ -1,5 +1,5 @@
 /* Expense module: PWA view over the existing GAS expense business rules. */
-const state={data:null,tab:0,direction:"รายจ่าย",month:new Date().getMonth(),year:new Date().getFullYear(),summary:null,editExpense:null,editInvestment:null,purchase:[],purchaseMeta:{},modal:null,loading:false,supportLoading:false,supportPromise:null};
+const state={data:null,tab:0,direction:"รายจ่าย",month:new Date().getMonth(),year:new Date().getFullYear(),summary:null,editExpense:null,editInvestment:null,purchase:[],purchaseMeta:{},modal:null,loading:false,supportLoading:false,supportPromise:null,transactionsLoading:false,transactionsPromise:null};
 let runtime={api:null,session:"",back:null,toast:()=>{},root:null,user:""};
 const esc=v=>String(v==null?"":v).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;","\"":"&quot;"}[c]));
 const money=v=>`฿${(Number(v)||0).toLocaleString("th-TH")}`;
@@ -17,10 +17,23 @@ const matByCode=(d,mode,code)=>(mode==="ของขาว"?d.whitewares:d.rawMa
 export async function renderExpense(root,api,session,onBack,context={}){
   runtime={api,session,back:onBack,toast:context.toast||(()=>{}),root,user:(context.displayUser||{}).name||""};
   const appHeader=document.querySelector("#appHeader");if(appHeader){appHeader.setAttribute("hidden","");appHeader.style.display="none";}
-  if(!state.data){state.loading=true;draw();try{const r=await api.expenseBootstrap(session);if(!r.ok)throw new Error(r.message||"โหลดข้อมูลไม่สำเร็จ");state.data=r.result||{};}catch(error){root.innerHTML=`<section class="expense-failure"><h1>เปิดหน้าค่าใช้จ่ายไม่สำเร็จ</h1><p>${esc(error.message||error)}</p><button data-exp="back">← กลับ</button></section>`;root.onclick=evt=>onClick(evt);return;}finally{state.loading=false;}draw();queueSupport();return;}
+  if(!state.data){state.loading=true;draw();try{const r=await api.expenseBootstrap(session);if(!r.ok)throw new Error(r.message||"โหลดข้อมูลไม่สำเร็จ");state.data=r.result||{};}catch(error){root.innerHTML=`<section class="expense-failure"><h1>เปิดหน้าค่าใช้จ่ายไม่สำเร็จ</h1><p>${esc(error.message||error)}</p><button data-exp="back">← กลับ</button></section>`;root.onclick=evt=>onClick(evt);return;}finally{state.loading=false;}draw();queueTransactions();queueSupport();return;}
   // Render cached master data immediately, then quietly revalidate it.
   draw();
-  api.expenseBootstrap(session).then(r=>{if(r.ok&&runtime.root===root){state.data={...state.data,...(r.result||{})};draw();queueSupport();}}).catch(()=>{});
+  api.expenseBootstrap(session).then(r=>{if(r.ok&&runtime.root===root){state.data={...state.data,...(r.result||{})};draw();queueTransactions();queueSupport();}}).catch(()=>{});
+}
+
+function queueTransactions(){
+  if(state.data&&state.data._transactionsLoaded)return Promise.resolve(state.data);
+  if(state.transactionsPromise)return state.transactionsPromise;
+  state.transactionsLoading=true;
+  state.transactionsPromise=runtime.api.expenseTransactions(runtime.session).then(r=>{
+    if(!r.ok)throw new Error(r.message||"โหลดรายการล่าสุดไม่สำเร็จ");
+    if(state.tab===0)state.editExpense=captureExpenseDraft(runtime.root.querySelector('form[data-form="expense"]'));
+    state.data={...(state.data||{}),...(r.result||{}),_transactionsLoaded:true};
+    return state.data;
+  }).catch(()=>state.data).finally(()=>{state.transactionsLoading=false;state.transactionsPromise=null;if(state.tab===0)draw();});
+  return state.transactionsPromise;
 }
 
 function queueSupport(renderWhenReady=false){
@@ -53,7 +66,7 @@ function transactions(d,s){const kind=state.direction,cat=(state.editExpense&&st
     <label class="expense-field"><span>หมวด *</span><select name="cat" data-exp-change="category">${select(kind==="รายรับ"?d.incomeCategories:d.categories,cat,"-- เลือกหมวด --")}</select></label>
     ${advance?advanceFields(d,x):purchase?purchaseFields(d):mode?materialFields(d,x,mode):regularFields(x)}
     <label class="expense-field"><span>วันที่</span><input type="date" name="date" value="${ymd(x.date)}"></label><label class="expense-field"><span>หมายเหตุ</span><input name="note" value="${esc(x.note||"")}"></label>${imageField(x.img)}${purchase?"":`<button class="expense-save">${x.row?"✅ บันทึกการแก้ไข":"✅ บันทึก"}</button>`}${x.row?`<button type="button" class="expense-cancel" data-exp="cancel-expense">ยกเลิกการแก้ไข</button>`:""}
-  </form><div class="expense-group-title">📋 รายรับ-รายจ่ายล่าสุด</div><div class="expense-list">${expenseRows(d.expenses||[])}</div>`;}
+  </form><div class="expense-group-title">📋 รายรับ-รายจ่ายล่าสุด</div><div class="expense-list">${d._transactionsLoaded?expenseRows(d.expenses||[]):'<div class="expense-empty compact">กำลังโหลดรายการล่าสุด…</div>'}</div>`;}
 function regularFields(x){return `<label class="expense-field"><span>รายละเอียด</span><input name="detail" value="${esc(x.detail||"")}"></label><label class="expense-field"><span>จำนวนเงิน (บาท) *</span><input class="expense-amount" type="number" min="0" step="0.01" name="amount" value="${esc(x.amount||"")}"></label>`;}
 function advanceFields(d,x){return `<div class="expense-note">เบิกค่าจ้างล่วงหน้า ระบบจะผูกยอดกับช่างโดยตรง</div><label class="expense-field"><span>ชื่อช่าง *</span><select name="workerName">${select((d.workshopEmployees||[]).map(w=>w.name||w),x.workerName,"-- เลือกช่าง --")}</select></label><label class="expense-field"><span>จำนวนเงิน (บาท) *</span><input class="expense-amount" type="number" min="0" step="0.01" name="amount" value="${esc(x.amount||"")}"></label>`;}
 function materialFields(d,x,mode){
@@ -111,5 +124,5 @@ function newProduct(v){if(!v.name||!v.category)return runtime.toast("กรุ�
 function addPurchaseLine(form,d){const v=formValues(form),id=String(v.purchaseProduct||"").split("|")[0],product=(d.purchaseProducts||[]).find(x=>String(x.code||x.sku)===id);state.purchaseMeta={...state.purchaseMeta,vendor:v.vendor||"",billNo:v.billNo||""};state.editExpense={...(state.editExpense||{}),cat:d.shopPurchaseCategory,date:v.date||ymd(),note:v.note||""};if(!product)return runtime.toast("กรุณาเลือกสินค้า");if(!(Number(v.purchaseQty)>0)||Number(v.purchasePrice)<0)return runtime.toast("กรุณาใส่จำนวนและราคาให้ถูกต้อง");state.purchase.push({sku:id,name:product.name,size:product.size||"-",qty:Number(v.purchaseQty),price:Number(v.purchasePrice),isNew:false});draw();}
 async function savePurchase(form){try{const v=formValues(form);if(!v.vendor)throw new Error("กรุณาใส่ชื่อผู้ขาย/ร้านค้า");if(!state.purchase.length)throw new Error("ยังไม่มีสินค้าในรายการซื้อ");const items=state.purchase.map(x=>x.isNew?{qty:x.qty,priceEach:x.price,newProduct:{name:x.name,category:x.category,pattern:x.pattern,priceRetail:x.priceRetail,cost:x.price}}:{productSku:x.sku,product:x.name||"",size:x.size||"-",qty:x.qty,priceEach:x.price});const img=await prepareImage(form,false);await run(()=>runtime.api.expensePurchase(runtime.session,{date:v.date||ymd(),vendor:v.vendor,billNo:v.billNo,note:v.note,img,items}));state.purchase=[];state.purchaseMeta={};}catch(error){runtime.toast(`❌ ${error.message||error}`);}}
 async function loadSummary(){try{const r=await runtime.api.expenseMonthSummary(runtime.session,state.month,state.year);if(!r.ok)throw new Error(r.message||"โหลดสรุปไม่สำเร็จ");state.summary=r.result||{};draw();}catch(error){runtime.toast(`❌ ${error.message||error}`);}}
-async function run(call){try{const r=await call();if(!r.ok)throw new Error(r.message||"บันทึกไม่สำเร็จ");runtime.toast(r.message||"บันทึกสำเร็จ");state.data=null;state.supportPromise=null;state.supportLoading=false;state.editExpense=null;state.editInvestment=null;state.modal=null;state.summary=null;await renderExpense(runtime.root,runtime.api,runtime.session,runtime.back,{toast:runtime.toast,displayUser:{name:runtime.user}});}catch(error){runtime.toast(`❌ ${error.message||error}`);}}
+async function run(call){try{const r=await call();if(!r.ok)throw new Error(r.message||"บันทึกไม่สำเร็จ");runtime.toast(r.message||"บันทึกสำเร็จ");state.data=null;state.supportPromise=null;state.supportLoading=false;state.transactionsPromise=null;state.transactionsLoading=false;state.editExpense=null;state.editInvestment=null;state.modal=null;state.summary=null;await renderExpense(runtime.root,runtime.api,runtime.session,runtime.back,{toast:runtime.toast,displayUser:{name:runtime.user}});}catch(error){runtime.toast(`❌ ${error.message||error}`);}}
 document.addEventListener("keydown",event=>{if(event.key==="Escape"&&state.modal){state.modal=null;draw();}});

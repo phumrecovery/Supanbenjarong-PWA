@@ -59,6 +59,7 @@ export class ApiClient {
     return this.request({action:"productUploadImage",session,row,layer,data,fileName},60000);
   }
   expenseBootstrap(session){return this.request({action:"expenseBootstrap",session});}
+  expenseTransactions(session){return this.request({action:"expenseTransactions",session});}
   expenseSupport(session){return this.request({action:"expenseSupport",session});}
   expenseAdd(session,expense){return this.request({action:"expenseAdd",session,expense});}
   expenseUpdate(session,row,expense){return this.request({action:"expenseUpdate",session,row,expense});}
