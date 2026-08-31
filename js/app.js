@@ -189,7 +189,16 @@ function setAuthenticatedHeader(){
   document.querySelector("#currentDate").textContent=thaiDate();
 }
 
-function menuMarkup(){return MENU.map(([route,icon,label,sub])=>`<button type="button" class="home-menu-btn" data-route="${route}"><span class="home-menu-icon">${icon}</span><span class="home-menu-label">${label}</span><span class="home-menu-sub">${sub}</span></button>`).join("");}
+// สิทธิ์ระดับ staff ในระบบเดิมมีไว้ใช้ขายสินค้าเท่านั้น (ดู verifyPin ใน
+// 04_WebApp.gs) จึงต้องบังคับทั้งตอนแสดงเมนูและตอนพิมพ์ hash เข้ามาเอง
+// ไม่ใช่ซ่อนปุ่มเพียงอย่างเดียว.
+function hasFamilyAccess(){return String(currentSession?.level||"").trim()==="family";}
+function isAllowedRoute(route){return hasFamilyAccess()||route==="sales";}
+function allowedStartRoute(route){return isAllowedRoute(route)?route:"sales";}
+function menuMarkup(){
+  const visible=hasFamilyAccess()?MENU:MENU.filter(([route])=>route==="sales");
+  return visible.map(([route,icon,label,sub])=>`<button type="button" class="home-menu-btn" data-route="${route}"><span class="home-menu-icon">${icon}</span><span class="home-menu-label">${label}</span><span class="home-menu-sub">${sub}</span></button>`).join("");
+}
 function featuredMarkup(items){
   if(!items||!items.length)return '<div class="empty-featured">⭐ ยังไม่มีสินค้าแนะนำ<br>ไปกดดาว ⭐ ในหน้าจัดการสินค้า</div>';
   return items.map(item=>`<article class="featured-card">${item.img?`<img class="featured-image" loading="lazy" src="${escapeHtml(item.img)}" alt="" onerror="this.outerHTML='<div class=&quot;featured-fallback&quot;>🏺</div>'">`:'<div class="featured-fallback">🏺</div>'}<div class="featured-info"><div class="featured-name">${escapeHtml(item.name)}${item.size?` ${escapeHtml(item.size)}`:""}</div><div class="featured-pattern">${escapeHtml(item.pattern||"")}</div><div class="featured-price">฿${money(item.priceRetail)}</div></div></article>`).join("");
@@ -221,6 +230,7 @@ function renderPlaceholder(route){const [title,body]=PAGES[route]||["กำล�
 function render(route,{animate=true,direction}={}){
   if(!currentSession||!currentSession.user){showLogin("กรุณาเข้าสู่ระบบก่อนใช้งาน");return;}
   route=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
+  route=allowedStartRoute(route);
   const travel=direction||pageDirection(route);activeRoute=route;if(animate)animatePage(travel);
   // A module may add viewport-pinned actions. Never let those controls leak
   // into another route (especially the POS command bar).
@@ -238,7 +248,13 @@ function render(route,{animate=true,direction}={}){
   if(route==="home"){renderHome();return;}
   renderPlaceholder(route);
 }
-function navigate(route,{replace=false,animate=true}={}){const clean=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";const url=`#${clean}`;if(replace)history.replaceState({route:clean},"",url);else history.pushState({route:clean},"",url);render(clean,{animate});}
+function navigate(route,{replace=false,animate=true}={}){
+  const requested=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
+  const clean=allowedStartRoute(requested);
+  const url=`#${clean}`;
+  if(replace)history.replaceState({route:clean},"",url);else history.pushState({route:clean},"",url);
+  render(clean,{animate});
+}
 window.addEventListener("popstate",()=>render(currentRoute(),{animate:true}));
 // Product mutations must never leave dashboard/POS master data looking current.
 window.addEventListener("suphan-data-mutated",()=>{homeData=null;});
