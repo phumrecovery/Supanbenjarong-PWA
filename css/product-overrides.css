@@ -4,3 +4,9 @@
 .product-fab{position:fixed;right:max(25px,calc(env(safe-area-inset-right) + 16px));bottom:max(25px,calc(env(safe-area-inset-bottom) + 16px));z-index:800}
 .product-modal{z-index:900}
 @media(max-width:650px){.product-fab{right:max(18px,calc(env(safe-area-inset-right) + 12px));bottom:max(18px,calc(env(safe-area-inset-bottom) + 12px))}}
+
+/* Product Management has its own command bar, matching the original GAS page. */
+.main.product-main{max-width:none;margin:0;padding:0}
+.product-main .product-page{max-width:1370px;padding:0 28px 110px}
+.product-main .product-top{position:sticky;top:0;z-index:60;display:flex;min-height:76px;margin:0 calc(50% - 50vw) 16px;padding:12px max(28px,calc((100vw - 1370px)/2 + 28px));background:rgba(255,250,245,.98);border-bottom:3px solid #c8956c;box-shadow:0 1px 3px rgba(139,69,19,.08)}
+@media(max-width:650px){.product-main .product-page{padding:0 13px 92px}.product-main .product-top{min-height:64px;margin-bottom:12px;padding:8px 13px}.product-main .product-back{padding:8px 12px}.product-main .product-title{font-size:22px}}

@@ -150,6 +150,20 @@ function showUserPicker(users){
 
 async function selectUser(user){
   try{
+    // Login API now supplies an already signed, short-lived session for each
+    // permitted user.  Choosing a name therefore stays local and immediate;
+    // retain the API call only for compatibility with an older deployment.
+    if(user&&user.token){
+      sessionToken=user.token;
+      sessionStorage.setItem(SESSION_KEY,sessionToken);
+      currentSession={level:currentSession?.level||"",user:{name:user.name,role:user.role||""}};
+      displayUser={name:user.name,role:user.role||""};
+      sessionStorage.setItem(DISPLAY_USER_KEY,JSON.stringify(displayUser));
+      setAuthenticatedHeader();
+      sound.success();
+      navigate(currentRoute(),{replace:true,animate:true});
+      return;
+    }
     const result=await api.selectUser(sessionToken,user.name);
     if(!result.ok)throw new Error(result.error);
     sessionToken=result.token;
@@ -211,8 +225,11 @@ function render(route,{animate=true,direction}={}){
   // into another route (especially the POS command bar).
   if(floatingLayer)floatingLayer.replaceChildren();
   // POS มีแถบคำสั่งเฉพาะของตนเอง จึงไม่ซ้อนกับ header หลักของ App Shell.
-  setShell(route!=="sales");
+  // POS and Product Management each own a dedicated, pinned command bar.
+  // Keeping the Home App Shell off these screens prevents stacked headers.
+  setShell(route!=="sales"&&route!=="product");
   main.classList.toggle("pos-main",route==="sales");
+  main.classList.toggle("product-main",route==="product");
   if(route==="sales"){renderPos(main,api,sessionToken,()=>navigate("home"),{...(currentSession||{}),displayUser});return;}
   if(route==="product"){renderProduct(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
   if(route==="home"){renderHome();return;}
