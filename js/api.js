@@ -58,6 +58,19 @@ export class ApiClient {
   productUploadImage(session,row,layer,data,fileName){
     return this.request({action:"productUploadImage",session,row,layer,data,fileName},60000);
   }
+  expenseBootstrap(session){return this.request({action:"expenseBootstrap",session});}
+  expenseAdd(session,expense){return this.request({action:"expenseAdd",session,expense});}
+  expenseUpdate(session,row,expense){return this.request({action:"expenseUpdate",session,row,expense});}
+  expenseDelete(session,row){return this.request({action:"expenseDelete",session,row});}
+  expensePurchase(session,purchase){return this.request({action:"expensePurchase",session,purchase});}
+  fixedAdd(session,fixed){return this.request({action:"fixedAdd",session,fixed});}
+  fixedUpdate(session,row,fixed){return this.request({action:"fixedUpdate",session,row,fixed});}
+  fixedStatus(session,row,status){return this.request({action:"fixedStatus",session,row,status});}
+  investmentAdd(session,investment){return this.request({action:"investmentAdd",session,investment});}
+  investmentUpdate(session,row,investment){return this.request({action:"investmentUpdate",session,row,investment});}
+  investmentDelete(session,row){return this.request({action:"investmentDelete",session,row});}
+  expenseMonthSummary(session,month,year){return this.request({action:"expenseMonthSummary",session,month,year});}
+  expenseUploadImage(session,data,fileName){return this.request({action:"expenseUploadImage",session,data,fileName},60000);}
   selectUser(session,name){
     return this.request({action:"selectUser",session,name});
   }
