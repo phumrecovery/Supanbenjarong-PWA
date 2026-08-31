@@ -34,8 +34,13 @@ function draw(root){
     <div class="legacy-pos-content"><div class="legacy-pos-layout"><section class="legacy-pos-products"><div class="category-tools">${family?'<button type="button" data-action="category-order">⚙️ จัดเรียงหมวด</button>':""}</div><div class="category-bar" role="tablist">${categoryButtons(data.categories||[])}</div><label class="legacy-search"><span>🔍</span><input data-search type="search" placeholder="ค้นหาสินค้า..." value="${escAttr(state.query)}"></label><div class="legacy-results"><span>${products.length.toLocaleString("th-TH")} รายการ</span><span>ข้อมูลล่าสุดจาก GAS</span></div><div class="legacy-product-grid">${products.map(productCard).join("")||'<div class="legacy-empty">🔎<br>ไม่พบสินค้า</div>'}</div></section><aside class="legacy-pos-cart pos-cart-desktop" aria-label="ตะกร้าสินค้า"><div class="cart-step ${state.animation}">${cartMarkup()}</div></aside></div></div>
   </section>`;
   const cartPieces=state.cart.reduce((sum,item)=>sum+(Number(item.qty)||0),0);
-  if(cartPieces){
-    root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",`<button class="cart-floating" type="button" data-action="mobile-cart">🛒 ฿${money(totals().net)} <span class="cart-count">${cartPieces} ชิ้น</span></button>`);
+  // Keep the mobile cart control outside the animated/scrolled POS page.
+  // This makes it truly viewport-pinned on mobile regardless of list length.
+  const floatingLayer=document.querySelector("#floatingLayer");
+  if(floatingLayer)floatingLayer.replaceChildren();
+  if(cartPieces&&!state.mobileCartOpen&&floatingLayer){
+    floatingLayer.innerHTML=`<button class="cart-floating" type="button">🛒 ฿${money(totals().net)} <span class="cart-count">${cartPieces} ชิ้น</span></button>`;
+    floatingLayer.querySelector(".cart-floating")?.addEventListener("click",()=>{state.mobileCartOpen=true;draw(root);});
   }
   if(state.mobileCartOpen)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",mobileCartMarkup());
   if(state.submitError)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",errorMarkup(state.submitError));
