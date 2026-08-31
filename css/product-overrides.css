@@ -25,3 +25,7 @@
 .product-field select option{font-size:20px}
 .product-modal-actions button{min-height:52px;font-size:19px}
 @media(max-width:650px){.product-modal{padding:8px}.product-modal-card{padding:18px}.product-modal-close{top:8px;right:8px}.product-field>span{font-size:16px}.product-field input,.product-field select{min-height:48px;font-size:19px}.product-field select option{font-size:19px}}
+
+/* Keep the mobile POS cart control attached to the viewport.  It is mounted
+   in the shared floating layer rather than after the scrolling product grid. */
+@media(max-width:767px){.floating-layer .cart-floating{position:fixed!important;inset:auto 0 0!important;bottom:env(safe-area-inset-bottom,0)!important;transform:translateZ(0);min-height:76px;padding:13px 20px;font-size:20px}}
