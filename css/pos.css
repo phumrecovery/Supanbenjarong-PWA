@@ -21,6 +21,10 @@
   @keyframes mobileCartSlide{from{transform:translateY(100%)}to{transform:translateY(0)}}
 }
 
+/* Rendered in #floatingLayer, outside .main's page transition/scrolling
+   context.  This is intentionally above the mobile cart trigger. */
+@media(max-width:767px){.floating-layer .mobile-cart-overlay{position:fixed;z-index:1000;inset:0;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.42);animation:mobileCartFade .2s ease}.floating-layer .mobile-cart-sheet{width:100%;max-height:85vh;overflow-y:auto;border-radius:18px 18px 0 0;background:#fff;box-shadow:0 -8px 28px rgba(0,0,0,.24);animation:mobileCartSlide .3s ease}}
+
 /* `.main` animates other pages. A transformed/will-change ancestor would make
    position:fixed behave like it is fixed to the end of the product list. */
 .main.pos-main{will-change:auto}

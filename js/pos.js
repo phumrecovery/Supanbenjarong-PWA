@@ -42,7 +42,13 @@ function draw(root){
     floatingLayer.innerHTML=`<button class="cart-floating" type="button">🛒 ฿${money(totals().net)} <span class="cart-count">${cartPieces} ชิ้น</span></button>`;
     floatingLayer.querySelector(".cart-floating")?.addEventListener("click",()=>{state.mobileCartOpen=true;draw(root);});
   }
-  if(state.mobileCartOpen)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",mobileCartMarkup());
+  // The sheet must live beside the fixed button as well.  Keeping it inside
+  // the animated POS page lets a transformed ancestor place it after a long
+  // product list, where it can be present but outside the visible viewport.
+  if(state.mobileCartOpen&&floatingLayer){
+    floatingLayer.innerHTML=mobileCartMarkup();
+    bindFloatingCart(floatingLayer);
+  }
   if(state.submitError)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",errorMarkup(state.submitError));
   if(state.successOpen)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",successMarkup());
   if(state.printOpen)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",printOptionsMarkup());
@@ -55,6 +61,34 @@ function draw(root){
 
 function backdatePicker(){return `<div class="legacy-pos-modal"><section><h2>🕘 บันทึกยอดขายย้อนหลัง</h2><label>วันที่ขายจริง<input type="date" data-backdate-input value="${escAttr(state.backdateValue)}"></label><p>ใช้สำหรับยอดขายย้อนหลังเท่านั้น</p><div><button type="button" data-action="cancel-backdate">ยกเลิก</button><button type="button" data-action="apply-backdate">ตกลง</button></div></section></div>`;}
 function mobileCartMarkup(){return `<div class="mobile-cart-overlay"><section class="mobile-cart-sheet"><header><strong>🛒 ตะกร้าสินค้า</strong><button type="button" data-action="close-mobile-cart" aria-label="ปิดตะกร้า">×</button></header><div class="cart-step ${state.animation}">${cartMarkup()}</div></section></div>`;}
+
+function bindFloatingCart(layer){
+  if(layer.dataset.posCartBound)return;
+  layer.dataset.posCartBound="true";
+  layer.addEventListener("click",event=>{
+    const button=event.target.closest("button");
+    if(!button||!button.closest(".mobile-cart-overlay"))return;
+    event.stopImmediatePropagation();
+    handleClick(button,runtime.root);
+  },true);
+  layer.addEventListener("input",event=>{
+    const input=event.target.closest("input");
+    if(!input||!input.closest(".mobile-cart-overlay"))return;
+    if(input.matches("[data-lump]"))state.lumpDiscount=Math.max(0,Number(input.value)||0);
+    else if(input.matches("[data-cash]"))state.cash=Math.max(0,Number(input.value)||0);
+    else if(input.matches("[data-shipping]"))state.shipping=Math.max(0,Number(input.value)||0);
+  },true);
+  layer.addEventListener("change",event=>{
+    const target=event.target;
+    if(!(target instanceof HTMLElement)||!target.closest(".mobile-cart-overlay"))return;
+    if(target.matches("[data-package]")){
+      const item=find(target.dataset.package);
+      if(item){item.packageCode=target.value;item.packageQty=target.value?1:0;draw(runtime.root);}
+      return;
+    }
+    if(target.matches("[data-lump],[data-cash],[data-shipping]"))draw(runtime.root);
+  },true);
+}
 function errorMarkup(message){return `<div class="legacy-pos-modal pwa-result-modal"><section><h2>⚠️ บันทึกบิลไม่สำเร็จ</h2><p>${esc(message)}</p><div><button type="button" data-action="close-error">รับทราบ</button></div></section></div>`;}
 function successMarkup(){const bill=state.lastBill||{},change=state.payIndex===0&&Number(state.cash)>0?Math.max(0,Number(state.cash)-Number(bill.netTotal||0)):null;return `<div class="legacy-pos-modal pwa-success-modal"><section><div class="success-icon">✅</div><h2>บันทึกสำเร็จ!</h2><div class="pwa-bill-info"><strong>เลขบิล: ${esc(bill.billNo||"-")}</strong><span>วันที่ขาย: ${esc(bill.date||"")}</span><b>฿${money(bill.netTotal)}</b><span>${Number(bill.pcs)||0} ชิ้น | ${esc(bill.payment||"")}</span>${change!==null?`<em>💰 เงินทอน ฿${money(change)}</em>`:""}</div><div><button type="button" data-action="open-print">🖨️ พิมพ์ใบเสร็จ</button><button type="button" data-action="new-sale">🧾 ขายต่อ</button></div></section></div>`;}
 function printOptionsMarkup(){return `<div class="legacy-pos-modal pwa-print-modal"><section><h2>🖨️ พิมพ์ใบเสร็จ</h2><label class="pwa-buyer-toggle"><input type="checkbox" data-buyer-enabled ${state.buyerEnabled?"checked":""}> ใส่ข้อมูลผู้ซื้อ</label><div class="pwa-buyer-fields ${state.buyerEnabled?"":"hidden"}"><label>ชื่อผู้ซื้อ / บริษัท<input type="text" data-buyer-name placeholder="เช่น บริษัท ABC จำกัด"></label><label>ที่อยู่<input type="text" data-buyer-addr placeholder="ที่อยู่ออกใบเสร็จ"></label><label>เลขผู้เสียภาษี<input type="text" data-buyer-tax placeholder="(ถ้ามี)"></label><label>เบอร์โทร<input type="text" data-buyer-phone placeholder="(ถ้ามี)"></label></div><p class="pwa-print-label">📄 ขนาดกระดาษ</p><div class="pwa-print-sizes">${[["size-a4","A4"],["size-a5","A5"],["size-80mm","🧾 80mm"]].map(([value,label])=>`<button type="button" class="${state.printSize===value?"active":""}" data-print-size="${value}">${label}</button>`).join("")}</div><div><button type="button" data-action="close-print">ยกเลิก</button><button type="button" data-action="print-bill">🖨️ พิมพ์</button></div></section></div>`;}
