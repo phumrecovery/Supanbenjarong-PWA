@@ -73,6 +73,11 @@ export class ApiClient {
   investmentDelete(session,row){return this.request({action:"investmentDelete",session,row});}
   expenseMonthSummary(session,month,year){return this.request({action:"expenseMonthSummary",session,month,year});}
   expenseUploadImage(session,data,fileName){return this.request({action:"expenseUploadImage",session,data,fileName},60000);}
+  outsourceBootstrap(session){return this.request({action:"outsourceBootstrap",session},30000);}
+  outsourceOrderSave(session,data){return this.request({action:"outsourceOrderSave",session,data},30000);}
+  outsourcePurchaseSave(session,data){return this.request({action:"outsourcePurchaseSave",session,data},30000);}
+  outsourceReceiveSave(session,data){return this.request({action:"outsourceReceiveSave",session,data},30000);}
+  outsourceUploadImage(session,data,fileName){return this.request({action:"outsourceUploadImage",session,data,fileName},60000);}
   preorderBootstrap(session){return this.request({action:"preorderBootstrap",session},30000);}
   preorderQuotationSave(session,data,row){return this.request({action:"preorderQuotationSave",session,data,row},30000);}
   preorderQuotationStatus(session,row,status){return this.request({action:"preorderQuotationStatus",session,row,status},30000);}

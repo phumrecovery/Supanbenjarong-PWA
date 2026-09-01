@@ -3,6 +3,7 @@ import {renderPos} from "./pos.js";
 import {renderProduct} from "./product.js";
 import {renderExpense} from "./expense.js?v=expense-v7";
 import {renderPreorder} from "./preorder.js?v=preorder-v13";
+import {renderOutsource} from "./outsource.js?v=outsource-v1";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -239,15 +240,17 @@ function render(route,{animate=true,direction}={}){
   // POS มีแถบคำสั่งเฉพาะของตนเอง จึงไม่ซ้อนกับ header หลักของ App Shell.
   // POS and Product Management each own a dedicated, pinned command bar.
   // Keeping the Home App Shell off these screens prevents stacked headers.
-  setShell(route!=="sales"&&route!=="product"&&route!=="expense"&&route!=="preorder");
+  setShell(route!=="sales"&&route!=="product"&&route!=="expense"&&route!=="preorder"&&route!=="outsource");
   main.classList.toggle("pos-main",route==="sales");
   main.classList.toggle("product-main",route==="product");
   main.classList.toggle("expense-main",route==="expense");
   main.classList.toggle("preorder-main",route==="preorder");
+  main.classList.toggle("outsource-main",route==="outsource");
   if(route==="sales"){renderPos(main,api,sessionToken,()=>navigate("home"),{...(currentSession||{}),displayUser});return;}
   if(route==="product"){renderProduct(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
   if(route==="expense"){renderExpense(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="preorder"){renderPreorder(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
+  if(route==="outsource"){renderOutsource(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="home"){renderHome();return;}
   renderPlaceholder(route);
 }
