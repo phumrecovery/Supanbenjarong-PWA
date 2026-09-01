@@ -1,7 +1,7 @@
 import {ApiClient} from "./api.js";
 import {renderPos} from "./pos.js";
 import {renderProduct} from "./product.js";
-import {renderExpense} from "./expense.js?v=expense-v6";
+import {renderExpense} from "./expense.js?v=expense-v7";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
