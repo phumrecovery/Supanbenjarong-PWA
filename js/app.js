@@ -2,7 +2,7 @@ import {ApiClient} from "./api.js";
 import {renderPos} from "./pos.js";
 import {renderProduct} from "./product.js";
 import {renderExpense} from "./expense.js?v=expense-v7";
-import {renderPreorder} from "./preorder.js?v=preorder-v5";
+import {renderPreorder} from "./preorder.js?v=preorder-v6";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
