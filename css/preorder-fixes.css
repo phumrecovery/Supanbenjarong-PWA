@@ -24,7 +24,7 @@
 .pre-customer-row select{flex:1;margin:0!important}
 .pre-add-customer{flex:none;min-height:44px;border:2px solid var(--primary);border-radius:9px;background:#fff;color:var(--primary-dark);padding:0 12px;font:700 14px var(--font);white-space:nowrap;cursor:pointer}
 .pre-form-section{margin-top:12px;padding-top:12px;border-top:2px solid var(--border)}
-.pre-item-fields{display:grid;grid-template-columns:minmax(0,1fr) 92px 120px 46px;gap:6px;align-items:end}
+.pre-item-fields{display:grid;grid-template-columns:minmax(0,1fr) 104px 104px 46px;gap:6px;align-items:end}
 .pre-item-fields label{margin:0!important;font-size:11px!important}
 .pre-item-fields select,.pre-item-fields input{margin:4px 0 0!important;text-align:center}
 .pre-item-fields .pre-product-field{text-align:left}
@@ -32,7 +32,7 @@
 .pre-attach-field{display:block!important;margin:6px 0!important;font-size:11px!important}
 .pre-attach-field input{min-height:32px!important;padding:4px!important;font-size:12px!important}
 .pre-product-picker{display:block!important;box-sizing:border-box!important;width:100%!important;min-height:42px!important;margin:4px 0 0!important;padding:9px 12px!important;border:2px solid var(--border)!important;border-radius:9px!important;background:#fff!important;color:var(--text-sub)!important;text-align:left!important;font:600 15px var(--font)!important;cursor:pointer!important}
-.pre-product-picker::after{content:"›";float:right;color:var(--primary);font-size:22px;line-height:15px}
+.pre-product-picker::after{content:""}
 .pre-product-picker.is-selected{border-color:var(--primary)!important;background:var(--bg-main)!important;color:var(--primary-dark)!important}
 .pre-picker-back{position:fixed;z-index:10020;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(30,20,10,.56)}
 .pre-product-modal{box-sizing:border-box;width:min(500px,calc(100vw - 32px));max-height:85vh;display:flex;flex-direction:column;padding:20px;border-radius:18px;background:#fff;box-shadow:0 18px 70px rgba(0,0,0,.3)}
@@ -64,7 +64,7 @@
 .pre-choice small{display:block;margin-top:2px;color:var(--text-sub);font-size:11px;font-weight:400}
 .pre-custom-box{margin:8px 0;padding:10px;border:2px solid var(--border);border-radius:9px;background:var(--bg-main)}
 .pre-custom-box input{margin:0 0 6px!important}.pre-custom-box input:last-child{margin-bottom:0!important}
-@media(max-width:650px){.pre-legacy-modal{padding:16px!important}.pre-item-fields{grid-template-columns:1fr 72px}.pre-item-fields .pre-product-field{grid-column:1/-1}.pre-item-fields label:nth-child(3){grid-column:1}.pre-item-fields button{grid-column:2}.pre-modal-actions{gap:8px}.pre-modal-actions button{font-size:16px}.pre-customer-row{align-items:stretch}.pre-add-customer{padding:0 9px;font-size:13px}}
+@media(max-width:650px){.pre-legacy-modal{padding:16px!important}.pre-item-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 46px}.pre-item-fields .pre-product-field{grid-column:1/-1}.pre-item-fields label:nth-child(2){grid-column:1}.pre-item-fields label:nth-child(3){grid-column:2}.pre-item-fields>button{grid-column:3}.pre-modal-actions{gap:8px}.pre-modal-actions button{font-size:16px}.pre-customer-row{align-items:stretch}.pre-add-customer{padding:0 9px;font-size:13px}}
 
 /* Never let the print-option dialog exceed its visual viewport. */
 .pre-modal-back>.print-choice{box-sizing:border-box!important;width:min(450px,calc(100vw - 32px))!important;max-width:calc(100vw - 32px)!important;overflow-x:hidden!important}
