@@ -6,6 +6,10 @@
 .pre-page .pre-filters button{border:2px solid var(--border);border-radius:999px;background:#fff;color:var(--primary-dark);padding:7px 15px;font:700 14px var(--font);cursor:pointer}
 .pre-page .pre-filters button.active{border-color:var(--primary);background:var(--primary);color:#fff}
 
+/* Customer type must be a compact badge rather than a stretched grid cell. */
+.pre-card.customer .pre-customer-type{justify-self:end;align-self:start;width:fit-content;max-width:100%;padding:7px 14px;border-radius:999px;background:#e8f5e9;color:#28713d;font-size:14px;font-weight:800;line-height:1.1;white-space:nowrap;box-sizing:border-box}
+@media(max-width:650px){.pre-card.customer .pre-customer-type{padding:6px 11px;font-size:13px}}
+
 /* The application shell is taller than the viewport.  Anchor dialog content
    to the visual viewport so create/print dialogs cannot be centered below it. */
 .pre-modal-back{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;min-height:100vh!important;z-index:9999!important;display:flex!important;align-items:center!important;justify-content:center!important}
