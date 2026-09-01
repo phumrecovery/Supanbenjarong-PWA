@@ -69,6 +69,13 @@
 .print-choice *{box-sizing:border-box}.print-choice .pre-choice{max-width:100%;min-width:0}.print-choice .pre-choice span{min-width:0;overflow-wrap:anywhere}.print-choice .pre-choice b,.print-choice .pre-choice small{overflow-wrap:anywhere}.print-choice .pre-custom-box{max-width:100%}
 
 @media print{
+  /* Keep the printable document outside the option dialog and remove the
+     app shell from the print layout.  This prevents the fixed modal/overlay
+     from being paginated as duplicate document pages. */
+  body>*{display:none!important}
+  #preorder-modal-portal{display:block!important;position:static!important;visibility:hidden!important}
+  #preorder-modal-portal>.pre-modal-back{display:none!important}
+  #preorder-modal-portal>.pre-print{display:block!important;position:static!important;inset:auto!important;width:100%!important;visibility:visible!important}
   body>*{visibility:hidden!important}
   .pre-print,.pre-print *{visibility:visible!important}
   .pre-print{display:block!important;position:absolute!important;inset:0!important;width:100%!important;background:#fff!important;color:#000!important;font-family:Prompt,sans-serif!important}
