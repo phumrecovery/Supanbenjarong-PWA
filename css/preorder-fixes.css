@@ -11,3 +11,48 @@
 .pre-modal-back{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;min-height:100vh!important;z-index:9999!important;display:flex!important;align-items:center!important;justify-content:center!important}
 .pre-modal-back>.pre-modal{position:fixed!important;left:50%!important;top:50vh!important;transform:translate(-50%,-50%)!important;margin:0!important}
 @media(max-width:650px){.pre-modal-back>.pre-modal{width:calc(100vw - 24px)!important;max-height:calc(100vh - 24px)!important}.pre-page .pre-dash{gap:8px!important}.pre-page .pre-filters{gap:6px}.pre-page .pre-filters button{padding:6px 11px;font-size:12px}}
+
+/* Modal parity with the original GAS forms. */
+.pre-legacy-modal{padding:20px!important;border-radius:18px!important}
+.pre-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px}
+.pre-modal-head h2{margin:0!important}
+.pre-modal-head>button{border:0;background:none;color:var(--primary-dark);font:400 28px/1 var(--font);cursor:pointer}
+.pre-required{color:#c62828}
+.pre-legacy-modal label{font-size:14px;font-weight:600}
+.pre-legacy-modal label small{color:var(--text-sub);font-size:11px;font-weight:400}
+.pre-customer-row{display:flex;gap:6px;margin:4px 0 10px}
+.pre-customer-row select{flex:1;margin:0!important}
+.pre-add-customer{flex:none;min-height:44px;border:2px solid var(--primary);border-radius:9px;background:#fff;color:var(--primary-dark);padding:0 12px;font:700 14px var(--font);white-space:nowrap;cursor:pointer}
+.pre-form-section{margin-top:12px;padding-top:12px;border-top:2px solid var(--border)}
+.pre-item-fields{display:grid;grid-template-columns:minmax(0,1fr) 92px 120px 46px;gap:6px;align-items:end}
+.pre-item-fields label{margin:0!important;font-size:11px!important}
+.pre-item-fields select,.pre-item-fields input{margin:4px 0 0!important;text-align:center}
+.pre-item-fields .pre-product-field{text-align:left}
+.pre-item-fields button{height:45px;border:0;border-radius:9px;background:var(--success);color:#fff;font:700 23px/1 var(--font);cursor:pointer}
+.pre-attach-field{display:block!important;margin:6px 0!important;font-size:11px!important}
+.pre-attach-field input{min-height:32px!important;padding:4px!important;font-size:12px!important}
+.pre-cost-grid{align-items:end;margin-top:8px}
+.pre-read-total{min-height:45px;padding:2px 8px}
+.pre-read-total span{display:block;color:var(--primary-dark);font-size:14px;font-weight:600}
+.pre-read-total .pre-total{display:block;margin:2px 0!important;padding:0!important;color:#c62828;font-size:22px;text-align:left}
+.pre-remaining{margin:-4px 0 8px;color:var(--text-sub);font-size:14px}
+.pre-modal-actions{display:flex;gap:12px;margin-top:18px}
+.pre-modal-actions button{flex:1;min-height:52px;border-radius:10px;padding:12px;font:700 18px var(--font);cursor:pointer}
+.pre-modal-actions .pre-cancel{border:2px solid var(--primary);background:#fff;color:var(--primary-dark)}
+.pre-modal-actions .pre-save{border:0;background:var(--success);color:#fff}
+.pre-modal-actions .pre-print-button{border:0;background:var(--primary);color:#fff}
+.print-choice{max-width:450px!important}
+.print-choice .pre-toggle-row{display:flex;gap:8px;margin:4px 0 12px}
+.print-choice .pre-toggle-row label{display:block;flex:1;margin:0;padding:9px 12px;border:2px solid var(--border);border-radius:9px;background:#fff;text-align:center;color:var(--primary-dark);cursor:pointer}
+.print-choice .pre-toggle-row label.active{border-color:var(--primary);background:var(--primary);color:#fff}
+.print-choice .pre-toggle-row input{position:absolute;opacity:0;pointer-events:none}
+.pre-choice-group{margin:4px 0 12px}
+.pre-choice{display:flex!important;align-items:center;gap:10px;margin:0 0 6px!important;padding:12px;border:2px solid var(--border);border-radius:10px;background:#fff;cursor:pointer}
+.pre-choice.selected{border-color:var(--primary);background:var(--bg-main)}
+.pre-choice input{flex:none!important;width:20px!important;min-height:20px!important;margin:0!important;padding:0!important}
+.pre-choice span{display:block;min-width:0}
+.pre-choice b{display:block;color:var(--primary-dark);font-size:14px}
+.pre-choice small{display:block;margin-top:2px;color:var(--text-sub);font-size:11px;font-weight:400}
+.pre-custom-box{margin:8px 0;padding:10px;border:2px solid var(--border);border-radius:9px;background:var(--bg-main)}
+.pre-custom-box input{margin:0 0 6px!important}.pre-custom-box input:last-child{margin-bottom:0!important}
+@media(max-width:650px){.pre-legacy-modal{padding:16px!important}.pre-item-fields{grid-template-columns:1fr 72px}.pre-item-fields .pre-product-field{grid-column:1/-1}.pre-item-fields label:nth-child(3){grid-column:1}.pre-item-fields button{grid-column:2}.pre-modal-actions{gap:8px}.pre-modal-actions button{font-size:16px}.pre-customer-row{align-items:stretch}.pre-add-customer{padding:0 9px;font-size:13px}}
