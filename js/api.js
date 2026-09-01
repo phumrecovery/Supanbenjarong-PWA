@@ -73,6 +73,15 @@ export class ApiClient {
   investmentDelete(session,row){return this.request({action:"investmentDelete",session,row});}
   expenseMonthSummary(session,month,year){return this.request({action:"expenseMonthSummary",session,month,year});}
   expenseUploadImage(session,data,fileName){return this.request({action:"expenseUploadImage",session,data,fileName},60000);}
+  preorderBootstrap(session){return this.request({action:"preorderBootstrap",session},30000);}
+  preorderQuotationSave(session,data,row){return this.request({action:"preorderQuotationSave",session,data,row},30000);}
+  preorderQuotationStatus(session,row,status){return this.request({action:"preorderQuotationStatus",session,row,status},30000);}
+  preorderCreatePoFromQt(session,row){return this.request({action:"preorderCreatePoFromQt",session,row},30000);}
+  preorderPoSave(session,data,row){return this.request({action:"preorderPoSave",session,data,row},30000);}
+  preorderPoStatus(session,row,status){return this.request({action:"preorderPoStatus",session,row,status},30000);}
+  preorderDepositConfirm(session,row,date){return this.request({action:"preorderDepositConfirm",session,row,date},30000);}
+  preorderCustomerSave(session,data,row){return this.request({action:"preorderCustomerSave",session,data,row},30000);}
+  preorderUploadImage(session,dataUrl,fileName){return this.request({action:"preorderUploadImage",session,dataUrl,fileName},60000);}
   selectUser(session,name){
     return this.request({action:"selectUser",session,name});
   }
