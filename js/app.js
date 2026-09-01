@@ -3,7 +3,7 @@ import {renderPos} from "./pos.js";
 import {renderProduct} from "./product.js";
 import {renderExpense} from "./expense.js?v=expense-v7";
 import {renderPreorder} from "./preorder.js?v=preorder-v13";
-import {renderOutsource} from "./outsource.js?v=outsource-v1";
+import {renderOutsource} from "./outsource.js?v=outsource-v2";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
