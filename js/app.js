@@ -88,7 +88,17 @@ function money(value){return (Number(value)||0).toLocaleString("th-TH");}
 function thaiDate(){return new Date().toLocaleDateString("th-TH",{weekday:"long",year:"numeric",month:"long",day:"numeric"});}
 function currentRoute(){const hash=location.hash.replace(/^#/,"");return hash&&(["home","sales",...Object.keys(PAGES)].includes(hash))?hash:"home";}
 function pageDirection(next){const order=["home","sales","workshop","outsource","expense","preorder","report","product","stock","settings"];return order.indexOf(next)<order.indexOf(activeRoute)?"back":"forward";}
-function animatePage(direction){main.classList.remove("page-enter-forward","page-enter-back");void main.offsetWidth;main.classList.add(direction==="back"?"page-enter-back":"page-enter-forward");}
+function animatePage(direction){
+  const animationClass=direction==="back"?"page-enter-back":"page-enter-forward";
+  main.classList.remove("page-enter-forward","page-enter-back");
+  void main.offsetWidth;
+  main.classList.add(animationClass);
+  // A persisted transform turns `position: sticky/fixed` children into a
+  // different containing block.  Remove the entrance class once it has played.
+  main.addEventListener("animationend",event=>{
+    if(event.target===main&&event.animationName.startsWith("page-enter"))main.classList.remove(animationClass);
+  },{once:true});
+}
 function setShell(visible){appHeader.hidden=!visible;appHeader.style.display=visible?"":"none";}
 function showToast(message){toast.textContent=message;toast.classList.add("show");try{sound.notify();}catch(error){}clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
 function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};}
@@ -234,6 +244,7 @@ function render(route,{animate=true,direction}={}){
   route=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
   route=allowedStartRoute(route);
   const travel=direction||pageDirection(route);activeRoute=route;if(animate)animatePage(travel);
+  main.dataset.route=route;
   // A module may add viewport-pinned actions. Never let those controls leak
   // into another route (especially the POS command bar).
   if(floatingLayer)floatingLayer.replaceChildren();
