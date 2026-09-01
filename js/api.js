@@ -4,21 +4,23 @@
 const GATEWAY_API_URL="https://suphanbenjarong-api.phum-recovery.workers.dev/api";
 
 export class ApiClient {
-  async request(payload,timeoutMs=15000){
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),timeoutMs);
-    let response;
-    try{
-      response=await fetch(GATEWAY_API_URL,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(payload),
-        cache:"no-store",
-        signal:controller.signal
-      });
-    }finally{clearTimeout(timeout);}
-    if(!response.ok) throw new Error(`Gateway ตอบกลับ ${response.status}`);
-    return response.json();
+  async request(payload,timeoutMs=15000,{retries=0,retryLogical=false}={}){
+    let result;
+    for(let attempt=0;attempt<=retries;attempt++){
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),timeoutMs);
+      try{
+        const response=await fetch(GATEWAY_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),cache:"no-store",signal:controller.signal});
+        if(!response.ok)throw new Error(`Gateway ตอบกลับ ${response.status}`);
+        result=await response.json();
+        if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
+        return result;
+      }catch(error){
+        if(attempt>=retries)throw error;
+        await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
+      }finally{clearTimeout(timeout);}
+    }
+    return result;
   }
   async health(){
     const payload=await this.request({action:"health"});
@@ -38,7 +40,9 @@ export class ApiClient {
     return this.request({action:"homeBootstrap",session});
   }
   productBootstrap(session,layer="store"){
-    return this.request({action:"productBootstrap",session,layer});
+    // This is a read-only request: GAS/Sheets can briefly be cold or busy,
+    // therefore it is safe to retry rather than replacing the page with empty data.
+    return this.request({action:"productBootstrap",session,layer},30000,{retries:2,retryLogical:true});
   }
   productAdd(session,product){
     return this.request({action:"productAdd",session,product});
