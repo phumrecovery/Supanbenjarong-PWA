@@ -1,6 +1,7 @@
 /* Last-mile parity fixes: the legacy page uses two summary tiles and an
    independent filter row below them. */
 .pre-page .pre-dash{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.pre-page .pre-dash button:nth-child(2){background:#e8f5e9!important;color:#2e7d32!important}
 .pre-page .pre-filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
 .pre-page .pre-filters button{border:2px solid var(--border);border-radius:999px;background:#fff;color:var(--primary-dark);padding:7px 15px;font:700 14px var(--font);cursor:pointer}
 .pre-page .pre-filters button.active{border-color:var(--primary);background:var(--primary);color:#fff}
