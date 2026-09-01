@@ -1,0 +1,9 @@
+/* Last-mile parity fixes: the legacy page uses two summary tiles, not four. */
+.pre-page .pre-dash{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.pre-page .pre-dash button:first-child,.pre-page .pre-dash button:nth-child(4){display:none}
+
+/* The application shell is taller than the viewport.  Anchor dialog content
+   to the visual viewport so create/print dialogs cannot be centered below it. */
+.pre-modal-back{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;min-height:100vh!important;z-index:9999!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.pre-modal-back>.pre-modal{position:fixed!important;left:50%!important;top:50vh!important;transform:translate(-50%,-50%)!important;margin:0!important}
+@media(max-width:650px){.pre-modal-back>.pre-modal{width:calc(100vw - 24px)!important;max-height:calc(100vh - 24px)!important}.pre-page .pre-dash{gap:8px!important}}
