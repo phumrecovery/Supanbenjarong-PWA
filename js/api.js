@@ -80,6 +80,7 @@ export class ApiClient {
   preorderPoSave(session,data,row){return this.request({action:"preorderPoSave",session,data,row},30000);}
   preorderPoStatus(session,row,status){return this.request({action:"preorderPoStatus",session,row,status},30000);}
   preorderDepositConfirm(session,row,date){return this.request({action:"preorderDepositConfirm",session,row,date},30000);}
+  preorderPrintDocument(session,row,type){return this.request({action:"preorderPrintDocument",session,row,type},30000);}
   preorderCustomerSave(session,data,row){return this.request({action:"preorderCustomerSave",session,data,row},30000);}
   preorderUploadImage(session,dataUrl,fileName){return this.request({action:"preorderUploadImage",session,dataUrl,fileName},60000);}
   selectUser(session,name){
