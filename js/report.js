@@ -59,7 +59,7 @@ async function submit(e){if(e.target.dataset.rptForm!=="cash")return;e.preventDe
 function loadTab(){
   if(S.tab===5)return Promise.resolve();
   // Comparison is the only tab requiring two independent yearly reports.
-  if(S.tab===4)return Promise.all([fetchData("year",S.cmpA),fetchData("year",S.cmpB)]).then(()=>active()&&draw()).catch(error=>R.toast(`❌ ${error.message||error}`));
+  if(S.tab===4)return fetchData("year",S.cmpA).then(()=>fetchData("year",S.cmpB)).then(()=>active()&&draw()).catch(error=>R.toast(`❌ ${error.message||error}`));
   const jobs=[["daily",dateKey(S.date)],["month",S.year,S.month],["year",S.yearTab],[S.topMode==="month"?"month":"year",S.topYear,S.topMode==="month"?S.topMonth:undefined],null,null,["cost",S.costYear,S.costMonth],["cash",S.cashYear]];
   const [type,...args]=jobs[S.tab];
   return fetchData(type,...args.filter(x=>x!==undefined)).then(()=>active()&&draw()).catch(error=>R.toast(`❌ ${error.message||error}`));
