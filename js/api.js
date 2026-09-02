@@ -64,10 +64,10 @@ export class ApiClient {
   }
   reportBootstrap(session){return this.request({action:"reportBootstrap",session},20000,{retries:1,retryLogical:true});}
   reportDaily(session,date){return this.request({action:"reportDaily",session,date},60000,{retries:0,retryLogical:false});}
-  reportMonthly(session,year,month){return this.request({action:"reportMonthly",session,year,month},30000,{retries:1,retryLogical:true});}
-  reportYearly(session,year){return this.request({action:"reportYearly",session,year},30000,{retries:1,retryLogical:true});}
-  reportCost(session,year,month0){return this.request({action:"reportCost",session,year,month:month0},30000,{retries:1,retryLogical:true});}
-  reportCashflow(session,year){return this.request({action:"reportCashflow",session,year},30000,{retries:1,retryLogical:true});}
+  reportMonthly(session,year,month){return this.request({action:"reportMonthly",session,year,month},60000,{retries:0,retryLogical:false});}
+  reportYearly(session,year){return this.request({action:"reportYearly",session,year},60000,{retries:0,retryLogical:false});}
+  reportCost(session,year,month0){return this.request({action:"reportCost",session,year,month:month0},60000,{retries:0,retryLogical:false});}
+  reportCashflow(session,year){return this.request({action:"reportCashflow",session,year},60000,{retries:0,retryLogical:false});}
   reportPrint(session,year,month0){return this.request({action:"reportPrint",session,year,month:month0},30000,{retries:1,retryLogical:true});}
   reportCashflowStartSave(session,amount,year,month){return this.request({action:"reportCashflowStartSave",session,amount,year,month},30000);}
   expenseBootstrap(session){return this.request({action:"expenseBootstrap",session});}
