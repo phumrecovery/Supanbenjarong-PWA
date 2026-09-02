@@ -62,6 +62,14 @@ export class ApiClient {
   productUploadImage(session,row,layer,data,fileName){
     return this.request({action:"productUploadImage",session,row,layer,data,fileName},60000);
   }
+  reportBootstrap(session){return this.request({action:"reportBootstrap",session},30000,{retries:1,retryLogical:true});}
+  reportDaily(session,date){return this.request({action:"reportDaily",session,date},30000,{retries:1,retryLogical:true});}
+  reportMonthly(session,year,month){return this.request({action:"reportMonthly",session,year,month},30000,{retries:1,retryLogical:true});}
+  reportYearly(session,year){return this.request({action:"reportYearly",session,year},30000,{retries:1,retryLogical:true});}
+  reportCost(session,year,month0){return this.request({action:"reportCost",session,year,month:month0},30000,{retries:1,retryLogical:true});}
+  reportCashflow(session,year){return this.request({action:"reportCashflow",session,year},30000,{retries:1,retryLogical:true});}
+  reportPrint(session,year,month0){return this.request({action:"reportPrint",session,year,month:month0},30000,{retries:1,retryLogical:true});}
+  reportCashflowStartSave(session,amount,year,month){return this.request({action:"reportCashflowStartSave",session,amount,year,month},30000);}
   expenseBootstrap(session){return this.request({action:"expenseBootstrap",session});}
   expenseTransactions(session){return this.request({action:"expenseTransactions",session});}
   expenseSupport(session){return this.request({action:"expenseSupport",session});}
