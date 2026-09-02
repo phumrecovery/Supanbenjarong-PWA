@@ -70,7 +70,9 @@ export class ApiClient {
   reportCashflow(session,year){return this.request({action:"reportCashflow",session,year},60000,{retries:0,retryLogical:false});}
   reportPrint(session,year,month0){return this.request({action:"reportPrint",session,year,month:month0},30000,{retries:1,retryLogical:true});}
   reportCashflowStartSave(session,amount,year,month){return this.request({action:"reportCashflowStartSave",session,amount,year,month},30000);}
-  expenseBootstrap(session){return this.request({action:"expenseBootstrap",session});}
+  // Master data can briefly fail while the Sheet execution is cold. This call
+  // is read-only, so one bounded retry is safe.
+  expenseBootstrap(session){return this.request({action:"expenseBootstrap",session},30000,{retries:1,retryLogical:true});}
   expenseTransactions(session){return this.request({action:"expenseTransactions",session});}
   expenseSupport(session){return this.request({action:"expenseSupport",session});}
   expenseAdd(session,expense){return this.request({action:"expenseAdd",session,expense});}

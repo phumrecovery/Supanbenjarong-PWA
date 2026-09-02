@@ -1,5 +1,5 @@
-const VERSION="suphan-pwa-v86";
-const APP_SHELL=["./","./index.html","./css/app.css","./css/pos.css","./css/product.css","./css/product-overrides.css","./css/expense.css","./css/preorder.css","./css/preorder-fixes.css","./css/outsource.css","./css/report.css","./css/report-print-parity.css","./js/app.js","./js/api.js","./js/pos.js","./js/product.js","./js/expense.js","./js/preorder.js","./js/outsource.js","./js/report.js","./assets/icon-48.png","./assets/icon-192.png","./assets/icon-512.png","./manifest.webmanifest"];
+const VERSION="suphan-pwa-v87";
+const APP_SHELL=["./","./index.html","./css/app.css","./css/pos.css","./css/product.css","./css/product-overrides.css","./css/expense.css","./css/expense-day-groups.css","./css/preorder.css","./css/preorder-fixes.css","./css/outsource.css","./css/report.css","./css/report-print-parity.css","./js/app.js","./js/api.js","./js/pos.js","./js/product.js","./js/expense.js","./js/preorder.js","./js/outsource.js","./js/report.js","./assets/icon-48.png","./assets/icon-192.png","./assets/icon-512.png","./manifest.webmanifest"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(APP_SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==VERSION).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",event=>{
