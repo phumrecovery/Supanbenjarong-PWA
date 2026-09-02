@@ -49,3 +49,11 @@
 .rpt-print-sheet th:nth-child(2),.rpt-print-sheet td:nth-child(2){text-align:left!important}
 .rpt-print-sheet th:nth-child(3),.rpt-print-sheet td:nth-child(3),.rpt-print-sheet th:nth-child(4),.rpt-print-sheet td:nth-child(4){text-align:right!important}
 @media(max-width:650px){.rpt-net b{font-size:28px}.rpt-stock-total b{font-size:23px}.rpt-sale-item{font-size:11px}}
+
+/* SVG line charts keep the requested trend view fast without another API call. */
+.rpt-line-chart{overflow-x:auto}.rpt-line-chart svg{display:block;width:100%;min-width:560px;height:auto}.rpt-line-chart line{stroke:#ead9ca;stroke-width:1}.rpt-line-chart text{fill:#8b6c58;font:12px var(--font)}.rpt-line-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin:0 0 10px;color:var(--text-sub);font-size:13px;font-weight:700}.rpt-line-legend span{display:flex;align-items:center;gap:5px}.rpt-line-legend i{width:14px;height:4px;border-radius:999px}
+
+/* Top-products tab follows the original GAS hierarchy and dimensions. */
+.rpt-top-switch{max-width:400px;margin:0 auto 12px}.rpt-top-switch button{flex:1}.rpt-top-ranks>div{margin:0 0 12px}.rpt-top-ranks header{display:flex;justify-content:space-between;align-items:center;gap:12px;color:var(--text-main);font-size:16px;font-weight:700}.rpt-top-ranks header span{min-width:0}.rpt-top-ranks header b{font-size:20px}.rpt-top-ranks header strong{flex:0 0 auto;color:var(--text-main);font-size:14px}.rpt-top-ranks small{display:block;margin:2px 0;color:var(--text-sub);font-size:12px}.rpt-top-ranks i,.rpt-top-share i{display:block;height:10px;overflow:hidden;border-radius:6px;background:var(--bg-main)}.rpt-top-ranks em,.rpt-top-share em{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ff6f00,#ffb300)}
+.rpt-top-share>div{display:flex;align-items:center;gap:8px;margin:0 0 8px}.rpt-top-share>div>b{width:80px;text-align:right;font-size:14px}.rpt-top-share>div>i{flex:1;height:28px}.rpt-top-share em{min-width:2px;padding-left:8px;color:#fff;font:700 11px/28px var(--font);white-space:nowrap}.rpt-top-share small{flex:0 0 auto;color:var(--text-sub);font-size:11px}
+@media(max-width:650px){.rpt-line-chart svg{min-width:500px}.rpt-line-legend{gap:9px;font-size:11px}.rpt-top-ranks header{font-size:14px}.rpt-top-share>div>b{width:70px;font-size:12px}.rpt-top-share em{font-size:10px}}
