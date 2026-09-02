@@ -2,7 +2,7 @@
 // The PWA calls the original GAS saveSale path through the authenticated API.
 const DEFAULT_CHANNELS=["หน้าร้าน","โทรสั่ง","Line","Facebook","Lot/ส่ง","อื่นๆ"];
 const PAYMENTS=["💵 เงินสด","🏦 โอนธนาคาร"];
-let state={data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false,mobileCartOpen:false,submitting:false,submitError:"",lastBill:null,successOpen:false,printOpen:false,printSize:"size-a4",buyerEnabled:false,receiptHtml:"",requestId:"",scanNotice:""};
+let state={data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false,mobileCartOpen:false,submitting:false,submitError:"",lastBill:null,successOpen:false,printOpen:false,printSize:"size-a4",buyerEnabled:false,receiptHtml:"",requestId:"",scanNotice:"",categoryOrderMode:false,categorySaving:false};
 let runtime={api:null,session:"",onBack:null,level:"",userName:"",root:null};
 
 export async function renderPos(root,api,session,onBack,context={}){
@@ -31,7 +31,7 @@ function draw(root){
     ${state.backdate?`<div class="back-sale-banner show">🕘 บันทึกยอดขายย้อนหลัง: ${state.backdateValue||"กรุณาเลือกวันที่ขายจริง"}<button type="button" data-action="choose-backdate">เลือกวันที่</button><button type="button" data-action="backdate">ปิด</button></div>`:""}
     ${state.scanNotice?`<div class="pwa-scan-notice ${state.scanNotice.error?"error":""}">${esc(state.scanNotice.text)}</div>`:""}
     ${state.showBackdatePicker?backdatePicker() : ""}
-    <div class="legacy-pos-content"><div class="legacy-pos-layout"><section class="legacy-pos-products"><div class="category-tools">${family?'<button type="button" data-action="category-order">⚙️ จัดเรียงหมวด</button>':""}</div><div class="category-bar" role="tablist">${categoryButtons(data.categories||[])}</div><label class="legacy-search"><span>🔍</span><input data-search type="search" placeholder="ค้นหาสินค้า..." value="${escAttr(state.query)}"></label><div class="legacy-results"><span>${products.length.toLocaleString("th-TH")} รายการ</span><span>ข้อมูลล่าสุดจาก GAS</span></div><div class="legacy-product-grid">${products.map(productCard).join("")||'<div class="legacy-empty">🔎<br>ไม่พบสินค้า</div>'}</div></section><aside class="legacy-pos-cart pos-cart-desktop" aria-label="ตะกร้าสินค้า"><div class="cart-step ${state.animation}">${cartMarkup()}</div></aside></div></div>
+    <div class="legacy-pos-content"><div class="legacy-pos-layout"><section class="legacy-pos-products"><div class="category-tools">${family?`<button type="button" class="${state.categoryOrderMode?"active":""}" data-action="category-order" ${state.categorySaving?"disabled":""}>${state.categorySaving?"⏳ กำลังบันทึก...":state.categoryOrderMode?"✅ เสร็จสิ้น":"⚙️ จัดเรียงหมวด"}</button>`:""}</div>${state.categoryOrderMode?'<div class="category-order-hint show">กดหมวดค้างประมาณ 1 วินาที แล้วลากซ้ายหรือขวา · กดเสร็จสิ้นเพื่อบันทึก</div>':""}<div class="category-bar ${state.categoryOrderMode?"order-mode":""}" role="tablist">${categoryButtons(data.categories||[])}</div><label class="legacy-search"><span>🔍</span><input data-search type="search" placeholder="ค้นหาสินค้า..." value="${escAttr(state.query)}"></label><div class="legacy-results"><span>${products.length.toLocaleString("th-TH")} รายการ</span><span>ข้อมูลล่าสุดจาก GAS</span></div><div class="legacy-product-grid">${products.map(productCard).join("")||'<div class="legacy-empty">🔎<br>ไม่พบสินค้า</div>'}</div></section><aside class="legacy-pos-cart pos-cart-desktop" aria-label="ตะกร้าสินค้า"><div class="cart-step ${state.animation}">${cartMarkup()}</div></aside></div></div>
   </section>`;
   const cartPieces=state.cart.reduce((sum,item)=>sum+(Number(item.qty)||0),0);
   // Keep the mobile cart control outside the animated/scrolled POS page.
@@ -56,6 +56,7 @@ function draw(root){
   root.querySelector("[data-buyer-enabled]")?.addEventListener("change",event=>{state.buyerEnabled=event.target.checked;draw(root);});
   state.animation="";
   ensureClickHandler(root);
+  bindCategoryOrder(root);
   bind(root);
 }
 
@@ -92,7 +93,7 @@ function bindFloatingCart(layer){
 function errorMarkup(message){return `<div class="legacy-pos-modal pwa-result-modal"><section><h2>⚠️ บันทึกบิลไม่สำเร็จ</h2><p>${esc(message)}</p><div><button type="button" data-action="close-error">รับทราบ</button></div></section></div>`;}
 function successMarkup(){const bill=state.lastBill||{},change=state.payIndex===0&&Number(state.cash)>0?Math.max(0,Number(state.cash)-Number(bill.netTotal||0)):null;return `<div class="legacy-pos-modal pwa-success-modal"><section><div class="success-icon">✅</div><h2>บันทึกสำเร็จ!</h2><div class="pwa-bill-info"><strong>เลขบิล: ${esc(bill.billNo||"-")}</strong><span>วันที่ขาย: ${esc(bill.date||"")}</span><b>฿${money(bill.netTotal)}</b><span>${Number(bill.pcs)||0} ชิ้น | ${esc(bill.payment||"")}</span>${change!==null?`<em>💰 เงินทอน ฿${money(change)}</em>`:""}</div><div><button type="button" data-action="open-print">🖨️ พิมพ์ใบเสร็จ</button><button type="button" data-action="new-sale">🧾 ขายต่อ</button></div></section></div>`;}
 function printOptionsMarkup(){return `<div class="legacy-pos-modal pwa-print-modal"><section><h2>🖨️ พิมพ์ใบเสร็จ</h2><label class="pwa-buyer-toggle"><input type="checkbox" data-buyer-enabled ${state.buyerEnabled?"checked":""}> ใส่ข้อมูลผู้ซื้อ</label><div class="pwa-buyer-fields ${state.buyerEnabled?"":"hidden"}"><label>ชื่อผู้ซื้อ / บริษัท<input type="text" data-buyer-name placeholder="เช่น บริษัท ABC จำกัด"></label><label>ที่อยู่<input type="text" data-buyer-addr placeholder="ที่อยู่ออกใบเสร็จ"></label><label>เลขผู้เสียภาษี<input type="text" data-buyer-tax placeholder="(ถ้ามี)"></label><label>เบอร์โทร<input type="text" data-buyer-phone placeholder="(ถ้ามี)"></label></div><p class="pwa-print-label">📄 ขนาดกระดาษ</p><div class="pwa-print-sizes">${[["size-a4","A4"],["size-a5","A5"],["size-80mm","🧾 80mm"]].map(([value,label])=>`<button type="button" class="${state.printSize===value?"active":""}" data-print-size="${value}">${label}</button>`).join("")}</div><div><button type="button" data-action="close-print">ยกเลิก</button><button type="button" data-action="print-bill">🖨️ พิมพ์</button></div></section></div>`;}
-function categoryButtons(categories){return ["",...categories].map(value=>`<button class="legacy-category-btn ${state.category===value?"active":""}" type="button" data-category="${escAttr(value)}" role="tab">${value?esc(value):"ทั้งหมด"}</button>`).join("");}
+function categoryButtons(categories){if(state.categoryOrderMode)return `<button class="legacy-category-btn order-all" type="button" disabled>ทั้งหมด</button>${categories.map(value=>`<button class="legacy-category-btn" type="button" data-category-order="${escAttr(value)}" role="tab">☰ ${esc(value)}</button>`).join("")}`;return ["",...categories].map(value=>`<button class="legacy-category-btn ${state.category===value?"active":""}" type="button" data-category="${escAttr(value)}" role="tab">${value?esc(value):"ทั้งหมด"}</button>`).join("");}
 function filteredProducts(products){const term=state.query.trim().toLocaleLowerCase("th");return products.filter(product=>{if(state.category&&product.category!==state.category)return false;return !term||[product.code,product.name,product.pattern,product.size,product.category].join(" ").toLocaleLowerCase("th").includes(term);}).slice(0,120);}
 function patternCode(pattern){const value=String(pattern||"");if(value.includes("ครึ่ง"))return "HF";if(value.includes("เต็ม"))return "FU";if(value.includes("มุก")&&value.includes("ดอก"))return "MP-FLOWER";if(value.includes("มุก"))return "MP-GOLD";if(value.includes("คราม"))return "KR";return "OT";}
 function patternLabel(pattern){const value=String(pattern||"");if(value.includes("ครึ่ง"))return "เบญจรงค์ครึ่งใบ";if(value.includes("เต็ม"))return "เบญจรงค์เต็มใบ";return value||"อื่น ๆ";}
@@ -144,6 +145,64 @@ function refreshProductResults(root){
   if(grid)grid.innerHTML=products.map(productCard).join("")||'<div class="legacy-empty">🔎<br>ไม่พบสินค้า</div>';
   if(count)count.textContent=`${products.length.toLocaleString("th-TH")} รายการ`;
 }
+function orderedCategoryNames(root){
+  return [...root.querySelectorAll("[data-category-order]")].map(button=>String(button.dataset.categoryOrder||"").trim()).filter(Boolean);
+}
+function bindCategoryOrder(root){
+  const bar=root.querySelector(".category-bar.order-mode");
+  if(!bar)return;
+  let timer=null,dragged=null,dragging=false,pointerId=null;
+  const clear=()=>{
+    if(timer)clearTimeout(timer);
+    timer=null;
+    if(dragged)dragged.classList.remove("category-hold","category-dragging");
+    dragged=null;dragging=false;pointerId=null;
+  };
+  bar.querySelectorAll("[data-category-order]").forEach(button=>{
+    button.addEventListener("pointerdown",event=>{
+      clear();dragged=button;pointerId=event.pointerId;
+      button.classList.add("category-hold");
+      timer=setTimeout(()=>{
+        if(dragged!==button)return;
+        dragging=true;button.classList.remove("category-hold");button.classList.add("category-dragging");
+        try{button.setPointerCapture(pointerId);}catch(error){}
+        try{window.SuphanSound?.tap();}catch(error){}
+      },800);
+    });
+    button.addEventListener("pointermove",event=>{
+      if(!dragging||!dragged)return;
+      event.preventDefault();
+      const target=document.elementFromPoint(event.clientX,event.clientY)?.closest("[data-category-order]");
+      if(!target||target===dragged||!bar.contains(target))return;
+      const rect=target.getBoundingClientRect();
+      bar.insertBefore(dragged,event.clientX>rect.left+rect.width/2?target.nextSibling:target);
+    });
+    button.addEventListener("pointerup",()=>{
+      if(dragging)state.data.categories=orderedCategoryNames(root);
+      clear();
+    });
+    button.addEventListener("pointercancel",clear);
+  });
+}
+async function saveCategoryOrder(root){
+  if(state.categorySaving)return;
+  const categories=orderedCategoryNames(root);
+  if(!categories.length){showScanNotice("ไม่พบหมวดสินค้า",true);return;}
+  state.categorySaving=true;draw(root);
+  try{
+    const response=await runtime.api.posCategoryOrder(runtime.session,categories);
+    if(!response.ok)throw new Error(response.message||"บันทึกลำดับหมวดไม่สำเร็จ");
+    state.data.categories=(response.result&&response.result.categories)||categories;
+    state.categoryOrderMode=false;
+    state.category="";
+    showScanNotice("บันทึกลำดับหมวดสินค้าแล้ว",false);
+  }catch(error){
+    showScanNotice(String(error?.message||error),true);
+  }finally{
+    state.categorySaving=false;
+    draw(root);
+  }
+}
 function handleBarcodeScan(code){
   const root=runtime.root;
   if(!root||!state.data||!root.querySelector(".legacy-pos-page"))return;
@@ -188,6 +247,11 @@ function handleClick(button,root){
   if(action==="choose-backdate"){state.showBackdatePicker=true;draw(root);return;}
   if(action==="cancel-backdate"){state.showBackdatePicker=false;draw(root);return;}
   if(action==="apply-backdate"){state.backdateValue=root.querySelector("[data-backdate-input]")?.value||"";state.showBackdatePicker=false;draw(root);return;}
+  if(action==="category-order"){
+    if(state.categorySaving)return;
+    if(state.categoryOrderMode){void saveCategoryOrder(root);return;}
+    state.categoryOrderMode=true;state.category="";draw(root);return;
+  }
   if(action==="checkout"){state.animation="cart-slide-next";state.step=1;draw(root);return;}
   if(action==="items"){state.animation="cart-slide-prev";state.step=0;draw(root);return;}
   if(action==="custom-discount"){state.discountType=1;draw(root);return;}

@@ -36,6 +36,9 @@ export class ApiClient {
   posBootstrap(session){
     return this.request({action:"posBootstrap",session});
   }
+  posCategoryOrder(session,categories){
+    return this.request({action:"posCategoryOrder",session,categories},30000);
+  }
   homeBootstrap(session){
     return this.request({action:"homeBootstrap",session});
   }

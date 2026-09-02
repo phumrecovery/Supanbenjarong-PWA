@@ -1,5 +1,5 @@
 import {ApiClient} from "./api.js";
-import {renderPos} from "./pos.js";
+import {renderPos} from "./pos.js?v=pos-v16";
 import {renderProduct} from "./product.js";
 import {renderExpense} from "./expense.js?v=expense-v9";
 import {renderPreorder} from "./preorder.js?v=preorder-v13";
@@ -259,7 +259,7 @@ function render(route,{animate=true,direction}={}){
   main.classList.toggle("preorder-main",route==="preorder");
   main.classList.toggle("outsource-main",route==="outsource");
   main.classList.toggle("report-main",route==="report");
-  if(route==="sales"){renderPos(main,api,sessionToken,()=>navigate("home"),{...(currentSession||{}),displayUser});return;}
+  if(route==="sales"){renderPos(main,api,sessionToken,()=>hasFamilyAccess()?navigate("home"):void returnLimitedPosToLogin(),{...(currentSession||{}),displayUser});return;}
   if(route==="product"){renderProduct(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
   if(route==="expense"){renderExpense(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="preorder"){renderPreorder(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
@@ -274,6 +274,20 @@ function navigate(route,{replace=false,animate=true}={}){
   const url=`#${clean}`;
   if(replace)history.replaceState({route:clean},"",url);else history.pushState({route:clean},"",url);
   render(clean,{animate});
+}
+async function returnLimitedPosToLogin(){
+  // A sales-only account has no permitted Home route. Its POS back button
+  // ends the session instead of silently navigating back to #sales.
+  const token=sessionToken;
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(DISPLAY_USER_KEY);
+  sessionToken="";
+  currentSession=null;
+  displayUser=null;
+  homeData=null;
+  history.replaceState({route:"home"},"","#home");
+  showLogin("");
+  try{if(token)await api.logout(token);}catch(error){}
 }
 window.addEventListener("popstate",()=>render(currentRoute(),{animate:true}));
 // Product mutations must never leave dashboard/POS master data looking current.
