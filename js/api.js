@@ -62,8 +62,8 @@ export class ApiClient {
   productUploadImage(session,row,layer,data,fileName){
     return this.request({action:"productUploadImage",session,row,layer,data,fileName},60000);
   }
-  reportBootstrap(session){return this.request({action:"reportBootstrap",session},30000,{retries:1,retryLogical:true});}
-  reportDaily(session,date){return this.request({action:"reportDaily",session,date},30000,{retries:1,retryLogical:true});}
+  reportBootstrap(session){return this.request({action:"reportBootstrap",session},20000,{retries:1,retryLogical:true});}
+  reportDaily(session,date){return this.request({action:"reportDaily",session,date},60000,{retries:0,retryLogical:false});}
   reportMonthly(session,year,month){return this.request({action:"reportMonthly",session,year,month},30000,{retries:1,retryLogical:true});}
   reportYearly(session,year){return this.request({action:"reportYearly",session,year},30000,{retries:1,retryLogical:true});}
   reportCost(session,year,month0){return this.request({action:"reportCost",session,year,month:month0},30000,{retries:1,retryLogical:true});}
