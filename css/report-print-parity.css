@@ -32,3 +32,20 @@
 .rpt-top,.expense-top,.os-top,.pre-top,.product-main .product-top{padding-left:20px!important;padding-right:20px!important}
 @media(max-width:650px){.rpt-month-grid{gap:6px}.rpt-month-grid button{min-height:46px;font-size:13px}.rpt-print-shortcuts{gap:6px}.rpt-print-shortcuts button{font-size:12px;padding:7px}.rpt-print{padding:10px;overflow:auto}.rpt-print-sheet{min-width:560px}.rpt-top,.expense-top,.os-top,.pre-top,.product-main .product-top{padding-left:10px!important;padding-right:10px!important}}
 @media print{body>*{visibility:hidden!important}#reportPrintArea,#reportPrintArea *{visibility:visible!important}#reportPrintArea{position:absolute!important;top:0!important;left:0!important;display:block!important;width:100%!important;margin:0!important;padding:0!important;box-shadow:none!important;border:0!important;border-radius:0!important;background:#fff!important;color:#000!important}.rpt-page-break{margin:0!important;border:0!important;break-after:page!important}}
+
+/* Complete Dashboard parity: original GAS exposes every card's underlying detail. */
+.rpt-sale{padding:8px 0;border-bottom:1px solid var(--border-light)}
+.rpt-sale:last-child{border-bottom:0}.rpt-sale p{display:flex;justify-content:space-between;gap:10px;margin:0}.rpt-sale strong{color:var(--primary-dark)}
+.rpt-sale-item{padding:3px 0 0 14px!important;color:var(--text-sub);font-size:12px}.rpt-sale-item b{color:inherit}
+.rpt-footnote{margin:0;padding:10px 4px;text-align:center;color:var(--text-sub);font-size:12px}
+.rpt-net{border:3px solid #4caf50;text-align:center}.rpt-net.negative{border-color:#e53935;background:#fff5f5}.rpt-net small,.rpt-net b,.rpt-net span{display:block}.rpt-net small{color:var(--text-sub);font-weight:700}.rpt-net b{margin:5px 0;color:#2e7d32;font-size:34px}.rpt-net.negative b{color:#c62828}.rpt-net span{color:var(--text-sub);font-size:12px}
+.rpt-table th:first-child,.rpt-table td:first-child{text-align:left}.rpt-table th:not(:first-child),.rpt-table td:not(:first-child){text-align:right}.rpt-table .expense{color:#c62828}.rpt-table .income{color:#2e7d32}.rpt-table .rpt-total-row{background:var(--primary-dark);color:#fff;font-weight:700}
+.rpt-compare-select label{display:grid;gap:4px;text-align:center;color:var(--text-sub);font-size:12px;font-weight:700}.rpt-compare-select select{font-size:15px}
+.rpt-legend{margin:0 0 8px;text-align:center;color:var(--text-sub);font-size:12px}
+.rpt-cost-hero,.rpt-year-cost{margin:12px 0;padding:18px;border-radius:16px;background:#fff;box-shadow:var(--shadow);text-align:center}.rpt-cost-hero small,.rpt-cost-hero b,.rpt-year-cost small,.rpt-year-cost b{display:block}.rpt-cost-hero small,.rpt-year-cost small{color:var(--text-sub);font-weight:700}.rpt-cost-hero b{color:#c62828;font-size:38px}.rpt-year-cost{border-left:4px solid #1565c0;text-align:left}.rpt-year-cost b{color:#1565c0;font-size:27px}
+.rpt-alert{margin:12px 0;padding:12px;border:2px solid #c62828;border-radius:12px;background:#fce4ec;color:#c62828;font-size:14px}
+.rpt-stock-block{margin:8px 0;padding:12px;border:1px solid var(--border-light);border-radius:12px}.rpt-stock-block>b{color:var(--primary-dark)}.rpt-stock-block p{display:flex;justify-content:space-between;margin:7px 0;font-size:14px}.rpt-stock-block small{color:var(--text-sub);font-size:12px}.rpt-stock-total{padding:12px;border-radius:12px;background:var(--bg-main);text-align:center}.rpt-stock-total small,.rpt-stock-total b{display:block}.rpt-stock-total small{color:var(--text-sub)}.rpt-stock-total b{color:#2e7d32;font-size:27px}
+/* The expense-print report must keep item descriptions left and monetary columns right. */
+.rpt-print-sheet th:nth-child(2),.rpt-print-sheet td:nth-child(2){text-align:left!important}
+.rpt-print-sheet th:nth-child(3),.rpt-print-sheet td:nth-child(3),.rpt-print-sheet th:nth-child(4),.rpt-print-sheet td:nth-child(4){text-align:right!important}
+@media(max-width:650px){.rpt-net b{font-size:28px}.rpt-stock-total b{font-size:23px}.rpt-sale-item{font-size:11px}}
