@@ -4,7 +4,7 @@ import {renderProduct} from "./product.js";
 import {renderExpense} from "./expense.js?v=expense-v9";
 import {renderPreorder} from "./preorder.js?v=preorder-v13";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
-import {renderReport} from "./report.js?v=report-v14";
+import {renderReport} from "./report.js?v=report-v15";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
