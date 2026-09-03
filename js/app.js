@@ -122,6 +122,9 @@ function showLogin(message=""){
   pinInput="";
   main.innerHTML=`<section class="login-screen" aria-label="เข้าสู่ระบบ"><img class="login-logo" src="${LOGO_FALLBACK}" alt="โลโก้สุพรรณบุรีเบญจรงค์"><h1 class="login-title">สุพรรณบุรีเบญจรงค์</h1><p class="login-sub">ใส่รหัส 6 หลัก</p><div id="pinDots" class="pin-dots" aria-label="รหัส PIN"></div><div id="pinPad" class="pin-pad"></div><p id="pinError" class="pin-error" aria-live="polite">${escapeHtml(message)}</p></section>`;
   renderPin();
+  // Start the lightweight health request while the user is entering six
+  // digits.  The GAS endpoint warms its user-list cache in the background.
+  api.health().catch(()=>{});
 }
 
 function renderPin(){
@@ -342,7 +345,7 @@ document.querySelector("#logout").addEventListener("click",async()=>{
 async function initialize(){
   // Never leave a blank canvas while the gateway is slow or unavailable.
   // A first-time user can always start at the PIN screen without waiting for health.
-  if(!sessionToken){showLogin();api.health().catch(()=>{});return;}
+  if(!sessionToken){showLogin();return;}
   main.innerHTML='<section class="card app-loading"><div class="spinner" aria-hidden="true"></div><p>กำลังเปิดข้อมูลร้าน…</p></section>';
   try{
     const result=await api.bootstrap(sessionToken);
