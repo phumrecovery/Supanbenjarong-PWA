@@ -152,33 +152,60 @@ function bindCategoryOrder(root){
   const bar=root.querySelector(".category-bar.order-mode");
   if(!bar)return;
   let timer=null,dragged=null,dragging=false,pointerId=null;
+  let ghost=null,dropTarget=null,dropAfter=false,lastPoint={x:0,y:0};
+  const clearDrop=()=>{
+    if(dropTarget)dropTarget.classList.remove("category-drop-before","category-drop-after");
+    dropTarget=null;dropAfter=false;
+  };
+  const moveGhost=()=>{
+    if(ghost)ghost.style.transform=`translate(${lastPoint.x}px,${lastPoint.y}px) translate(-50%,-50%)`;
+  };
+  const setDropTarget=(target,after)=>{
+    if(dropTarget===target&&dropAfter===after)return;
+    clearDrop();
+    dropTarget=target;dropAfter=after;
+    if(dropTarget)dropTarget.classList.add(dropAfter?"category-drop-after":"category-drop-before");
+  };
   const clear=()=>{
     if(timer)clearTimeout(timer);
     timer=null;
     if(dragged)dragged.classList.remove("category-hold","category-dragging");
-    dragged=null;dragging=false;pointerId=null;
+    clearDrop();
+    if(ghost)ghost.remove();
+    ghost=null;dragged=null;dragging=false;pointerId=null;
   };
   bar.querySelectorAll("[data-category-order]").forEach(button=>{
     button.addEventListener("pointerdown",event=>{
       clear();dragged=button;pointerId=event.pointerId;
+      lastPoint={x:event.clientX,y:event.clientY};
       button.classList.add("category-hold");
       timer=setTimeout(()=>{
         if(dragged!==button)return;
         dragging=true;button.classList.remove("category-hold");button.classList.add("category-dragging");
         try{button.setPointerCapture(pointerId);}catch(error){}
+        ghost=button.cloneNode(true);
+        ghost.className="category-drag-ghost";
+        ghost.removeAttribute("data-category-order");
+        ghost.removeAttribute("role");
+        ghost.setAttribute("aria-hidden","true");
+        document.body.appendChild(ghost);moveGhost();
         try{window.SuphanSound?.tap();}catch(error){}
       },800);
     });
     button.addEventListener("pointermove",event=>{
       if(!dragging||!dragged)return;
       event.preventDefault();
+      lastPoint={x:event.clientX,y:event.clientY};moveGhost();
       const target=document.elementFromPoint(event.clientX,event.clientY)?.closest("[data-category-order]");
-      if(!target||target===dragged||!bar.contains(target))return;
+      if(!target||target===dragged||!bar.contains(target)){clearDrop();return;}
       const rect=target.getBoundingClientRect();
-      bar.insertBefore(dragged,event.clientX>rect.left+rect.width/2?target.nextSibling:target);
+      setDropTarget(target,event.clientX>rect.left+rect.width/2);
     });
     button.addEventListener("pointerup",()=>{
-      if(dragging)state.data.categories=orderedCategoryNames(root);
+      if(dragging&&dragged&&dropTarget){
+        bar.insertBefore(dragged,dropAfter?dropTarget.nextSibling:dropTarget);
+        state.data.categories=orderedCategoryNames(root);
+      }
       clear();
     });
     button.addEventListener("pointercancel",clear);

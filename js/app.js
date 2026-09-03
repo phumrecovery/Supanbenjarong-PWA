@@ -1,5 +1,5 @@
 import {ApiClient} from "./api.js";
-import {renderPos} from "./pos.js?v=pos-v16";
+import {renderPos} from "./pos.js?v=pos-v17";
 import {renderProduct} from "./product.js";
 import {renderExpense} from "./expense.js?v=expense-v9";
 import {renderPreorder} from "./preorder.js?v=preorder-v13";
