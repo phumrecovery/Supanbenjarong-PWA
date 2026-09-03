@@ -105,6 +105,25 @@ export class ApiClient {
   preorderPrintDocument(session,row,type){return this.request({action:"preorderPrintDocument",session,row,type},30000);}
   preorderCustomerSave(session,data,row){return this.request({action:"preorderCustomerSave",session,data,row},30000);}
   preorderUploadImage(session,dataUrl,fileName){return this.request({action:"preorderUploadImage",session,dataUrl,fileName},60000);}
+  settingsBootstrap(session){return this.request({action:"settingsBootstrap",session},30000,{retries:1,retryLogical:true});}
+  settingsSaveConfig(session,data){return this.request({action:"settingsSaveConfig",session,data},30000);}
+  settingsSaveUser(session,data){return this.request({action:"settingsSaveUser",session,data},30000);}
+  settingsSaveEmployee(session,data){return this.request({action:"settingsSaveEmployee",session,data},30000);}
+  settingsSavePackaging(session,data){return this.request({action:"settingsSavePackaging",session,data},30000);}
+  settingsSaveWage(session,data){return this.request({action:"settingsSaveWage",session,data},30000);}
+  settingsAddOption(session,data){return this.request({action:"settingsAddOption",session,data},30000);}
+  settingsEditOption(session,data){return this.request({action:"settingsEditOption",session,data},30000);}
+  settingsDeleteOption(session,row){return this.request({action:"settingsDeleteOption",session,row},30000);}
+  settingsToggleMaterial(session,row){return this.request({action:"settingsToggleMaterial",session,row},30000);}
+  settingsStoreLayout(session){return this.request({action:"settingsStoreLayout",session},30000);}
+  settingsSaveStoreLayout(session,data){return this.request({action:"settingsSaveStoreLayout",session,data},30000);}
+  settingsSaveLocation(session,data){return this.request({action:"settingsSaveLocation",session,data},30000);}
+  settingsResetDevice(session,workerName){return this.request({action:"settingsResetDevice",session,workerName},30000);}
+  settingsClearCache(session){return this.request({action:"settingsClearCache",session},30000);}
+  settingsUploadLogo(session,data,fileName){return this.request({action:"settingsUploadLogo",session,data,fileName},60000);}
+  settingsUploadEmployee(session,data,fileName){return this.request({action:"settingsUploadEmployee",session,data,fileName},60000);}
+  settingsUploadPackaging(session,data,fileName){return this.request({action:"settingsUploadPackaging",session,data,fileName},60000);}
+  settingsWebAppUrl(session){return this.request({action:"settingsWebAppUrl",session},30000);}
   selectUser(session,name){
     return this.request({action:"selectUser",session,name});
   }
