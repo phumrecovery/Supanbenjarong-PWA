@@ -5,7 +5,7 @@ import {renderExpense} from "./expense.js?v=expense-v12";
 import {renderPreorder} from "./preorder.js?v=preorder-v13";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v17";
-import {renderSettings} from "./settings.js?v=settings-v3";
+import {renderSettings} from "./settings.js?v=settings-v4";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
