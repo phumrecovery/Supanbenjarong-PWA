@@ -53,37 +53,57 @@ let pinInput="";
 let homeData=null;
 let toastTimer=0;
 let audioContext=null;
+let audioUnlocking=null;
 let barcodeBuffer="";
 let barcodeTimer=0;
 
-// เสียงสั้นจาก Web Audio: ไม่ต้องโหลดไฟล์เพิ่ม และเริ่มได้หลังผู้ใช้แตะหน้าจอเท่านั้น
-// รูปแบบและลำดับโน้ตเดียวกับ bjSound ใน 03_Style.html ของ GAS เดิม
-// ปรับระดับรวมขึ้น 3 เท่าจาก PWA รุ่นก่อน โดยลดสัดส่วนจากเสียงเดิม
-// เพื่อไม่ให้ Web Audio clipping.
+// เสียงสั้นจาก Web Audio: ต้องปลดล็อก context ใน user gesture ก่อน
+// มิฉะนั้น Chrome/PWA อาจสร้าง oscillator ขณะที่ context ยัง suspended แล้วกลืนเสียงทิ้ง
+function getAudioContext(){
+  try{
+    if(!audioContext||audioContext.state==="closed")audioContext=new (window.AudioContext||window.webkitAudioContext)();
+  }catch(error){audioContext=null;}
+  return audioContext;
+}
+function unlockAudio(){
+  const context=getAudioContext();
+  if(!context)return Promise.resolve(null);
+  if(context.state==="running")return Promise.resolve(context);
+  if(!audioUnlocking){
+    audioUnlocking=context.resume().then(()=>context).catch(()=>null).finally(()=>{audioUnlocking=null;});
+  }
+  return audioUnlocking;
+}
+function scheduleTone(context,frequency,duration,volume,type,delay){
+  if(!context||context.state!=="running")return;
+  const oscillator=context.createOscillator();
+  const gain=context.createGain();
+  const start=context.currentTime+delay;
+  oscillator.type=type;oscillator.frequency.setValueAtTime(frequency,start);
+  gain.gain.setValueAtTime(0.0001,start);
+  gain.gain.exponentialRampToValueAtTime(Math.max(.0001,Math.min(.8,volume)),start+.012);
+  gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
+  oscillator.connect(gain).connect(context.destination);
+  oscillator.start(start);oscillator.stop(start+duration+.02);
+}
 function playTone(frequency,duration=.1,volume=.3,type="sine",delay=0){
   try{
-    audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)();
-    if(audioContext.state==="suspended")audioContext.resume();
-    const oscillator=audioContext.createOscillator();
-    const gain=audioContext.createGain();
-    const start=audioContext.currentTime+delay;
-    oscillator.type=type;oscillator.frequency.value=frequency;
-    gain.gain.setValueAtTime(0.0001,start);
-    gain.gain.exponentialRampToValueAtTime(Math.min(.5,volume),start+.012);
-    gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
-    oscillator.connect(gain).connect(audioContext.destination);
-    oscillator.start(start);oscillator.stop(start+duration);
+    const context=getAudioContext();
+    if(!context)return;
+    if(context.state==="running")scheduleTone(context,frequency,duration,volume,type,delay);
+    else unlockAudio().then(ready=>scheduleTone(ready,frequency,duration,volume,type,delay));
   }catch(error){}
 }
 const sound={
-  tap:()=>{const now=Date.now();if(now-(sound.lastTap||0)<60)return;sound.lastTap=now;playTone(600,.08,.375,"sine");playTone(800,.06,.23,"sine",.02);},
-  success:()=>{playTone(523,.18,.447,"sine");playTone(659,.18,.447,"sine",.12);playTone(784,.25,.296,"sine",.25);},
-  error:()=>{playTone(250,.18,.493,"sine");playTone(200,.25,.375,"sine",.1);},
-  add:()=>{playTone(880,.1,.375,"sine");playTone(1100,.08,.27,"sine",.05);},
-  notify:()=>playTone(700,.15,.296,"sine")
+  tap:()=>{const now=Date.now();if(now-(sound.lastTap||0)<60)return;sound.lastTap=now;playTone(600,.08,.57,"sine");playTone(800,.06,.35,"sine",.02);},
+  success:()=>{playTone(523,.18,.68,"sine");playTone(659,.18,.68,"sine",.12);playTone(784,.25,.45,"sine",.25);},
+  error:()=>{playTone(250,.18,.75,"sine");playTone(200,.25,.57,"sine",.1);},
+  add:()=>{playTone(880,.1,.57,"sine");playTone(1100,.08,.41,"sine",.05);},
+  notify:()=>playTone(700,.15,.45,"sine")
 };
 window.SuphanSound=sound;
-document.addEventListener("pointerdown",event=>{const button=event.target.closest("button");if(button&&!button.disabled) sound.tap();},{capture:true});
+document.addEventListener("pointerdown",event=>{unlockAudio();const button=event.target.closest("button");if(button&&!button.disabled) sound.tap();},{capture:true,passive:true});
+document.addEventListener("keydown",event=>{if(event.key!=="Tab"&&event.key!=="Shift")unlockAudio();},{capture:true});
 
 function escapeHtml(value){return String(value??"").replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
 function money(value){return (Number(value)||0).toLocaleString("th-TH");}
