@@ -5,7 +5,7 @@ import {renderExpense} from "./expense.js?v=expense-v12";
 import {renderPreorder} from "./preorder.js?v=preorder-v13";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v17";
-import {renderSettings} from "./settings.js?v=settings-v7";
+import {renderSettings} from "./settings.js?v=settings-v8";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -81,7 +81,8 @@ function scheduleTone(context,frequency,duration,volume,type,delay){
   const start=context.currentTime+delay;
   oscillator.type=type;oscillator.frequency.setValueAtTime(frequency,start);
   gain.gain.setValueAtTime(0.0001,start);
-  gain.gain.exponentialRampToValueAtTime(Math.max(.0001,Math.min(.8,volume)),start+.012);
+  // Four times the prior feedback level, capped below the Web Audio ceiling.
+  gain.gain.exponentialRampToValueAtTime(Math.max(.0001,Math.min(.98,volume*4)),start+.012);
   gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
   oscillator.connect(gain).connect(context.destination);
   oscillator.start(start);oscillator.stop(start+duration+.02);
