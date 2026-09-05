@@ -1,4 +1,6 @@
-const TABS=[['shop','🏪 ข้อมูลร้าน'],['users','👤 ผู้ใช้'],['employees','👷 ช่าง'],['packaging','📦 แพ็คเกจ'],['wages','💰 ค่าจ้าง'],['system','🔧 ระบบ'],['options','📋 ตัวเลือก'],['layout','🗺️ ผังร้าน']];
+// Intentionally hidden: packaging is retained in the API and renderer for
+// future use, but the shop does not want this tab exposed in PWA navigation.
+const TABS=[['shop','🏪 ข้อมูลร้าน'],['users','👤 ผู้ใช้'],['employees','👷 ช่าง'],['wages','💰 ค่าจ้าง'],['system','🔧 ระบบ'],['options','📋 ตัวเลือก'],['layout','🗺️ ผังร้าน']];
 const ROLES=['เจ้าของร้าน','Admin','ครอบครัว','พนักงานขาย'];
 const EMP_TYPES=['ช่างเขียนลาย','ช่างเคลือบ','ช่างปั้น','ช่างฝีมือ','คนทำหลายงาน','ช่างเผา','ช่างนอก(Outsource)','พนักงานขาย'];
 const PAY_METHODS=['รายชิ้น','รายวัน','รายครั้ง','ตามตกลง','รายเดือน'];
@@ -15,6 +17,9 @@ export function renderSettings(root,api,session,onBack,{toast}={}){
   // settings re-render, just like the legacy GAS modal controls.
   root.addEventListener('click',event=>{const button=event.target.closest('[data-settings-action]');if(!button)return;const action=button.dataset.settingsAction||'';if(action==='pkg-add'){state.modal={kind:'package'};draw();}else if(action.startsWith('pkg-edit:')){const item=(state.data.packaging||[])[Number(action.split(':')[1])];if(item){state.modal={kind:'package',item};draw();}}},{signal});
   root.addEventListener('change',async event=>{const file=event.target;if(file.id!=='mPackageImage'||!file.files||!file.files[0])return;try{const status=root.querySelector('#mPackageImageStatus');if(status)status.textContent='กำลังอัปโหลด…';const url=await upload(file.files[0],'packaging');const preview=root.querySelector('#mPackageImagePreview'),hidden=root.querySelector('#mPackageImageUrl');if(preview)preview.src=url;if(hidden)hidden.value=url;if(status)status.textContent='✅ อัปโหลดสำเร็จ';}catch(error){say('❌ '+(error.message||error));}},{signal});
+  // One delegated capture handler makes controls reliable after draw() replaces
+  // the tab DOM.  It also normalizes actions such as user-edit:0 to their data.
+  root.addEventListener('click',event=>{const control=event.target.closest('[data-settings-action]');if(!control)return;event.preventDefault();event.stopPropagation();const actionName=control.dataset.settingsAction||'';const [kind,index]=actionName.split(':');if(actionName==='pkg-add'){state.modal={kind:'package'};draw();return;}if(kind==='pkg-edit'){const item=(state.data.packaging||[])[Number(index)];if(item){state.modal={kind:'package',item};draw();}return;}const editMap={'user-edit':['users','user'],'emp-edit':['employees','emp'],'wage-edit':['wages','wage']};if(editMap[kind]){const [list,modalKind]=editMap[kind],item=(state.data[list]||[])[Number(index)];if(item){state.modal={kind:modalKind,item,status:item.status,social:!!item.socialSecurity};draw();}return;}action(actionName,{currentTarget:control});},{signal,capture:true});
   const say=message=>toast?toast(message):void 0;
   const errorOf=r=>String((r&&r.message)||(r&&r.error)||'ทำรายการไม่สำเร็จ');
   const button=(text,cls='',action='',attrs='')=>`<button type="button" class="settings-button ${cls}" data-settings-action="${esc(action)}" ${attrs}>${text}</button>`;
