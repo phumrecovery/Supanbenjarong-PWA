@@ -85,7 +85,11 @@ export class ApiClient {
   // Master data can briefly fail while the Sheet execution is cold. This call
   // is read-only, so one bounded retry is safe.
   expenseBootstrap(session){return this.request({action:"expenseBootstrap",session},30000,{retries:1,retryLogical:true});}
-  expenseTransactions(session){return this.request({action:"expenseTransactions",session});}
+  // Transaction aggregation may trigger the fixed-expense sync before reading
+  // recent records.  It is read-only and can exceed the generic 15s timeout
+  // when Apps Script is cold, so allow one safe retry instead of leaving the
+  // Receive/Pay list in its perpetual loading state.
+  expenseTransactions(session){return this.request({action:"expenseTransactions",session},45000,{retries:1,retryLogical:true});}
   expenseSupport(session){return this.request({action:"expenseSupport",session});}
   expenseAdd(session,expense){return this.request({action:"expenseAdd",session,expense});}
   expenseUpdate(session,row,expense){return this.request({action:"expenseUpdate",session,row,expense});}

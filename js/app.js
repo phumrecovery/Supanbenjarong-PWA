@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js";
+import {ApiClient} from "./api.js?v=expense-fix-v1";
 import {renderPos} from "./pos.js?v=pos-v17";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v1";
