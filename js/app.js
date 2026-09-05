@@ -5,7 +5,7 @@ import {renderExpense} from "./expense.js?v=expense-v12";
 import {renderPreorder} from "./preorder.js?v=preorder-v13";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v17";
-import {renderSettings} from "./settings.js?v=settings-v8";
+import {renderSettings} from "./settings.js?v=settings-v9";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -380,5 +380,5 @@ async function initialize(){
   }catch(error){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
-if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js?v=107").catch(()=>{});
 initialize();
