@@ -65,6 +65,15 @@ export class ApiClient {
   productUploadImage(session,row,layer,data,fileName){
     return this.request({action:"productUploadImage",session,row,layer,data,fileName},60000);
   }
+  stockBootstrap(session){
+    return this.request({action:"stockBootstrap",session},30000,{retries:1,retryLogical:true});
+  }
+  stockSaveMovement(session,data){
+    return this.request({action:"stockSaveMovement",session,data},30000);
+  }
+  stockConfirmFiring(session,rowIdx,passed,damaged){
+    return this.request({action:"stockConfirmFiring",session,rowIdx,passed,damaged},30000);
+  }
   reportBootstrap(session){return this.request({action:"reportBootstrap",session},20000,{retries:1,retryLogical:true});}
   reportDaily(session,date){return this.request({action:"reportDaily",session,date},60000,{retries:0,retryLogical:false});}
   reportMonthly(session,year,month){return this.request({action:"reportMonthly",session,year,month},60000,{retries:0,retryLogical:false});}
