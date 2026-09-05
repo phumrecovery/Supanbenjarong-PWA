@@ -74,6 +74,13 @@ export class ApiClient {
   stockConfirmFiring(session,rowIdx,passed,damaged){
     return this.request({action:"stockConfirmFiring",session,rowIdx,passed,damaged},30000);
   }
+  workshopBootstrap(session){return this.request({action:"workshopBootstrap",session},45000,{retries:1,retryLogical:true});}
+  workshopSaveJob(session,data){return this.request({action:"workshopSaveJob",session,data},45000);}
+  workshopAttendance(session,date){return this.request({action:"workshopAttendance",session,date},30000,{retries:1,retryLogical:true});}
+  workshopMonthlyAttendance(session,year,month){return this.request({action:"workshopMonthlyAttendance",session,year,month},45000,{retries:1,retryLogical:true});}
+  workshopSaveAttendance(session,data){return this.request({action:"workshopSaveAttendance",session,data},45000);}
+  workshopWageSummary(session,start,end){return this.request({action:"workshopWageSummary",session,start,end},60000,{retries:1,retryLogical:true});}
+  workshopConfirmFiring(session,rowIdx,passed,damaged){return this.request({action:"workshopConfirmFiring",session,rowIdx,passed,damaged},45000);}
   reportBootstrap(session){return this.request({action:"reportBootstrap",session},20000,{retries:1,retryLogical:true});}
   reportDaily(session,date){return this.request({action:"reportDaily",session,date},60000,{retries:0,retryLogical:false});}
   reportMonthly(session,year,month){return this.request({action:"reportMonthly",session,year,month},60000,{retries:0,retryLogical:false});}
