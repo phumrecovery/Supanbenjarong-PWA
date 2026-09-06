@@ -71,9 +71,6 @@ export class ApiClient {
   stockSaveMovement(session,data){
     return this.request({action:"stockSaveMovement",session,data},30000);
   }
-  stockConfirmFiring(session,rowIdx,passed,damaged){
-    return this.request({action:"stockConfirmFiring",session,rowIdx,passed,damaged},30000);
-  }
   workshopBootstrap(session){return this.request({action:"workshopBootstrap",session},45000,{retries:1,retryLogical:true});}
   workshopSaveJob(session,data){return this.request({action:"workshopSaveJob",session,data},45000);}
   workshopAttendance(session,date){return this.request({action:"workshopAttendance",session,date},30000,{retries:1,retryLogical:true});}
