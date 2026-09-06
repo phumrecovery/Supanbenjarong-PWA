@@ -82,6 +82,7 @@ export class ApiClient {
   workshopConfirmWagePeriod(session,start,end){return this.request({action:"workshopConfirmWagePeriod",session,start,end},60000);}
   workshopConfirmFiring(session,rowIdx,passed,damaged){return this.request({action:"workshopConfirmFiring",session,rowIdx,passed,damaged},45000);}
   workerPortalOwnerQueue(session){return this.request({action:"workerPortalOwnerQueue",session},30000,{retries:1,retryLogical:true});}
+  workerPortalConfirmToFiring(session,data){return this.request({action:"workerPortalConfirmToFiring",session,data},60000);}
   workerPortalLegacyPreview(session){return this.request({action:"workerPortalLegacyPreview",session},30000);}
   workerPortalLegacyImport(session,data){return this.request({action:"workerPortalLegacyImport",session,data},45000);}
   workerPortalBootstrap(session){return this.request({action:"workerPortalBootstrap",session},30000,{retries:1,retryLogical:true});}
