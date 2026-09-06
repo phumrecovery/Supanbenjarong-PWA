@@ -1,10 +1,11 @@
 // API boundary for PART 3. Credentials, PINs, and tokens never belong here.
 // The Worker accepts requests only from this GitHub Pages origin and signs the
 // server-to-server request before forwarding it to GAS.
-const GATEWAY_API_URL="https://suphanbenjarong-api.phum-recovery.workers.dev/api";
+const GATEWAY_API_URL=String(globalThis.SUPANBENJARONG_RUNTIME_CONFIG?.gatewayApiUrl||"").trim();
 
 export class ApiClient {
   async request(payload,timeoutMs=15000,{retries=0,retryLogical=false}={}){
+    if(!GATEWAY_API_URL)throw new Error("ยังไม่ได้ตั้งค่า API ของระบบ");
     let result;
     for(let attempt=0;attempt<=retries;attempt++){
       const controller=new AbortController();
@@ -80,6 +81,12 @@ export class ApiClient {
   workshopUpdateClosedWage(session,data){return this.request({action:"workshopUpdateClosedWage",session,data},60000);}
   workshopConfirmWagePeriod(session,start,end){return this.request({action:"workshopConfirmWagePeriod",session,start,end},60000);}
   workshopConfirmFiring(session,rowIdx,passed,damaged){return this.request({action:"workshopConfirmFiring",session,rowIdx,passed,damaged},45000);}
+  workerPortalOwnerQueue(session){return this.request({action:"workerPortalOwnerQueue",session},30000,{retries:1,retryLogical:true});}
+  workerPortalLegacyPreview(session){return this.request({action:"workerPortalLegacyPreview",session},30000);}
+  workerPortalLegacyImport(session,data){return this.request({action:"workerPortalLegacyImport",session,data},45000);}
+  workerPortalBootstrap(session){return this.request({action:"workerPortalBootstrap",session},30000,{retries:1,retryLogical:true});}
+  workerPortalCreateJob(session,data){return this.request({action:"workerPortalCreateJob",session,data},30000);}
+  workerPortalSubmit(session,data){return this.request({action:"workerPortalSubmit",session,data},60000);}
   reportBootstrap(session){return this.request({action:"reportBootstrap",session},20000,{retries:1,retryLogical:true});}
   reportDaily(session,date){return this.request({action:"reportDaily",session,date},60000,{retries:0,retryLogical:false});}
   reportMonthly(session,year,month){return this.request({action:"reportMonthly",session,year,month},60000,{retries:0,retryLogical:false});}

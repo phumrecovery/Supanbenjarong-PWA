@@ -23,6 +23,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # The gateway URL is deployment configuration, never source code. Set
+      # PWA_GATEWAY_API_URL as a GitHub Pages environment variable.
+      - name: Write runtime API configuration
+        env:
+          PWA_GATEWAY_API_URL: ${{ vars.PWA_GATEWAY_API_URL }}
+        run: |
+          test -n "$PWA_GATEWAY_API_URL"
+          printf 'globalThis.SUPANBENJARONG_RUNTIME_CONFIG={gatewayApiUrl:%s};\n' "$(node -p 'JSON.stringify(process.argv[1])' "$PWA_GATEWAY_API_URL")" > js/runtime-config.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
