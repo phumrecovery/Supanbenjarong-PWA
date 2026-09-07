@@ -1,4 +1,4 @@
-const CACHE="suphan-worker-v1";
+const CACHE="suphan-worker-v2";
 const SHELL=["./","./index.html","./worker.css","./worker.js","./manifest.webmanifest","../js/api.js","../js/runtime-config.js","../assets/icon-192.png","../assets/icon-512.png"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
