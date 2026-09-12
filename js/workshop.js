@@ -115,6 +115,8 @@ function bind(root){
     if(S.periodOpen&&!ev.target.closest(".pwa-period-picker")){S.periodOpen=false;root.querySelector(".pwa-period-menu")?.remove();root.querySelector(".pwa-period-trigger")?.setAttribute("aria-expanded","false");return;}
     if(ev.target.classList?.contains("pwa-workshop-modal")){
       if(S.handoffConfirm&&!S.handoffSaving)S.handoffConfirm=null;
+      else if(S.handoffPicker)S.handoffPicker=null;
+      else if(S.handoffEdit)S.handoffEdit=null;
       else if(S.wageEdit&&!S.wageEditSaving)S.wageEdit=null;
       else if(S.wagePrint)S.wagePrint=false;
       else if(S.wageConfirm&&!S.wageConfirming)S.wageConfirm=false;
