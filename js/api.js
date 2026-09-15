@@ -90,6 +90,10 @@ export class ApiClient {
   workerPortalBootstrap(session){return this.request({action:"workerPortalBootstrap",session},30000,{retries:1,retryLogical:true});}
   workerPortalCreateJob(session,data){return this.request({action:"workerPortalCreateJob",session,data},30000);}
   workerPortalSubmit(session,data){return this.request({action:"workerPortalSubmit",session,data},60000);}
+  workerPortalUpdateJob(session,data){return this.request({action:"workerPortalUpdateJob",session,data},30000);}
+  workerPortalDeleteJob(session,data){return this.request({action:"workerPortalDeleteJob",session,data},30000);}
+  workerPortalUpdatePendingSubmission(session,data){return this.request({action:"workerPortalUpdatePendingSubmission",session,data},60000);}
+  workerPortalDeletePendingJob(session,data){return this.request({action:"workerPortalDeletePendingJob",session,data},30000);}
   reportBootstrap(session){return this.request({action:"reportBootstrap",session},20000,{retries:1,retryLogical:true});}
   reportDaily(session,date){return this.request({action:"reportDaily",session,date},60000,{retries:0,retryLogical:false});}
   reportMonthly(session,year,month){return this.request({action:"reportMonthly",session,year,month},60000,{retries:0,retryLogical:false});}
