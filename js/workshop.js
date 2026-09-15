@@ -1,6 +1,9 @@
 // UI adapter only.  08_Workshop.gs remains the source of truth for all wages,
 // attendance, stock deduction and LockService-protected mutations.
 const S={api:null,token:"",back:null,toast:()=>{},data:null,tab:"assign",step:"เขียนลายน้ำทอง",pick:false,pickQ:"",chosen:null,day:"",daily:{},months:{},wages:{},handoff:null,handoffConfirm:null,handoffReview:null,handoffPhoto:null,handoffEdit:null,handoffPicker:null,handoffDraft:{},handoffSaving:false,wageMode:"half",wageView:"table",wageKey:"",periodOpen:false,saving:false,wageConfirm:false,wageConfirming:false,wageEdit:null,wageEditSaving:false,wagePrint:false};
+// Keep in sync with WORKSHOP_FIRING_MODE_ in GAS.  Manual controls stay in
+// source below so the shop can safely re-enable the previous queue later.
+const FIRING_AUTO_STOCK=true;
 const e=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 const m=v=>(Number(v)||0).toLocaleString("th-TH");
 const handoffDate=v=>{const s=String(v||"").trim();return s?s.replace(/^([^T\s]+)[T\s].*$/,"$1"):"-";};
@@ -67,6 +70,7 @@ async function loadWage(root){const periodMode=S.wageMode==="person"?(S.personPe
 /* Override the first-pass compact views with the same information hierarchy as GAS. */
 function firing(){
   const rows=S.data?.firing||[];
+  if(FIRING_AUTO_STOCK)return `<section class="pwa-firing-wrap"><div class="pwa-workshop-title"><h2>🔥 คิวเผา</h2></div><div class="pwa-handoff-note"><b>⚙️ ระบบรับเข้าสต๊อกอัตโนมัติทำงานอยู่</b><br>ปิดการบันทึกผลเผาผ่านผู้ใช้ชั่วคราว — เมื่อยืนยันงานช่าง ระบบจะบันทึกผ่าน QC และรับเข้าปลายทางอัตโนมัติ</div>${rows.length?`<p class="pwa-workshop-empty">มี ${m(rows.length)} รายการค้างตรวจสอบในประวัติคิวเผา โปรดติดต่อผู้ดูแลก่อนเปิดโหมดบันทึกเอง</p>`:'<p class="pwa-workshop-empty">ไม่มีงานค้างในคิวเผา</p>'}</section>`;
   return `<section class="pwa-firing-wrap"><div class="pwa-workshop-title"><h2>🔥 คิวเผา</h2></div><div class="pwa-firing-list">${rows.length?rows.map(x=>{
     const pre=String(x.destination||"")==="Preorder",qty=Number(x.qty)||0;
     return `<article class="pwa-firing-card" data-row="${Number(x.row)}" data-qty="${qty}"><div class="pwa-firing-card-head"><div><div class="pwa-firing-card-name">${e(x.product||"")}</div><div class="pwa-firing-card-code">${e(x.id||"")}${x.finishedSku?` · ${e(x.finishedSku)}`:""}</div><div class="pwa-firing-destination ${pre?"preorder":"shop"}">${pre?`📋 งาน Preorder${x.preorderNo?` · ${e(x.preorderNo)}`:""}`:"🏪 เข้าสต๊อกร้าน"}</div></div><div class="pwa-firing-card-qty">รอเผา ${m(qty)} ชิ้น</div></div>${pre?`<div class="pwa-firing-preorder">${x.preorderNo?`อ้างอิง: ${e(x.preorderNo)}`:""}${x.trackingId?`${x.preorderNo?"<br>":""}รหัสติดตาม: ${e(x.trackingId)}`:""}${x.specialDetail?`<br>งานพิเศษ: ${e(x.specialDetail)}`:""}</div>`:""}<div class="pwa-firing-note ${pre?"preorder":"shop"}">${pre?"ผลผ่านจะบันทึกเข้า Preorder โดยไม่เพิ่มสต๊อกร้าน":"ผลผ่านจะรับเข้าสต๊อกสินค้าสำเร็จ"}</div><div class="pwa-firing-result-grid"><label class="pwa-firing-result-box pass"><span>✅ ผ่าน</span><input data-k="pass" type="number" min="0" max="${qty}" value="${qty}" inputmode="numeric"></label><label class="pwa-firing-result-box damage"><span>❌ เสีย</span><input data-k="damaged" type="number" min="0" max="${qty}" value="0" inputmode="numeric"></label></div><button class="pwa-firing-confirm-btn" data-a="fire">✅ ยืนยันหลังเปิดเตา</button></article>`;
