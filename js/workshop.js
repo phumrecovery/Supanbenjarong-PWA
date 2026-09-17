@@ -137,7 +137,7 @@ function bind(root){
     if(a==="saveHandoffEdit"){saveHandoffEdit(root);return;}
     if(a==="handoffPhoto"){S.handoffPhoto=button.dataset.url||null;render(root);return;}
     if(a==="closeHandoffPhoto"){S.handoffPhoto=null;render(root);return;}
-    if(a==="openHandoffReviewPicker"){S.handoffReviewPicker={kind:button.dataset.kind,jobId:button.dataset.job,submissionId:button.dataset.sub,query:""};render(root);setTimeout(()=>root.querySelector("#handoffReviewPickerSearch")?.focus(),0);return;}
+    if(a==="openHandoffReviewPicker"){const card=(S.handoff?.cards||[]).find(x=>String(x.id)===String(button.dataset.job))||{};S.handoffReviewPicker={kind:button.dataset.kind,jobId:button.dataset.job,submissionId:button.dataset.sub,query:String(card.product||"").trim()};render(root);setTimeout(()=>root.querySelector("#handoffReviewPickerSearch")?.focus(),0);return;}
     if(a==="closeHandoffReviewPicker"){S.handoffReviewPicker=null;render(root);return;}
     if(a==="showAllHandoffReviewPicker"){if(S.handoffReviewPicker){S.handoffReviewPicker.query="";render(root);root.querySelector("#handoffReviewPickerSearch")?.focus();}return;}
     if(a==="chooseHandoffReviewPicker"){const state=S.handoffReviewPicker;if(state){const draft=handoffReviewDraft(state.submissionId);if(state.kind==="whiteware")draft.whitewareSku=button.dataset.key||"";else draft.finishedSku=button.dataset.key||"";S.handoffReviewPicker=null;render(root);}return;}
