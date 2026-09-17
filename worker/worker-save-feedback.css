@@ -1,0 +1,4 @@
+/* Immediate feedback for every worker data mutation. */
+button.is-saving { cursor: wait; opacity: .9; }
+button.is-saving::before { content: ""; display: inline-block; width: 13px; height: 13px; margin-right: 7px; border: 2px solid rgba(255, 255, 255, .45); border-top-color: #fff; border-radius: 50%; vertical-align: -1px; animation: worker-button-spin .7s linear infinite; }
+@keyframes worker-button-spin { to { transform: rotate(360deg); } }
