@@ -9,7 +9,7 @@ export class ApiClient {
     let result;
     for(let attempt=0;attempt<=retries;attempt++){
       const controller=new AbortController();
-      const timeout=setTimeout(()=>controller.abort(),timeoutMs);
+      const timeout=setTimeout(()=>controller.abort("REQUEST_TIMEOUT"),timeoutMs);
       try{
         const response=await fetch(GATEWAY_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),cache:"no-store",signal:controller.signal});
         if(!response.ok)throw new Error(`Gateway ตอบกลับ ${response.status}`);
@@ -17,7 +17,12 @@ export class ApiClient {
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
       }catch(error){
-        if(attempt>=retries)throw error;
+        // Chrome reports a timed-out AbortController as "signal is aborted
+        // without reason" on some Android builds.  Do not expose that
+        // browser-internal message to shop staff.
+        const timedOut=controller.signal.aborted;
+        const normalized=timedOut?new Error("การเชื่อมต่อใช้เวลานานเกินไป โปรดลองอีกครั้ง"):error;
+        if(attempt>=retries)throw normalized;
         await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
       }finally{clearTimeout(timeout);}
     }
@@ -29,7 +34,9 @@ export class ApiClient {
     return payload;
   }
   login(pin){
-    return this.request({action:"login",pin});
+    // Login is read-only and safe to retry. GAS can be cold for a few seconds;
+    // worker phones must not be thrown back to the PIN screen in that case.
+    return this.request({action:"login",pin},45000,{retries:1,retryLogical:true});
   }
   bootstrap(session){
     return this.request({action:"bootstrap",session});
