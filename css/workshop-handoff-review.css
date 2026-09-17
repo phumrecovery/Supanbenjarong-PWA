@@ -1,0 +1,12 @@
+.pwa-handoff-job-context{margin:3px 0 10px;color:var(--text-sub)}
+.pwa-handoff-job-context b{color:var(--primary-dark)}
+.pwa-handoff-route{display:grid;gap:3px;margin:10px 0;padding:10px 12px;border-radius:10px;border:1px solid #b9d9c0;background:#eef9ef}
+.pwa-handoff-route.fire{border-color:#f1c3aa;background:#fff4ed}
+.pwa-handoff-route b{font-size:16px}
+.pwa-handoff-route span{font-size:12px;color:var(--text-sub)}
+.pwa-handoff-review-fields{display:grid;gap:8px;margin:10px 0}
+.pwa-handoff-review-fields label{display:grid;gap:5px;font-weight:700;color:var(--primary-dark)}
+.pwa-handoff-review-fields small{font-size:12px;color:var(--text-sub);font-weight:500}
+.pwa-handoff-review-fields select{min-height:42px;border:1px solid #d9c3a8;border-radius:9px;background:#fff;padding:8px;font:inherit;color:var(--text)}
+.pwa-handoff-review-fields .pwa-handoff-picker-button{min-height:43px!important;text-align:left!important;justify-content:space-between!important;background:#fff!important;color:var(--text)!important;border:1px solid #d9c3a8!important;font-size:14px!important}
+.pwa-handoff-review-fields .pwa-handoff-picker-button span{margin-left:auto;font-size:20px;color:var(--primary-dark)}
