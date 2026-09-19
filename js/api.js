@@ -95,6 +95,8 @@ export class ApiClient {
   workshopSetFiringMode(session,mode){return this.request({action:"workshopSetFiringMode",session,mode},30000);}
   workerPortalOwnerQueue(session){return this.request({action:"workerPortalOwnerQueue",session},30000,{retries:1,retryLogical:true});}
   workerPortalOwnerUpdate(session,data){return this.request({action:"workerPortalOwnerUpdate",session,data},45000);}
+  workerPortalOwnerReturn(session,data){return this.request({action:"workerPortalOwnerReturn",session,data},45000);}
+  workerPortalOwnerCancel(session,data){return this.request({action:"workerPortalOwnerCancel",session,data},45000);}
   workerPortalConfirmToFiring(session,data){return this.request({action:"workerPortalConfirmToFiring",session,data},60000);}
   workerPortalLegacyPreview(session){return this.request({action:"workerPortalLegacyPreview",session},30000);}
   workerPortalLegacyImport(session,data){return this.request({action:"workerPortalLegacyImport",session,data},45000);}

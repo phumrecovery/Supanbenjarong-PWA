@@ -1,9 +1,9 @@
 /* Owner review: inspect worker photos without leaving the PWA. */
 .pwa-handoff-photo-dialog{width:min(1040px,calc(100vw - 28px))}
 .pwa-photo-zoom-help{margin:0 0 10px;color:var(--text-sub);font-size:13px}
-.pwa-handoff-photo-stage{display:grid;place-items:center;min-height:300px;max-height:calc(100vh - 245px);overflow:auto;overscroll-behavior:contain;border:1px solid #ead6c2;border-radius:12px;background:#fff;cursor:zoom-in;outline:none}
+.pwa-handoff-photo-stage{display:block;min-height:300px;max-height:calc(100vh - 245px);overflow:auto;overscroll-behavior:contain;border:1px solid #ead6c2;border-radius:12px;background:#fff;cursor:grab;outline:none}
 .pwa-handoff-photo-stage:focus-visible{box-shadow:0 0 0 3px #c48b4d66}
-.pwa-handoff-photo-stage img{display:block;width:calc(100% * var(--handoff-photo-zoom));max-width:none;min-width:100%;height:auto;transition:width .12s ease}
+.pwa-handoff-photo-stage img{display:block;max-width:none;min-width:0;height:auto;user-select:none;transition:width .12s ease}
 .pwa-photo-zoom-controls{display:flex;align-items:center;gap:8px;margin:11px 0}
 .pwa-photo-zoom-controls button{min-width:42px;min-height:38px;border:1px solid #c48b4d;border-radius:9px;background:#fff8ef;color:var(--primary-dark);font:800 16px var(--font);cursor:pointer}
 .pwa-photo-zoom-controls button:last-of-type{padding:0 12px;font-size:13px}
