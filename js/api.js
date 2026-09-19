@@ -12,7 +12,11 @@ export class ApiClient {
       const timeout=setTimeout(()=>controller.abort("REQUEST_TIMEOUT"),timeoutMs);
       try{
         const response=await fetch(GATEWAY_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),cache:"no-store",signal:controller.signal});
-        if(!response.ok)throw new Error(`Gateway ตอบกลับ ${response.status}`);
+        if(!response.ok){
+          const error=new Error(response.status>=500?"การเชื่อมต่อกับระบบขัดข้องชั่วคราว":`เชื่อมต่อระบบไม่สำเร็จ (${response.status})`);
+          error.code=`HTTP_${response.status}`;
+          throw error;
+        }
         result=await response.json();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
