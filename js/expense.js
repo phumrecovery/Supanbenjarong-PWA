@@ -19,7 +19,7 @@ const matByCode=(d,mode,code)=>(mode==="ของขาว"?d.whitewares:d.rawMa
 export async function renderExpense(root,api,session,onBack,context={}){
   runtime={api,session,back:onBack,toast:context.toast||(()=>{}),root,user:(context.displayUser||{}).name||""};
   const appHeader=document.querySelector("#appHeader");if(appHeader){appHeader.setAttribute("hidden","");appHeader.style.display="none";}
-  if(!state.data){state.loading=true;draw();try{const r=await api.expenseBootstrap(session);if(!r.ok)throw new Error(r.message||"โหลดข้อมูลไม่สำเร็จ");state.data=r.result||{};}catch(error){root.innerHTML=`<section class="expense-failure"><h1>เปิดหน้าค่าใช้จ่ายไม่สำเร็จ</h1><p>${esc(error.message||error)}</p><button data-exp="back">← กลับ</button></section>`;root.onclick=evt=>onClick(evt);return;}finally{state.loading=false;}draw();queueTransactions();queueSupport();return;}
+  if(!state.data){state.loading=true;draw();try{const r=await api.expenseBootstrap(session);if(!r.ok)throw new Error(r.message||"โหลดข้อมูลไม่สำเร็จ");state.data=r.result||{};}catch(error){if(!active())return;root.innerHTML=`<section class="expense-failure"><h1>เปิดหน้าค่าใช้จ่ายไม่สำเร็จ</h1><p>${esc(error.message||error)}</p><button data-exp="back">← กลับ</button></section>`;root.onclick=evt=>onClick(evt);return;}finally{state.loading=false;}draw();queueTransactions();queueSupport();return;}
   // Render cached master data immediately, then quietly revalidate it.
   draw();
   api.expenseBootstrap(session).then(r=>{if(r.ok&&runtime.root===root){state.data={...state.data,...(r.result||{})};draw();queueTransactions();queueSupport();}}).catch(()=>{});
@@ -55,7 +55,8 @@ function queueSupport(renderWhenReady=false){
   return state.supportPromise;
 }
 
-function draw(){const root=runtime.root,d=state.data||{},sum=state.summaryCache[summaryKey(state.month,state.year)]||state.summary||d.summary||{};root.innerHTML=`
+const active=()=>runtime.root?.isConnected&&runtime.root.dataset.route==="expense";
+function draw(){if(!active())return;const root=runtime.root,d=state.data||{},sum=state.summaryCache[summaryKey(state.month,state.year)]||state.summary||d.summary||{};root.innerHTML=`
   <section class="expense-page">
     <header class="expense-top"><button class="expense-back" data-exp="back">← กลับ</button><h1>💸 ค่าใช้จ่าย</h1></header>
     <nav class="expense-tabs">${[[0,"📝 รับ-จ่าย"],[1,"🏠 ค่าใช้ประจำเดือน"],[2,"💰 เงินลงทุน"],[3,"📊 สรุปรายเดือน"]].map(([i,t])=>`<button class="expense-tab ${state.tab===i?"active":""}" data-exp="tab" data-tab="${i}">${t}</button>`).join("")}</nav>

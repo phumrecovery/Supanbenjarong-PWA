@@ -1,13 +1,13 @@
 import {ApiClient} from "./api.js?v=api-v3";
-import {renderPos} from "./pos.js?v=pos-v17";
+import {renderPos} from "./pos.js?v=pos-v18";
 import {renderProduct} from "./product.js";
-import {renderStock} from "./stock.js?v=stock-v3";
-import {renderExpense} from "./expense.js?v=expense-v12";
-import {renderPreorder} from "./preorder.js?v=preorder-v13";
+import {renderStock} from "./stock.js?v=stock-v4";
+import {renderExpense} from "./expense.js?v=expense-v13";
+import {renderPreorder} from "./preorder.js?v=preorder-v14";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v17";
-import {renderSettings} from "./settings.js?v=settings-v9";
-import {renderWorkshop} from "./workshop.js?v=workshop-v19";
+import {renderSettings} from "./settings.js?v=settings-v10";
+import {renderWorkshop} from "./workshop.js?v=workshop-v20";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -141,6 +141,9 @@ sidebar.addEventListener("click",event=>{
 });
 
 function showLogin(message=""){
+  main.dataset.route="login";
+  main._settingsAbort?.abort();
+  main.onclick=main.oninput=main.onchange=main.onsubmit=null;
   closeSidebar();
   setShell(false);
   pinInput="";
@@ -272,6 +275,9 @@ function render(route,{animate=true,direction}={}){
   route=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
   route=allowedStartRoute(route);
   const travel=direction||pageDirection(route);activeRoute=route;if(animate)animatePage(travel);
+  main._settingsAbort?.abort();
+  main.onclick=main.oninput=main.onchange=main.onsubmit=null;
+  document.querySelector("#preorder-modal-portal")?.replaceChildren();
   main.dataset.route=route;
   // A module may add viewport-pinned actions. Never let those controls leak
   // into another route (especially the POS command bar).

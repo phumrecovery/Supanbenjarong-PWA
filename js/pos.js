@@ -11,7 +11,7 @@ export async function renderPos(root,api,session,onBack,context={}){
   if(header){header.hidden=true;header.style.display="none";}
   if(!state.data){
     root.innerHTML='<section class="pos-loading"><span class="spinner"></span><p>กำลังโหลดข้อมูล...</p></section>';
-    try{state.data=await api.posBootstrap(session);}catch(error){root.innerHTML='<section class="card"><h1>เปิดหน้าขายของไม่สำเร็จ</h1><p class="hint">ไม่สามารถโหลดสินค้าหน้าร้านได้ โปรดลองใหม่อีกครั้ง</p></section>';return;}
+    try{state.data=await api.posBootstrap(session);}catch(error){if(!root.isConnected||root.dataset.route!=="sales")return;root.innerHTML='<section class="card"><h1>เปิดหน้าขายของไม่สำเร็จ</h1><p class="hint">ไม่สามารถโหลดสินค้าหน้าร้านได้ โปรดลองใหม่อีกครั้ง</p></section>';return;}
   }
   draw(root);
   const pending=sessionStorage.getItem("suphanbenjarong.pwa.pending-barcode")||"";
@@ -19,6 +19,7 @@ export async function renderPos(root,api,session,onBack,context={}){
 }
 
 function draw(root){
+  if(!root.isConnected||root.dataset.route!=="sales")return;
   const data=state.data;
   if(!data||!data.ok){root.innerHTML='<section class="card"><h1>เปิด POS ไม่สำเร็จ</h1><p class="hint">ไม่พบข้อมูลสินค้าสำหรับผู้ใช้นี้</p></section>';return;}
   const family=runtime.level==="family";
