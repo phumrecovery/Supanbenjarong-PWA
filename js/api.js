@@ -46,7 +46,9 @@ export class ApiClient {
     return this.request({action:"bootstrap",session});
   }
   posBootstrap(session){
-    return this.request({action:"posBootstrap",session});
+    // POS loads the complete sellable-product and packaging catalog.  A GAS
+    // cold start can legitimately exceed the generic 15-second request limit.
+    return this.request({action:"posBootstrap",session},45000,{retries:2,retryLogical:true});
   }
   posCategoryOrder(session,categories){
     return this.request({action:"posCategoryOrder",session,categories},30000);

@@ -11,7 +11,7 @@ export async function renderPos(root,api,session,onBack,context={}){
   if(header){header.hidden=true;header.style.display="none";}
   if(!state.data){
     root.innerHTML='<section class="pos-loading"><span class="spinner"></span><p>กำลังโหลดข้อมูล...</p></section>';
-    try{state.data=await api.posBootstrap(session);}catch(error){if(!root.isConnected||root.dataset.route!=="sales")return;root.innerHTML='<section class="card"><h1>เปิดหน้าขายของไม่สำเร็จ</h1><p class="hint">ไม่สามารถโหลดสินค้าหน้าร้านได้ โปรดลองใหม่อีกครั้ง</p></section>';return;}
+    try{state.data=await api.posBootstrap(session);}catch(error){if(!root.isConnected||root.dataset.route!=="sales")return;root.innerHTML='<section class="card pos-load-failure"><h1>เปิดหน้าขายของไม่สำเร็จ</h1><p class="hint">ไม่สามารถโหลดสินค้าหน้าร้านได้ โปรดลองใหม่อีกครั้ง</p><button type="button" data-pos-retry>ลองโหลดอีกครั้ง</button></section>';root.querySelector("[data-pos-retry]")?.addEventListener("click",()=>{state.data=null;void renderPos(root,api,session,onBack,context);});return;}
   }
   draw(root);
   const pending=sessionStorage.getItem("suphanbenjarong.pwa.pending-barcode")||"";
