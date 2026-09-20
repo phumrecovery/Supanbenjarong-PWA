@@ -7,3 +7,12 @@
 .pwa-stock-dialog .pwa-stock-seg{flex:0 0 auto;overflow-x:auto;overflow-y:hidden;margin:0 0 12px;padding-bottom:4px}
 .pwa-stock-dialog .pwa-stock-search{flex:0 0 auto;margin:0 0 12px}
 .pwa-stock-dialog .pwa-stock-picker-list{min-height:0;flex:1 1 auto}
+.pwa-stock-row-actions{display:flex;gap:6px;flex:none}
+.pwa-stock-row-actions button{width:34px;height:34px;border:1.5px solid #e7dccb;border-radius:10px;font:800 22px/1 inherit;cursor:pointer}
+.pwa-stock-row-actions button.in{color:#16703d;background:#e8f5ee;border-color:#b9dfc8}
+.pwa-stock-row-actions button.out{color:#b42318;background:#fbeceb;border-color:#efc3be}
+.pwa-stock-quick-product{padding:12px;border:1px solid #f1e9dc;border-radius:12px;background:#faf5ee}
+.pwa-stock-quick-product strong{display:block}
+.pwa-stock-quick-product small{display:block;margin-top:3px;color:#8c7c6b}
+.pwa-stock-quick-modal .pwa-stock-save.out{background:#b42318}
+@media(max-width:420px){.pwa-stock-product{gap:8px}.pwa-stock-product-icon{width:34px;height:34px}.pwa-stock-row-actions{gap:4px}.pwa-stock-row-actions button{width:31px;height:31px}.pwa-stock-balance{min-width:45px;padding:7px 6px}}
