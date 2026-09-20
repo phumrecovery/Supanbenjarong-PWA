@@ -91,6 +91,7 @@ export class ApiClient {
   workshopMonthlyAttendance(session,year,month){return this.request({action:"workshopMonthlyAttendance",session,year,month},45000,{retries:1,retryLogical:true});}
   workshopSaveAttendance(session,data){return this.request({action:"workshopSaveAttendance",session,data},45000);}
   workshopWageSummary(session,start,end){return this.request({action:"workshopWageSummary",session,start,end},60000,{retries:1,retryLogical:true});}
+  workshopRecordAdvanceSettlement(session,data){return this.request({action:"workshopRecordAdvanceSettlement",session,data},60000);}
   workshopUpdateClosedWage(session,data){return this.request({action:"workshopUpdateClosedWage",session,data},60000);}
   workshopConfirmWagePeriod(session,start,end){return this.request({action:"workshopConfirmWagePeriod",session,start,end},60000);}
   workshopConfirmFiring(session,rowIdx,passed,damaged){return this.request({action:"workshopConfirmFiring",session,rowIdx,passed,damaged},45000);}

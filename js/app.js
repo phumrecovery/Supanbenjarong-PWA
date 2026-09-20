@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v4";
+import {ApiClient} from "./api.js?v=api-v5";
 import {renderPos} from "./pos.js?v=pos-v19";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
@@ -7,7 +7,7 @@ import {renderPreorder} from "./preorder.js?v=preorder-v15";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v17";
 import {renderSettings} from "./settings.js?v=settings-v10";
-import {renderWorkshop} from "./workshop.js?v=workshop-v22";
+import {renderWorkshop} from "./workshop.js?v=workshop-v23";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
