@@ -7,7 +7,7 @@ import {renderPreorder} from "./preorder.js?v=preorder-v15";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v17";
 import {renderSettings} from "./settings.js?v=settings-v10";
-import {renderWorkshop} from "./workshop.js?v=workshop-v23";
+import {renderWorkshop} from "./workshop.js?v=workshop-v24";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
