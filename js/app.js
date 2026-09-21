@@ -290,7 +290,7 @@ function render(route,{animate=true,direction}={}){
   // POS มีแถบคำสั่งเฉพาะของตนเอง จึงไม่ซ้อนกับ header หลักของ App Shell.
   // POS and Product Management each own a dedicated, pinned command bar.
   // Keeping the Home App Shell off these screens prevents stacked headers.
-  setShell(route!=="sales"&&route!=="workshop"&&route!=="product"&&route!=="stock"&&route!=="expense"&&route!=="preorder"&&route!=="outsource"&&route!=="report"&&route!=="settings");
+  setShell(route!=="sales"&&route!=="workshop"&&route!=="product"&&route!=="stock"&&route!=="expense"&&route!=="preorder"&&route!=="outsource"&&route!=="report"&&route!=="settings"&&route!=="claim");
   main.classList.toggle("pos-main",route==="sales");
   main.classList.toggle("product-main",route==="product");
   main.classList.toggle("stock-main",route==="stock");
