@@ -399,5 +399,5 @@ async function initialize(){
   }catch(error){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
-if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js?v=116").catch(()=>{});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js?v=117").catch(()=>{});
 initialize();
