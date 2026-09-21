@@ -8,6 +8,7 @@ import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v10";
 import {renderWorkshop} from "./workshop.js?v=workshop-v24";
+import {renderClaim} from "./claim.js?v=claim-v1";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -37,6 +38,7 @@ const MENU=[
   ["settings","⚙️","ตั้งค่าร้าน","ข้อมูลร้าน / ผู้ใช้ / พนักงาน"]
 ];
 const PAGES={
+  claim:["🔄 รับคืน/เคลม","บันทึกรับคืนและดำเนินการเคลม"],
   workshop:["🖌️ จัดการงานช่าง","กำลังย้ายหน้าจ่ายงานช่างจาก Web App เดิม"],
   outsource:["🚚 สั่งของ/รับของ","กำลังย้ายข้อมูล Outsource และรับสินค้า"],
   expense:["💸 ค่าใช้จ่าย","กำลังย้ายรายการรับ-จ่ายโดยยังคง validation เดิม"],
@@ -135,8 +137,11 @@ sidebarOverlay.addEventListener("click",closeSidebar);
 sidebar.addEventListener("click",event=>{
   const item=event.target.closest("[data-sidebar-route]");
   if(!item)return;
+  item.classList.add("pressed");
+  setTimeout(()=>item.classList.remove("pressed"),180);
   closeSidebar();
   if(item.dataset.sidebarRoute==="refresh"){homeData=null;render("home",{animate:true});return;}
+  if(item.dataset.sidebarRoute==="claim"){navigate("claim",{animate:true});return;}
   showToast("เมนูนี้กำลังย้ายจาก Web App เดิม");
 });
 
@@ -295,8 +300,10 @@ function render(route,{animate=true,direction}={}){
   main.classList.toggle("report-main",route==="report");
   main.classList.toggle("settings-main",route==="settings");
   main.classList.toggle("workshop-main",route==="workshop");
+  main.classList.toggle("claim-main",route==="claim");
   if(route==="sales"){renderPos(main,api,sessionToken,()=>hasFamilyAccess()?navigate("home"):void returnLimitedPosToLogin(),{...(currentSession||{}),displayUser});return;}
   if(route==="workshop"){renderWorkshop(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
+  if(route==="claim"){renderClaim(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="product"){renderProduct(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
   if(route==="stock"){renderStock(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="expense"){renderExpense(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
