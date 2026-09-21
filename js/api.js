@@ -145,6 +145,7 @@ export class ApiClient {
   outsourceReceiveSave(session,data){return this.request({action:"outsourceReceiveSave",session,data},30000);}
   outsourceUploadImage(session,data,fileName){return this.request({action:"outsourceUploadImage",session,data,fileName},60000);}
   claimBootstrap(session){return this.request({action:"claimBootstrap",session},45000,{retries:1,retryLogical:true});}
+  claimSupport(session){return this.request({action:"claimSupport",session},45000,{retries:1,retryLogical:true});}
   claimSave(session,data){return this.request({action:"claimSave",session,data},60000);}
   claimComplete(session,rowIdx){return this.request({action:"claimComplete",session,rowIdx},60000);}
   preorderBootstrap(session){return this.request({action:"preorderBootstrap",session},30000);}
