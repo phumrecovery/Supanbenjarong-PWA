@@ -24,6 +24,8 @@ const floatingLayer=document.querySelector("#floatingLayer");
 const SESSION_KEY="suphanbenjarong.pwa.session";
 const DISPLAY_USER_KEY="suphanbenjarong.pwa.display-user";
 const PENDING_BARCODE_KEY="suphanbenjarong.pwa.pending-barcode";
+const LOGIN_PREVIEW_KEY="suphanbenjarong.pwa.family-login-preview";
+const LOGIN_PREVIEW_TTL=15*60*1000;
 // URL เดียวกับ Web App เดิม เพื่อให้ก่อนโหลดข้อมูลร้าน PWA ยังใช้ตราร้านจริง
 const LOGO_FALLBACK="https://lh3.googleusercontent.com/d/18rwkqytClqwNtg0PReV1ILLFwkiIKa01";
 const MENU=[
@@ -60,6 +62,25 @@ let audioContext=null;
 let audioUnlocking=null;
 let barcodeBuffer="";
 let barcodeTimer=0;
+
+function readLoginPreview(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(LOGIN_PREVIEW_KEY)||"null");
+    const users=Array.isArray(saved?.users)?saved.users:[];
+    if(!users.length||Date.now()-Number(saved?.savedAt||0)>LOGIN_PREVIEW_TTL)return [];
+    return users.map(user=>({name:String(user?.name||""),role:String(user?.role||"")})).filter(user=>user.name);
+  }catch(error){return [];}
+}
+function saveLoginPreview(users){
+  try{
+    const safe=(Array.isArray(users)?users:[]).map(user=>({name:String(user?.name||""),role:String(user?.role||"")})).filter(user=>user.name);
+    if(safe.length)localStorage.setItem(LOGIN_PREVIEW_KEY,JSON.stringify({savedAt:Date.now(),users:safe}));
+  }catch(error){}
+}
+function preloadHomeData(token){
+  if(!token||homeData)return;
+  api.homeBootstrap(token).then(data=>{if(data?.ok)homeData=data;}).catch(()=>{});
+}
 
 // เสียงสั้นจาก Web Audio: ต้องปลดล็อก context ใน user gesture ก่อน
 // มิฉะนั้น Chrome/PWA อาจสร้าง oscillator ขณะที่ context ยัง suspended แล้วกลืนเสียงทิ้ง
@@ -154,9 +175,10 @@ function showLogin(message=""){
   pinInput="";
   main.innerHTML=`<section class="login-screen" aria-label="เข้าสู่ระบบ"><img class="login-logo" src="${LOGO_FALLBACK}" alt="โลโก้สุพรรณบุรีเบญจรงค์"><h1 class="login-title">สุพรรณบุรีเบญจรงค์</h1><p class="login-sub">ใส่รหัส 6 หลัก</p><div id="pinDots" class="pin-dots" aria-label="รหัส PIN"></div><div id="pinPad" class="pin-pad"></div><p id="pinError" class="pin-error" aria-live="polite">${escapeHtml(message)}</p></section>`;
   renderPin();
-  // Start the lightweight health request while the user is entering six
-  // digits.  The GAS endpoint warms its user-list cache in the background.
-  api.health().catch(()=>{});
+  // Start the lightweight health request while the user enters six digits.
+  // It refreshes display-only family-name hints; PINs and tokens are never
+  // stored in this browser cache.
+  api.health().then(result=>saveLoginPreview(result?.loginHints?.family)).catch(()=>{});
 }
 
 function renderPin(){
@@ -180,21 +202,27 @@ function enterPin(key){
 
 async function submitPin(){
   const error=document.querySelector("#pinError");
-  if(error)error.textContent="กำลังตรวจสอบ...";
+  const previewUsers=readLoginPreview();
+  if(previewUsers.length)showUserPicker(previewUsers,{pending:true});
+  else if(error)error.textContent="กำลังตรวจสอบ...";
   try{
     const result=await api.login(pinInput);
     if(!result.ok)throw new Error("INVALID_PIN");
     sessionToken=result.session;
     sessionStorage.setItem(SESSION_KEY,sessionToken);
     currentSession={level:result.level,user:null};
+    if(result.level==="family")saveLoginPreview(result.users||[]);
+    // Any signed user choice token is already authenticated. Warm this small
+    // common home payload while the user decides which name to select.
+    preloadHomeData((result.users||[])[0]?.token);
     showUserPicker(result.users||[]);
   }catch(error){sound.error();pinInput="";renderPin();const el=document.querySelector("#pinError");if(el)el.textContent="รหัสไม่ถูกต้อง";}
 }
 
-function showUserPicker(users){
+function showUserPicker(users,{pending=false}={}){
   const colors=["#e91e63","#9c27b0","#2196f3","#ff9800","#4caf50","#00bcd4","#f44336","#3f51b5"];
-  main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน"><div class="picker-icon" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="32" cy="17" r="10"/><path d="M19 34c4-6 8-9 13-9s9 3 13 9l7 21H12l7-21Z"/><path d="m26 29 6 8 6-8 4 26H22l4-26Z" fill="currentColor" opacity=".82"/><path d="m32 34 4 7-4 5-4-5 4-7Z" fill="#fff8f0"/></svg></div><h1 class="picker-title">คุณคือใคร?</h1><div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn" type="button" data-user-index="${index}" aria-pressed="false"><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>'}</div></section>`;
-  main.querySelectorAll("[data-user-index]").forEach(button=>button.addEventListener("click",()=>selectUser(users[Number(button.dataset.userIndex)],button)));
+  main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน"><div class="picker-icon" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="32" cy="17" r="10"/><path d="M19 34c4-6 8-9 13-9s9 3 13 9l7 21H12l7-21Z"/><path d="m26 29 6 8 6-8 4 26H22l4-26Z" fill="currentColor" opacity=".82"/><path d="m32 34 4 7-4 5-4-5 4-7Z" fill="#fff8f0"/></svg></div><h1 class="picker-title">${pending?"กำลังตรวจ PIN และเตรียมข้อมูลร้าน…":"คุณคือใคร?"}</h1>${pending?'<p class="picker-loading" role="status"><span aria-hidden="true"></span>กำลังยืนยันสิทธิ์ ปุ่มจะพร้อมใช้ทันที</p>':""}<div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn${pending?" is-pending":""}" type="button" data-user-index="${index}" aria-pressed="false"${pending?" disabled":""}><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>'}</div></section>`;
+  if(!pending)main.querySelectorAll("[data-user-index]").forEach(button=>button.addEventListener("click",()=>selectUser(users[Number(button.dataset.userIndex)],button)));
 }
 
 async function selectUser(user,selectedButton){
