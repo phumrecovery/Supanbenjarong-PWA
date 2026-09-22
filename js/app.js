@@ -62,6 +62,9 @@ let audioContext=null;
 let audioUnlocking=null;
 let barcodeBuffer="";
 let barcodeTimer=0;
+// Increment whenever the authenticated flow ends.  Async responses capture
+// this number and cannot redraw a page belonging to an older session.
+let loginFlowId=0;
 
 function readLoginPreview(){
   try{
@@ -78,8 +81,11 @@ function saveLoginPreview(users){
   }catch(error){}
 }
 function preloadHomeData(token){
+  const requestedFlow=loginFlowId;
   if(!token||homeData)return;
-  api.homeBootstrap(token).then(data=>{if(data?.ok)homeData=data;}).catch(()=>{});
+  api.homeBootstrap(token).then(data=>{
+    if(data?.ok&&requestedFlow===loginFlowId)homeData=data;
+  }).catch(()=>{});
 }
 
 // เสียงสั้นจาก Web Audio: ต้องปลดล็อก context ใน user gesture ก่อน
@@ -167,6 +173,8 @@ sidebar.addEventListener("click",event=>{
 });
 
 function showLogin(message=""){
+  loginFlowId++;
+  activeRoute="login";
   main.dataset.route="login";
   main._settingsAbort?.abort();
   main.onclick=main.oninput=main.onchange=main.onsubmit=null;
@@ -296,15 +304,21 @@ function renderHome(){
 }
 
 async function loadHomeData(){
+  const requestedToken=sessionToken;
+  const requestedFlow=loginFlowId;
   try{
-    const data=await api.homeBootstrap(sessionToken);
+    const data=await api.homeBootstrap(requestedToken);
     if(!data.ok)throw new Error(data.error);
+    // A logout can occur while this request is in flight.  Never let its
+    // response redraw Home over the PIN screen; that old shell has no family
+    // session and misleadingly shows only the POS menu.
+    if(!requestedToken||requestedToken!==sessionToken||requestedFlow!==loginFlowId||!currentSession?.user||activeRoute!=="home"||main.dataset.route!=="home")return;
     homeData=data;
     const name=data.shop&&data.shop.name;
     if(name)topbarTitle.textContent=name;
     setLogo(data.shop&&data.shop.logo);
     if(activeRoute==="home")renderHome();
-  }catch(error){if(activeRoute==="home")showToast("แสดงโครงหน้าแรกแล้ว กำลังเชื่อมข้อมูลล่าสุด");}
+  }catch(error){if(requestedFlow===loginFlowId&&activeRoute==="home"&&main.dataset.route==="home")showToast("แสดงโครงหน้าแรกแล้ว กำลังเชื่อมข้อมูลล่าสุด");}
 }
 
 function renderPlaceholder(route){const [title,body]=PAGES[route]||["กำลังพัฒนา",""];main.innerHTML=`<section class="card"><h1>${title}</h1><p>${body}</p><p class="hint">ระบบเดิมบน GAS ยังใช้งานได้ตามปกติระหว่างย้ายโมดูล</p></section>`;}
