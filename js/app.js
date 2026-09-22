@@ -385,10 +385,21 @@ document.addEventListener("keydown",event=>{
   barcodeTimer=setTimeout(()=>{barcodeBuffer="";},1000);
 });
 
-document.querySelector("#logout").addEventListener("click",async()=>{
-  try{if(sessionToken)await api.logout(sessionToken);}catch(error){}
-  sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;homeData=null;showLogin("ออกจากระบบแล้ว");
-});
+function logoutFromSidebar(){
+  // Returning to the PIN screen is local and must never wait for a cold GAS
+  // request.  The server-side revoke is still sent immediately in background,
+  // so an old token remains unusable once that request reaches the gateway.
+  const token=sessionToken;
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(DISPLAY_USER_KEY);
+  sessionToken="";
+  currentSession=null;
+  displayUser=null;
+  homeData=null;
+  showLogin("ออกจากระบบแล้ว");
+  if(token) api.logout(token).catch(()=>{});
+}
+document.querySelector("#logout").addEventListener("click",logoutFromSidebar);
 
 async function initialize(){
   // Never leave a blank canvas while the gateway is slow or unavailable.
