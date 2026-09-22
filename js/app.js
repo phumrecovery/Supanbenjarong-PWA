@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v5";
+import {ApiClient} from "./api.js?v=api-v6";
 import {renderPos} from "./pos.js?v=pos-v19";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
@@ -461,5 +461,5 @@ async function initialize(){
   }catch(error){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
-if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js?v=119").catch(()=>{});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js?v=120").catch(()=>{});
 initialize();

@@ -22,6 +22,7 @@ assert.match(barcode,/window\.print\(\)/);
 assert.match(barcode,/window\.JsBarcode/);
 assert.match(index,/barcode\.css\?v=barcode-v1/);
 assert.match(index,/JsBarcode\.all\.min\.js/);
-assert.match(worker,/suphan-pwa-v158/);
+assert.match(worker,/suphan-pwa-v159/);
+assert.match(app,/api\.js\?v=api-v6/);
 assert.match(worker,/barcode\.js\?v=barcode-v1/);
 console.log("barcode route uses real GAS catalog and A4 print flow: PASS");
