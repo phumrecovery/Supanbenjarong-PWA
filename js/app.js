@@ -419,10 +419,10 @@ function closeTopPwaPopup(){
   const explicit=[...document.querySelectorAll("[data-popup-close]")].filter(isVisiblePwaElement);
   const direct=explicit.at(-1);
   if(direct){direct.click();return true;}
-  const dialogs=[...document.querySelectorAll('[role="dialog"][aria-modal="true"],dialog[open],.modal.show,.popup.show,.overlay.show')].filter(isVisiblePwaElement);
+  const dialogs=[...document.querySelectorAll('[role="dialog"][aria-modal="true"],dialog[open],.modal.show,.popup.show,.overlay.show,.pwa-claim-modal,.pwa-workshop-modal,.legacy-pos-modal,.expense-modal-backdrop')].filter(isVisiblePwaElement);
   const dialog=dialogs.at(-1);
   if(!dialog)return false;
-  const close=[...dialog.querySelectorAll('[data-action^="close"],.modal-close,.popup-close,.dialog-close,[aria-label^="ปิด"],[aria-label^="Close"]')].find(isVisiblePwaElement);
+  const close=[...dialog.querySelectorAll('[data-action^="close"],[data-a^="close"],[data-exp="modal-close"],[data-exp="image-close"],.modal-close,.popup-close,.dialog-close,.pwa-dialog-x,.pwa-claim-x,[aria-label^="ปิด"],[aria-label^="Close"]')].find(isVisiblePwaElement);
   if(!close)return false;
   close.click();
   return true;
