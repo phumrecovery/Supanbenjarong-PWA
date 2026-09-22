@@ -9,7 +9,7 @@ import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v10";
 import {renderWorkshop} from "./workshop.js?v=workshop-v25";
 import {renderClaim} from "./claim.js?v=claim-v3";
-import {renderBarcode} from "./barcode.js?v=barcode-v1";
+import {renderBarcode} from "./barcode.js?v=barcode-v2";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -408,6 +408,30 @@ function receiveBarcode(code){
   sessionStorage.setItem(PENDING_BARCODE_KEY,value);
   navigate("sales",{animate:true});
 }
+function isVisiblePwaElement(element){
+  if(!element)return false;
+  const style=window.getComputedStyle(element);
+  return style.display!=="none"&&style.visibility!=="hidden"&&!!(element.offsetWidth||element.offsetHeight||element.getClientRects().length);
+}
+function closeTopPwaPopup(){
+  // Popup close controls opt in with data-popup-close. The fallback covers
+  // existing accessible dialogs while modules are migrated to that convention.
+  const explicit=[...document.querySelectorAll("[data-popup-close]")].filter(isVisiblePwaElement);
+  const direct=explicit.at(-1);
+  if(direct){direct.click();return true;}
+  const dialogs=[...document.querySelectorAll('[role="dialog"][aria-modal="true"],dialog[open],.modal.show,.popup.show,.overlay.show')].filter(isVisiblePwaElement);
+  const dialog=dialogs.at(-1);
+  if(!dialog)return false;
+  const close=[...dialog.querySelectorAll('[data-action^="close"],.modal-close,.popup-close,.dialog-close,[aria-label^="ปิด"],[aria-label^="Close"]')].find(isVisiblePwaElement);
+  if(!close)return false;
+  close.click();
+  return true;
+}
+document.addEventListener("keydown",event=>{
+  if(event.key!=="Escape"||!closeTopPwaPopup())return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+},{capture:true});
 document.addEventListener("keydown",event=>{
   // POS also hides the App Shell header.  Only the visible PIN keypad may
   // claim number keys; otherwise number inputs in POS must receive them.

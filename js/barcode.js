@@ -20,7 +20,7 @@ export function renderBarcode(root,api,session,goBack,{toast=()=>{}}={}){
   const previewHtml=()=>{
     if(!state.preview)return "";const items=stickers(state.queue);const pages=[];
     for(let start=0;start<items.length;start+=STICKERS_PER_PAGE){const page=items.slice(start,start+STICKERS_PER_PAGE);const cells=page.map((item,index)=>`<div class="barcode-sticker"><svg id="pwa-barcode-${start+index}"></svg><div class="barcode-sticker-name">${esc([item.name,item.pattern,item.size].filter(value=>value&&value!=="-").join(" "))}</div><div class="barcode-sticker-row"><span class="barcode-sticker-sku">${esc(item.code)}</span><span class="barcode-sticker-price">฿${money(item.priceRetail)}</span></div></div>`);while(cells.length<STICKERS_PER_PAGE)cells.push('<div class="barcode-sticker"></div>');pages.push(`<section class="barcode-sheet">${cells.join("")}</section>`);}
-    return `<div class="barcode-preview-modal" role="dialog" aria-modal="true" aria-label="ตัวอย่างสติกเกอร์ A4"><div class="barcode-preview-toolbar"><button type="button" class="barcode-preview-close" data-action="close-preview">✕ ปิดตัวอย่าง</button></div>${pages.join("")}</div>`;
+    return `<div class="barcode-preview-modal" role="dialog" aria-modal="true" aria-label="ตัวอย่างสติกเกอร์ A4"><div class="barcode-preview-toolbar"><button type="button" class="barcode-preview-close" data-action="close-preview" data-popup-close>✕ ปิดตัวอย่าง</button></div>${pages.join("")}</div>`;
   };
   const makeCodes=()=>{
     if(typeof window.JsBarcode!=="function"){toast("โหลดเครื่องมือสร้าง Barcode ไม่สำเร็จ");return;}
