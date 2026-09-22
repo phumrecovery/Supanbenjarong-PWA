@@ -9,6 +9,7 @@ import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v10";
 import {renderWorkshop} from "./workshop.js?v=workshop-v25";
 import {renderClaim} from "./claim.js?v=claim-v3";
+import {renderBarcode} from "./barcode.js?v=barcode-v1";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -48,7 +49,8 @@ const PAGES={
   report:["📊 ดูสรุป","กำลังย้ายรายงานยอดขาย กำไร และ Cashflow"],
   product:["📦 จัดการสินค้า","กำลังย้ายหน้าจัดการสินค้า"],
   stock:["🗃️ สต๊อกสินค้า","กำลังย้ายหน้าสต๊อกสินค้า"],
-  settings:["⚙️ ตั้งค่าร้าน","กำลังย้ายหน้าตั้งค่าร้าน"]
+  settings:["⚙️ ตั้งค่าร้าน","กำลังย้ายหน้าตั้งค่าร้าน"],
+  barcode:["🏷️ พิมพ์ Barcode","ค้นหาสินค้าและพิมพ์สติกเกอร์ A4"]
 };
 
 let sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
@@ -168,7 +170,7 @@ sidebar.addEventListener("click",event=>{
   setTimeout(()=>item.classList.remove("pressed"),180);
   closeSidebar();
   if(item.dataset.sidebarRoute==="refresh"){homeData=null;render("home",{animate:true});return;}
-  if(item.dataset.sidebarRoute==="claim"){navigate("claim",{animate:true});return;}
+  if(item.dataset.sidebarRoute==="claim"||item.dataset.sidebarRoute==="barcode"){navigate(item.dataset.sidebarRoute,{animate:true});return;}
   showToast("เมนูนี้กำลังย้ายจาก Web App เดิม");
 });
 
@@ -337,7 +339,7 @@ function render(route,{animate=true,direction}={}){
   // POS มีแถบคำสั่งเฉพาะของตนเอง จึงไม่ซ้อนกับ header หลักของ App Shell.
   // POS and Product Management each own a dedicated, pinned command bar.
   // Keeping the Home App Shell off these screens prevents stacked headers.
-  setShell(route!=="sales"&&route!=="workshop"&&route!=="product"&&route!=="stock"&&route!=="expense"&&route!=="preorder"&&route!=="outsource"&&route!=="report"&&route!=="settings"&&route!=="claim");
+  setShell(route!=="sales"&&route!=="workshop"&&route!=="product"&&route!=="stock"&&route!=="expense"&&route!=="preorder"&&route!=="outsource"&&route!=="report"&&route!=="settings"&&route!=="claim"&&route!=="barcode");
   main.classList.toggle("pos-main",route==="sales");
   main.classList.toggle("product-main",route==="product");
   main.classList.toggle("stock-main",route==="stock");
@@ -348,9 +350,11 @@ function render(route,{animate=true,direction}={}){
   main.classList.toggle("settings-main",route==="settings");
   main.classList.toggle("workshop-main",route==="workshop");
   main.classList.toggle("claim-main",route==="claim");
+  main.classList.toggle("barcode-main",route==="barcode");
   if(route==="sales"){renderPos(main,api,sessionToken,()=>hasFamilyAccess()?navigate("home"):void returnLimitedPosToLogin(),{...(currentSession||{}),displayUser});return;}
   if(route==="workshop"){renderWorkshop(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="claim"){renderClaim(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
+  if(route==="barcode"){renderBarcode(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="product"){renderProduct(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
   if(route==="stock"){renderStock(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="expense"){renderExpense(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
@@ -457,5 +461,5 @@ async function initialize(){
   }catch(error){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
-if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js?v=118").catch(()=>{});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js?v=119").catch(()=>{});
 initialize();
