@@ -8,7 +8,12 @@ if (!/^\d{6}$/.test(pin || "")) throw new Error("WORKER_QA_PIN must be a six-dig
 async function api(action, session, data) {
   const payload = { action };
   if (session) payload.session = session;
-  if (data) action === "login" ? payload.pin = data.pin : payload.data = data;
+  if (data && action === "login") {
+    payload.pin = data.pin;
+    payload.scope = "worker";
+  } else if (data) {
+    payload.data = data;
+  }
   const response = await fetch(gateway, { method: "POST", headers: { "content-type": "application/json", origin: "https://phumrecovery.github.io" }, body: JSON.stringify(payload), signal: AbortSignal.timeout(45000) });
   const reply = await response.json();
   if (!reply.ok) throw new Error(`${action}: ${reply.error || "FAILED"} ${reply.message || ""}`);
