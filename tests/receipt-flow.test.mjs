@@ -14,6 +14,19 @@ assert.match(root.innerHTML,/กำลังโหลดบิลย้อนห
 assert.equal(typeof resolveFirst,'function');
 resolveFirst({ok:true,bills:[{billNo:'INV-1',customer:'ลูกค้าหนึ่ง',dateTH:'23/09/2026',time:'10:00',net:500,pcs:1,payment:'เงินสด',canCancel:true,items:[]}],shop:{name:'ร้านทดสอบ'}});
 await new Promise(resolve=>setImmediate(resolve));
+const click=(action,index=0)=>root.onclick({target:{closest:()=>({dataset:{r:action,i:String(index)}})}});
+click('openPrint');
+assert.match(root.innerHTML,/🖨️ พิมพ์: INV-1/);
+assert.match(root.innerHTML,/ใส่ข้อมูลผู้ซื้อ/);
+assert.match(root.innerHTML,/data-size="size-a4"/);
+assert.match(root.innerHTML,/data-size="size-a5"/);
+assert.match(root.innerHTML,/data-size="size-80mm"/);
+assert.match(root.innerHTML,/data-popup-close/);
+click('close');
+click('openCancel');
+assert.match(root.innerHTML,/รายรับจะถูกหักออกตามวันที่ขายเดิม/);
+assert.match(root.innerHTML,/ยืนยันยกเลิก/);
+assert.match(root.innerHTML,/data-popup-close/);
 // The UI is refreshed through the real DOM in Chrome; this VM guard catches
 // a late response being applied after navigation or a new entry.
 let resolveOld,resolveNew;
