@@ -3,7 +3,7 @@ import {renderPos} from "./pos.js?v=pos-v19";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
 import {renderExpense} from "./expense.js?v=expense-v13";
-import {renderPreorder} from "./preorder.js?v=preorder-v15";
+import {renderPreorder} from "./preorder.js?v=preorder-v16";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v10";
