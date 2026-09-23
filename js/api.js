@@ -92,6 +92,8 @@ export class ApiClient {
   barcodeBootstrap(session){
     return this.request({action:"barcodeBootstrap",session},30000,{retries:1,retryLogical:true});
   }
+  receiptBootstrap(session){return this.request({action:"receiptBootstrap",session},45000,{retries:1,retryLogical:true});}
+  receiptCancel(session,billNo,reason){return this.request({action:"receiptCancel",session,billNo,reason},60000);}
   workshopBootstrap(session){return this.request({action:"workshopBootstrap",session},45000,{retries:1,retryLogical:true});}
   workshopSaveJob(session,data){return this.request({action:"workshopSaveJob",session,data},45000);}
   workshopAttendance(session,date){return this.request({action:"workshopAttendance",session,date},30000,{retries:1,retryLogical:true});}
