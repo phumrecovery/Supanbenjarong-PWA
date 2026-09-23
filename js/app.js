@@ -9,7 +9,7 @@ import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v10";
 import {renderWorkshop} from "./workshop.js?v=workshop-v25";
 import {renderClaim} from "./claim.js?v=claim-v4";
-import {renderBarcode} from "./barcode.js?v=barcode-v3";
+import {renderBarcode} from "./barcode.js?v=barcode-v4";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");

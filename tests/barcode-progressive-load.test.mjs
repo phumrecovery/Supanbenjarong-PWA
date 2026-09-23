@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+const source=fs.readFileSync(new URL('../js/barcode.js',import.meta.url),'utf8').replace(/export /g,'');
+const root={isConnected:true,dataset:{route:'barcode'},innerHTML:'',querySelector(){return null;}};
+const context=vm.createContext({console,Number,String,Math,Array,Promise,root});
+vm.runInContext(source,context);
+let resolveFirst;
+context.api={barcodeBootstrap:()=>new Promise(resolve=>{resolveFirst=resolve;})};
+vm.runInContext('renderBarcode(root,api,"session-a",()=>{})',context);
+assert.match(root.innerHTML,/id="barcode-search"/,'search control must render before products arrive');
+assert.match(root.innerHTML,/รายการพิมพ์ \(0 สินค้า/,'print queue must render before products arrive');
+assert.match(root.innerHTML,/data-action="preview"/,'preview action must remain visible while loading');
+assert.match(root.innerHTML,/กำลังโหลดสินค้า/);
+assert.equal(typeof resolveFirst,'function');
+
+let resolveSecond;
+context.api={barcodeBootstrap:()=>new Promise(resolve=>{resolveSecond=resolve;})};
+vm.runInContext('renderBarcode(root,api,"session-b",()=>{})',context);
+resolveFirst({ok:true,products:[{code:'STALE',name:'old'}]});
+await new Promise(resolve=>setImmediate(resolve));
+assert.match(root.innerHTML,/กำลังโหลดสินค้า/,'previous route response must not replace the new view');
+resolveSecond({ok:true,products:[{code:'CURRENT',name:'new'}]});
+await new Promise(resolve=>setImmediate(resolve));
+assert.doesNotMatch(root.innerHTML,/กำลังโหลดสินค้า/);
+assert.match(root.innerHTML,/id="barcode-search"/);
+context.api={barcodeBootstrap:async()=>({ok:false,message:'เชื่อมต่อไม่ได้'})};
+vm.runInContext('renderBarcode(root,api,"session-b",()=>{})',context);
+await new Promise(resolve=>setImmediate(resolve));
+assert.match(root.innerHTML,/เชื่อมต่อไม่ได้/);
+assert.match(root.innerHTML,/data-action="retry"/,'catalog error must offer a retry');
+assert.match(root.innerHTML,/data-action="load-last"/,'saved print batch must remain accessible when catalog fails');
+console.log('PASS: barcode controls render before catalog data and old responses cannot redraw a new view.');
