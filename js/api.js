@@ -42,6 +42,10 @@ export class ApiClient {
     // worker phones must not be thrown back to the PIN screen in that case.
     return this.request({action:"login",pin},45000,{retries:1,retryLogical:true});
   }
+  workerLogin(pin){
+    // Keep worker identity separate from family/staff PIN resolution in GAS.
+    return this.request({action:"login",pin,scope:"worker"},45000,{retries:1,retryLogical:true});
+  }
   bootstrap(session){
     return this.request({action:"bootstrap",session});
   }
