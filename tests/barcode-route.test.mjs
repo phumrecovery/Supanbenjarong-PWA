@@ -27,7 +27,7 @@ assert.match(index,/barcode\.css\?v=barcode-v4/);
 assert.match(index,/JsBarcode\.all\.min\.js/);
 assert.match(app,/api\.js\?v=api-v9/);
 assert.match(index,/app\.js\?v=app-v50/);
-assert.match(worker,/suphan-pwa-v173/);
+assert.match(worker,/suphan-pwa-v174/);
 assert.match(worker,/barcode\.js\?v=barcode-v4/);
 assert.match(barcode,/data-popup-close/);
 assert.match(app,/function closeTopPwaPopup\(/);
