@@ -4,6 +4,28 @@
 const GATEWAY_API_URL=String(globalThis.SUPANBENJARONG_RUNTIME_CONFIG?.gatewayApiUrl||"").trim();
 
 export class ApiClient {
+  constructor(){
+    // Short-lived, memory-only master data. Session tokens remain in memory and
+    // never enter IndexedDB, localStorage, or the service-worker cache.
+    this.warmCache=new Map();
+    this.warmEpoch=0;
+  }
+  clearWarmCache(){this.warmEpoch++;this.warmCache.clear();}
+  warmRead(action,session,ttlMs,timeoutMs,retries){
+    const key=action+":"+session;
+    const now=Date.now();
+    const hit=this.warmCache.get(key);
+    if(hit&&(hit.promise||hit.expiresAt>now))return hit.promise||Promise.resolve(hit.value);
+    const epoch=this.warmEpoch;
+    const promise=this.request({action,session},timeoutMs,{retries,retryLogical:true})
+      .then(result=>{
+        if(!result?.ok){this.warmCache.delete(key);return result;}
+        if(epoch===this.warmEpoch)this.warmCache.set(key,{value:result,expiresAt:Date.now()+ttlMs});
+        return result;
+      }).catch(error=>{if(epoch===this.warmEpoch)this.warmCache.delete(key);throw error;});
+    this.warmCache.set(key,{promise,expiresAt:0});
+    return promise;
+  }
   async request(payload,timeoutMs=15000,{retries=0,retryLogical=false}={}){
     if(!GATEWAY_API_URL)throw new Error("ยังไม่ได้ตั้งค่า API ของระบบ");
     let result;
@@ -18,6 +40,9 @@ export class ApiClient {
           throw error;
         }
         result=await response.json();
+        // Successful writes may change master data on the next screen. Keep
+        // this broad rather than maintaining a fragile per-module write list.
+        if(result?.ok&&payload.session&&!["bootstrap","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseSupport","preorderBootstrap","outsourceBootstrap","claimBootstrap","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
       }catch(error){
@@ -90,7 +115,7 @@ export class ApiClient {
     return this.request({action:"stockSaveMovement",session,data},30000);
   }
   barcodeBootstrap(session){
-    return this.request({action:"barcodeBootstrap",session},30000,{retries:1,retryLogical:true});
+    return this.warmRead("barcodeBootstrap",session,5*60*1000,30000,1);
   }
   receiptBootstrap(session){return this.request({action:"receiptBootstrap",session},45000,{retries:1,retryLogical:true});}
   receiptCancel(session,billNo,reason){return this.request({action:"receiptCancel",session,billNo,reason},60000);}
@@ -129,7 +154,7 @@ export class ApiClient {
   reportCashflowStartSave(session,amount,year,month){return this.request({action:"reportCashflowStartSave",session,amount,year,month},30000);}
   // Master data can briefly fail while the Sheet execution is cold. This call
   // is read-only, so one bounded retry is safe.
-  expenseBootstrap(session){return this.request({action:"expenseBootstrap",session},30000,{retries:1,retryLogical:true});}
+  expenseBootstrap(session){return this.warmRead("expenseBootstrap",session,2*60*1000,30000,1);}
   // Transaction aggregation may trigger the fixed-expense sync before reading
   // recent records.  It is read-only and can exceed the generic 15s timeout
   // when Apps Script is cold, so allow one safe retry instead of leaving the

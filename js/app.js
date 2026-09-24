@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v7";
+import {ApiClient} from "./api.js?v=api-v8";
 import {renderPos} from "./pos.js?v=pos-v19";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
@@ -69,6 +69,22 @@ let barcodeTimer=0;
 // Increment whenever the authenticated flow ends.  Async responses capture
 // this number and cannot redraw a page belonging to an older session.
 let loginFlowId=0;
+let masterWarmupToken="";
+
+function scheduleMasterWarmup(token,flow){
+  if(!token||masterWarmupToken===token)return;
+  const warm=async()=>{
+    if(flow!==loginFlowId||sessionToken!==token||activeRoute!=="sales")return;
+    masterWarmupToken=token;
+    // POS has already rendered. Warm only two low-churn read models, one at
+    // a time, so background work cannot compete with the initial POS load.
+    try{await api.expenseBootstrap(token);}catch(error){}
+    if(flow!==loginFlowId||sessionToken!==token)return;
+    try{await api.barcodeBootstrap(token);}catch(error){}
+  };
+  if("requestIdleCallback" in window)window.requestIdleCallback(warm,{timeout:4000});
+  else setTimeout(warm,1200);
+}
 
 function readLoginPreview(){
   try{
@@ -369,7 +385,13 @@ function render(route,{animate=true,direction}={}){
   main.classList.toggle("claim-main",route==="claim");
   main.classList.toggle("barcode-main",route==="barcode");
   main.classList.toggle("receipt-main",route==="receipt");
-  if(route==="sales"){renderPos(main,api,sessionToken,()=>hasFamilyAccess()?navigate("home"):void returnLimitedPosToLogin(),{...(currentSession||{}),displayUser});return;}
+  if(route==="sales"){
+    const token=sessionToken,flow=loginFlowId;
+    renderPos(main,api,token,()=>hasFamilyAccess()?navigate("home"):void returnLimitedPosToLogin(),{...(currentSession||{}),displayUser})
+      .then(()=>{if(hasFamilyAccess()&&main.dataset.route==="sales"&&!main.querySelector('.pos-load-failure')&&sessionToken===token)scheduleMasterWarmup(token,flow);})
+      .catch(()=>{});
+    return;
+  }
   if(route==="workshop"){renderWorkshop(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="claim"){renderClaim(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="barcode"){renderBarcode(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
@@ -398,6 +420,7 @@ async function returnLimitedPosToLogin(){
   sessionStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(DISPLAY_USER_KEY);
   sessionToken="";
+  api.clearWarmCache?.();
   currentSession=null;
   displayUser=null;
   homeData=null;
@@ -482,6 +505,7 @@ function logoutFromSidebar(){
   sessionStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(DISPLAY_USER_KEY);
   sessionToken="";
+  api.clearWarmCache?.();
   currentSession=null;
   displayUser=null;
   homeData=null;
@@ -517,7 +541,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=122",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=123",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
