@@ -27,7 +27,9 @@ const SESSION_KEY="suphanbenjarong.pwa.session";
 const DISPLAY_USER_KEY="suphanbenjarong.pwa.display-user";
 const PENDING_BARCODE_KEY="suphanbenjarong.pwa.pending-barcode";
 const LOGIN_PREVIEW_KEY="suphanbenjarong.pwa.family-login-preview";
-const LOGIN_PREVIEW_TTL=15*60*1000;
+// Display-only names may survive idle days. They remain disabled until GAS
+// verifies the PIN, then the server's current list replaces this preview.
+const LOGIN_PREVIEW_TTL=30*24*60*60*1000;
 // URL เดียวกับ Web App เดิม เพื่อให้ก่อนโหลดข้อมูลร้าน PWA ยังใช้ตราร้านจริง
 const LOGO_FALLBACK="https://lh3.googleusercontent.com/d/18rwkqytClqwNtg0PReV1ILLFwkiIKa01";
 const MENU=[
@@ -60,6 +62,7 @@ let currentSession=null;
 let displayUser=null;
 let activeRoute="";
 let pinInput="";
+let pinSubmitting=false;
 let homeData=null;
 let toastTimer=0;
 let audioContext=null;
@@ -194,6 +197,7 @@ sidebar.addEventListener("click",event=>{
 
 function showLogin(message=""){
   loginFlowId++;
+  pinSubmitting=false;
   activeRoute="login";
   main.dataset.route="login";
   main._settingsAbort?.abort();
@@ -229,12 +233,15 @@ function enterPin(key){
 }
 
 async function submitPin(){
-  const error=document.querySelector("#pinError");
+  if(pinSubmitting||pinInput.length!==6)return;
+  pinSubmitting=true;
+  const requestedFlow=loginFlowId;
+  const submittedPin=pinInput;
   const previewUsers=readLoginPreview();
-  if(previewUsers.length)showUserPicker(previewUsers,{pending:true});
-  else if(error)error.textContent="กำลังตรวจสอบ...";
+  showUserPicker(previewUsers,{pending:true});
   try{
-    const result=await api.login(pinInput);
+    const result=await api.login(submittedPin);
+    if(requestedFlow!==loginFlowId)return;
     if(!result.ok)throw new Error("INVALID_PIN");
     sessionToken=result.session;
     sessionStorage.setItem(SESSION_KEY,sessionToken);
@@ -244,12 +251,16 @@ async function submitPin(){
     // common home payload while the user decides which name to select.
     preloadHomeData((result.users||[])[0]?.token);
     showUserPicker(result.users||[]);
-  }catch(error){sound.error();pinInput="";renderPin();const el=document.querySelector("#pinError");if(el)el.textContent="รหัสไม่ถูกต้อง";}
+  }catch(error){
+    if(requestedFlow!==loginFlowId)return;
+    sound.error();
+    showLogin("รหัสไม่ถูกต้อง");
+  }finally{if(requestedFlow===loginFlowId)pinSubmitting=false;}
 }
 
 function showUserPicker(users,{pending=false}={}){
   const colors=["#e91e63","#9c27b0","#2196f3","#ff9800","#4caf50","#00bcd4","#f44336","#3f51b5"];
-  main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน"><div class="picker-icon" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="32" cy="17" r="10"/><path d="M19 34c4-6 8-9 13-9s9 3 13 9l7 21H12l7-21Z"/><path d="m26 29 6 8 6-8 4 26H22l4-26Z" fill="currentColor" opacity=".82"/><path d="m32 34 4 7-4 5-4-5 4-7Z" fill="#fff8f0"/></svg></div><h1 class="picker-title">${pending?"กำลังตรวจ PIN และเตรียมข้อมูลร้าน…":"คุณคือใคร?"}</h1>${pending?'<p class="picker-loading" role="status"><span aria-hidden="true"></span>กำลังยืนยันสิทธิ์ ปุ่มจะพร้อมใช้ทันที</p>':""}<div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn${pending?" is-pending":""}" type="button" data-user-index="${index}" aria-pressed="false"${pending?" disabled":""}><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>'}</div></section>`;
+  main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน"><div class="picker-icon" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="32" cy="17" r="10"/><path d="M19 34c4-6 8-9 13-9s9 3 13 9l7 21H12l7-21Z"/><path d="m26 29 6 8 6-8 4 26H22l4-26Z" fill="currentColor" opacity=".82"/><path d="m32 34 4 7-4 5-4-5 4-7Z" fill="#fff8f0"/></svg></div><h1 class="picker-title">${pending?"กำลังตรวจ PIN และเตรียมข้อมูลร้าน…":"คุณคือใคร?"}</h1>${pending?'<p class="picker-loading" role="status"><span aria-hidden="true"></span>กำลังยืนยันสิทธิ์ ปุ่มจะพร้อมใช้ทันที</p>':""}<div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn${pending?" is-pending":""}" type="button" data-user-index="${index}" aria-pressed="false"${pending?" disabled":""}><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||(pending?'<p class="hint">กำลังโหลดรายชื่อจากระบบ…</p>':'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>')}</div></section>`;
   if(!pending)main.querySelectorAll("[data-user-index]").forEach(button=>button.addEventListener("click",()=>selectUser(users[Number(button.dataset.userIndex)],button)));
 }
 
@@ -541,7 +552,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=124",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=125",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
