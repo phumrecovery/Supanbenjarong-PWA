@@ -12,6 +12,9 @@ const stage=(kind,s)=>String(s)==="ยกเลิก"?"cancelled":kind==="qt"?(
 const shop={th:"สุพรรณบุรีเบญจรงค์",en:"SUPHAN BENJARONG",addressTh:"79 หมู่ 2 ต.วังน้ำซับ อ.ศรีประจันต์ จ.สุพรรณบุรี 72140",addressEn:"79 Moo 2, Wang Namsap, Si Prachan, Suphan Buri 72140, Thailand"};
 
 export async function renderPreorder(root,api,session,onBack,context={}){
+  // A fresh visit starts with the two outstanding-work queues. A data refresh
+  // inside this route keeps the user's currently selected filter instead.
+  if(context.resetView){state.tab=0;state.filter="pending";state.query="";state.modal=null;}
   runtime={root,api,session,back:onBack,toast:context.toast||(()=>{})};
   const header=document.querySelector("#appHeader");if(header){header.hidden=true;header.style.display="none";}bindEscape();
   if(!state.data){state.loading=true;draw();try{await loadPreorderData();}catch(error){if(!active())return;root.innerHTML=`<section class="pre-failure"><h1>เปิดงานสั่งทำไม่สำเร็จ</h1><p>${esc(error.message||error)}</p><button data-pre="back">← กลับ</button></section>`;bind();return;}finally{state.loading=false;}draw();return;}

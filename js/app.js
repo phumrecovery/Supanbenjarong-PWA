@@ -3,7 +3,7 @@ import {renderPos} from "./pos.js?v=pos-v19";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
 import {renderExpense} from "./expense.js?v=expense-v13";
-import {renderPreorder} from "./preorder.js?v=preorder-v16";
+import {renderPreorder} from "./preorder.js?v=preorder-v17";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v10";
@@ -303,7 +303,22 @@ function renderHome(){
   const daily=data.daily||{};
   main.innerHTML=`<section class="home-hero"><img id="homeLogo" class="home-logo" src="${escapeHtml(shop.logo||LOGO_FALLBACK)}" alt="โลโก้"><h1 class="home-name">${escapeHtml(name)}</h1><p class="home-tagline">งานฝีมือไทยแท้ ✨</p></section><section class="home-summary"><div><div class="welcome-title">สวัสดีครับ 🙏</div><div class="welcome-date">${thaiDate()}</div></div><div class="summary-values"><div class="card-stat"><div class="stat-value">฿${money(daily.totalSales)}</div><div class="stat-label">ยอดขายวันนี้</div></div><div class="card-stat"><div class="stat-value">${money(daily.billCount)} บิล</div><div class="stat-label">จำนวนบิล</div></div></div></section><h2 class="section-title">📋 เมนูหลัก</h2><section class="home-menu-grid">${menuMarkup()}</section><h2 class="section-title">⭐ สินค้าขายดี</h2><section class="featured-grid">${featuredMarkup(data.starred)}</section><footer class="home-footer"><div>🏺 ${escapeHtml(name)} — งานฝีมือไทยแท้</div><div>${escapeHtml([shop.address,shop.phone?`โทร ${shop.phone}`:""].filter(Boolean).join(" | "))}</div><div>Version 2.0</div></footer>`;
   const homeLogo=main.querySelector("#homeLogo");if(homeLogo)homeLogo.onerror=()=>{homeLogo.src=LOGO_FALLBACK;};
-  main.querySelectorAll("[data-route]").forEach(button=>button.addEventListener("click",()=>navigate(button.dataset.route)));
+  main.querySelectorAll("[data-route]").forEach(button=>{
+    button.addEventListener("click",()=>navigate(button.dataset.route));
+    button.addEventListener("pointermove",event=>{
+      if(event.pointerType!=="mouse")return;
+      const rect=button.getBoundingClientRect();
+      const x=(event.clientX-rect.left)/rect.width-.5;
+      const y=(event.clientY-rect.top)/rect.height-.5;
+      button.style.setProperty("--menu-tilt-x",`${(-y*3).toFixed(2)}deg`);
+      button.style.setProperty("--menu-tilt-y",`${(x*3).toFixed(2)}deg`);
+      button.style.setProperty("--menu-glow-x",`${((x+.5)*100).toFixed(1)}%`);
+      button.style.setProperty("--menu-glow-y",`${((y+.5)*100).toFixed(1)}%`);
+    });
+    button.addEventListener("pointerleave",()=>{
+      for(const name of ["--menu-tilt-x","--menu-tilt-y","--menu-glow-x","--menu-glow-y"])button.style.removeProperty(name);
+    });
+  });
   if(!homeData)loadHomeData();
 }
 
@@ -362,7 +377,7 @@ function render(route,{animate=true,direction}={}){
   if(route==="product"){renderProduct(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
   if(route==="stock"){renderStock(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="expense"){renderExpense(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
-  if(route==="preorder"){renderPreorder(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
+  if(route==="preorder"){renderPreorder(main,api,sessionToken,()=>navigate("home"),{toast:showToast,resetView:true});return;}
   if(route==="outsource"){renderOutsource(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="report"){renderReport(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="settings"){renderSettings(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
@@ -489,5 +504,27 @@ async function initialize(){
   }catch(error){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
-if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js?v=121").catch(()=>{});
+if("serviceWorker" in navigator){
+  const hadController=!!navigator.serviceWorker.controller;
+  const showUpdateNotice=()=>{
+    if(document.querySelector("#pwaUpdateNotice"))return;
+    const notice=document.createElement("button");
+    notice.id="pwaUpdateNotice";
+    notice.type="button";
+    notice.className="pwa-update-notice";
+    notice.textContent="✨ มีเวอร์ชันใหม่ · แตะเพื่ออัปเดต";
+    notice.addEventListener("click",()=>location.reload());
+    document.body.appendChild(notice);
+  };
+  if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
+  navigator.serviceWorker.register("./service-worker.js?v=122",{updateViaCache:"none"}).then(registration=>{
+    if(hadController&&registration.waiting)showUpdateNotice();
+    let lastChecked=0;
+    document.addEventListener("visibilitychange",()=>{
+      if(document.visibilityState!=="visible"||Date.now()-lastChecked<5*60*1000)return;
+      lastChecked=Date.now();
+      registration.update().catch(()=>{});
+    });
+  }).catch(()=>{});
+}
 initialize();
