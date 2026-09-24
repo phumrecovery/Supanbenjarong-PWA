@@ -25,6 +25,12 @@ await api.expenseBootstrap('session-a');
 const repeatMs=Date.now()-repeatStart;
 assert.deepEqual(requests,['expenseBootstrap'],'repeat entry must reuse warmed master data');
 assert.ok(repeatMs<firstMs*.9,`repeat ${repeatMs} ms must beat first ${firstMs} ms by 10%`);
+await api.request({action:'claimSupport',session:'session-a'});
+await api.expenseBootstrap('session-a');
+assert.deepEqual(requests,['expenseBootstrap','claimSupport'],'a read in another module must not discard warm data');
+await api.request({action:'expenseAdd',session:'session-a'});
+await api.expenseBootstrap('session-a');
+assert.deepEqual(requests,['expenseBootstrap','claimSupport','expenseAdd','expenseBootstrap'],'a write must invalidate warm data');
 
 requests=[];
 await Promise.all([api.barcodeBootstrap('session-a'),api.barcodeBootstrap('session-a')]);
