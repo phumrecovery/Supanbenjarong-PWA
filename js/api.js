@@ -42,7 +42,7 @@ export class ApiClient {
         result=await response.json();
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
-        if(result?.ok&&payload.session&&!["bootstrap","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
+        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
       }catch(error){
@@ -113,6 +113,10 @@ export class ApiClient {
   }
   stockSaveMovement(session,data){
     return this.request({action:"stockSaveMovement",session,data},30000);
+  }
+  stockTake(session,operation,data={}){
+    const read=operation==='getStockTakePageData'||operation==='getStockTakeReviewData';
+    return this.request({action:"stockTake",session,operation,data},60000,{retries:read?1:0,retryLogical:read});
   }
   barcodeBootstrap(session){
     return this.warmRead("barcodeBootstrap",session,5*60*1000,30000,1);

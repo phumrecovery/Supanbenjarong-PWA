@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+const source=fs.readFileSync(new URL('../js/stocktake.js',import.meta.url),'utf8').replace(/^export /m,'');
+const nodes=new Map();
+const element=id=>{
+  if(!nodes.has(id))nodes.set(id,{id,style:{},classList:{add(){},remove(){}},textContent:'',innerHTML:'',appendChild(){},value:''});
+  return nodes.get(id);
+};
+const root={isConnected:true,dataset:{route:'stocktake'},innerHTML:''};
+const window={SuphanSound:{}};
+const document={getElementById:element,createElement:()=>({style:{},dataset:{},appendChild(){},setAttribute(){}})};
+const ctx=vm.createContext({window,document,console,Promise,Number,String,Math,Date,clearTimeout,setTimeout});
+vm.runInContext(source,ctx);
+let resolvePage;
+const calls=[];
+const api={stockTake(session,operation,data){calls.push({session,operation,data});return new Promise(resolve=>{resolvePage=resolve;});}};
+ctx.root=root;ctx.api=api;
+vm.runInContext('renderStocktake(root,api,"signed-session",()=>{},{displayUser:{name:"เจ้าของร้าน"}})',ctx);
+assert.match(root.innerHTML,/ตรวจนับสินค้าหน้าร้าน/,'the page shell appears before Sheets responds');
+assert.equal(calls[0].operation,'getStockTakePageData');
+assert.equal(calls[0].session,'signed-session');
+resolvePage({ok:true,result:{success:true,round:null,layout:{items:[]},locations:[],items:[],products:[]}});
+await new Promise(resolve=>setImmediate(resolve));
+assert.match(element('roundText').textContent,/ยังไม่มีรอบ/);
+assert.equal(element('startBtn').style.display,'block');
+root.dataset.route='home';root.innerHTML='HOME';
+window.reloadPageData();
+assert.equal(calls.length,1,'old handlers must not fire after navigation');
+assert.equal(root.innerHTML,'HOME');
+console.log('PASS: stocktake shell, real API action, empty-round state, and stale-route guard.');

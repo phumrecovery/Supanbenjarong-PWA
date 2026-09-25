@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v9";
+import {ApiClient} from "./api.js?v=api-v10";
 import {renderPos} from "./pos.js?v=pos-v19";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
@@ -11,6 +11,7 @@ import {renderWorkshop} from "./workshop.js?v=workshop-v27";
 import {renderClaim} from "./claim.js?v=claim-v4";
 import {renderBarcode} from "./barcode.js?v=barcode-v4";
 import {renderReceipt} from "./receipt.js?v=receipt-v1";
+import {renderStocktake} from "./stocktake.js?v=stocktake-v1";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -18,6 +19,9 @@ const appHeader=document.querySelector("#appHeader");
 const connection=document.querySelector("#connection");
 const topbarTitle=document.querySelector("#topbarTitle");
 const topbarLogo=document.querySelector("#topbarLogo");
+const sidebarLogo=document.querySelector("#sidebarLogo");
+sidebarLogo.src=topbarLogo.src;
+sidebarLogo.onerror=()=>{sidebarLogo.src="./assets/main-app-icon.png";};
 const sidebar=document.querySelector("#sidebar");
 const sidebarOverlay=document.querySelector("#sidebarOverlay");
 const sidebarUser=document.querySelector("#sidebarUser");
@@ -54,7 +58,8 @@ const PAGES={
   stock:["🗃️ สต๊อกสินค้า","กำลังย้ายหน้าสต๊อกสินค้า"],
   settings:["⚙️ ตั้งค่าร้าน","กำลังย้ายหน้าตั้งค่าร้าน"],
   barcode:["🏷️ พิมพ์ Barcode","ค้นหาสินค้าและพิมพ์สติกเกอร์ A4"],
-  receipt:["🧾 พิมพ์/ยกเลิก ใบเสร็จย้อนหลัง","ค้นหาบิล พิมพ์ซ้ำ และยกเลิกบิลล่าสุด"]
+  receipt:["🧾 พิมพ์/ยกเลิก ใบเสร็จย้อนหลัง","ค้นหาบิล พิมพ์ซ้ำ และยกเลิกบิลล่าสุด"],
+  stocktake:["📋 ตรวจนับสต๊อก","ตรวจนับสินค้าหน้าร้าน"]
 };
 
 let sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
@@ -178,7 +183,7 @@ function animatePage(direction){
 }
 function setShell(visible){appHeader.hidden=!visible;appHeader.style.display=visible?"":"none";}
 function showToast(message){toast.textContent=message;toast.classList.add("show");try{sound.notify();}catch(error){}clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
-function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};}
+function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;sidebarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};sidebarLogo.onerror=()=>{sidebarLogo.src="./assets/main-app-icon.png";};}
 
 function openSidebar(){sidebar.classList.add("open");sidebarOverlay.classList.add("show");}
 function closeSidebar(){sidebar.classList.remove("open");sidebarOverlay.classList.remove("show");}
@@ -190,8 +195,7 @@ sidebar.addEventListener("click",event=>{
   item.classList.add("pressed");
   setTimeout(()=>item.classList.remove("pressed"),180);
   closeSidebar();
-  if(item.dataset.sidebarRoute==="refresh"){homeData=null;render("home",{animate:true});return;}
-  if(item.dataset.sidebarRoute==="claim"||item.dataset.sidebarRoute==="barcode"||item.dataset.sidebarRoute==="receipt"){navigate(item.dataset.sidebarRoute,{animate:true});return;}
+  if(item.dataset.sidebarRoute==="claim"||item.dataset.sidebarRoute==="barcode"||item.dataset.sidebarRoute==="receipt"||item.dataset.sidebarRoute==="stocktake"){navigate(item.dataset.sidebarRoute,{animate:true});return;}
   showToast("เมนูนี้กำลังย้ายจาก Web App เดิม");
 });
 
@@ -401,7 +405,7 @@ function render(route,{animate=true,direction}={}){
   // POS มีแถบคำสั่งเฉพาะของตนเอง จึงไม่ซ้อนกับ header หลักของ App Shell.
   // POS and Product Management each own a dedicated, pinned command bar.
   // Keeping the Home App Shell off these screens prevents stacked headers.
-  setShell(route!=="sales"&&route!=="workshop"&&route!=="product"&&route!=="stock"&&route!=="expense"&&route!=="preorder"&&route!=="outsource"&&route!=="report"&&route!=="settings"&&route!=="claim"&&route!=="barcode"&&route!=="receipt");
+  setShell(route!=="sales"&&route!=="workshop"&&route!=="product"&&route!=="stock"&&route!=="expense"&&route!=="preorder"&&route!=="outsource"&&route!=="report"&&route!=="settings"&&route!=="claim"&&route!=="barcode"&&route!=="receipt"&&route!=="stocktake");
   main.classList.toggle("pos-main",route==="sales");
   main.classList.toggle("product-main",route==="product");
   main.classList.toggle("stock-main",route==="stock");
@@ -414,6 +418,7 @@ function render(route,{animate=true,direction}={}){
   main.classList.toggle("claim-main",route==="claim");
   main.classList.toggle("barcode-main",route==="barcode");
   main.classList.toggle("receipt-main",route==="receipt");
+  main.classList.toggle("stocktake-main",route==="stocktake");
   if(route==="sales"){
     const token=sessionToken,flow=loginFlowId;
     renderPos(main,api,token,()=>hasFamilyAccess()?navigate("home"):void returnLimitedPosToLogin(),{...(currentSession||{}),displayUser})
@@ -425,6 +430,7 @@ function render(route,{animate=true,direction}={}){
   if(route==="claim"){renderClaim(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="barcode"){renderBarcode(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="receipt"){renderReceipt(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
+  if(route==="stocktake"){renderStocktake(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="product"){renderProduct(main,api,sessionToken,()=>navigate("home"),{toast:showToast});return;}
   if(route==="stock"){renderStock(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
   if(route==="expense"){renderExpense(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
@@ -570,7 +576,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=130",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=131",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
