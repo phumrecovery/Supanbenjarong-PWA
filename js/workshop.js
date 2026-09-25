@@ -196,7 +196,7 @@ function bind(root){
     if(a==="openHandoffReviewPicker"){const card=(S.handoff?.cards||[]).find(x=>String(x.id)===String(button.dataset.job))||{},kind=button.dataset.kind;S.handoffReviewPicker={kind,jobId:button.dataset.job,submissionId:button.dataset.sub,query:kind==="po"?"":String(card.product||"").trim()};render(root);setTimeout(()=>root.querySelector("#handoffReviewPickerSearch")?.focus(),0);return;}
     if(a==="closeHandoffReviewPicker"){S.handoffReviewPicker=null;render(root);return;}
     if(a==="showAllHandoffReviewPicker"){if(S.handoffReviewPicker){S.handoffReviewPicker.query="";render(root);root.querySelector("#handoffReviewPickerSearch")?.focus();}return;}
-    if(a==="chooseHandoffReviewPicker"){const state=S.handoffReviewPicker;if(state){const draft=handoffReviewDraft(state.submissionId);if(state.kind==="whiteware")draft.whitewareSku=button.dataset.key||"";else if(state.kind==="po"){draft.preorderKey=button.dataset.key||"";draft.finishedSku="";}else{draft.finishedSku=button.dataset.key||"";draft.preorderKey="";}S.handoffReviewPicker=null;render(root);}return;}
+    if(a==="chooseHandoffReviewPicker"){const state=S.handoffReviewPicker;if(state){chooseHandoffReviewItem(handoffReviewDraft(state.submissionId),state.kind,button.dataset.key||"");S.handoffReviewPicker=null;render(root);}return;}
     if(a==="handoffConfirm"){if(button.dataset.inlineReview){saveHandoffFromReview(root,button);return;}const card=(S.handoff?.cards||[]).find(x=>x.id===button.dataset.job),sub=(card?.submissions||[]).find(x=>x.id===button.dataset.sub);if(sub){S.handoffConfirm={jobId:card.id,submissionId:sub.id,qty:Number(sub.qty)||0};S.handoffDraft={};render(root);}return;}
     if(a==="closeHandoff"){if(!S.handoffSaving){S.handoffConfirm=null;render(root);}return;}
     if(a==="openHandoffPicker"){S.handoffPicker=button.dataset.kind;S.handoffPickerQuery="";render(root);setTimeout(()=>root.querySelector("#handoffPickerSearch")?.focus(),0);return;}
@@ -259,13 +259,29 @@ async function loadHandoff(root){
 // confirm inside the review, rather than opening a duplicate confirmation dialog.
 function handoffReviewKey(v){return String(v||"").replace(/[^A-Za-z0-9_-]/g,"_");}
 function handoffReviewDraft(id){return S.handoffReviewDrafts[String(id)]||(S.handoffReviewDrafts[String(id)]={});}
+export function chooseHandoffReviewItem(draft,kind,key){
+  if(kind==="whiteware")draft.whitewareSku=key;
+  else if(kind==="po"){
+    draft.preorderKey=key;
+    draft.destination=key?"po":"store";
+    if(key)draft.finishedSku=""; // Only a real PO replaces the manually selected shop SKU.
+  }else if(kind==="finished"){
+    draft.finishedSku=key;
+    if(key){draft.preorderKey="";draft.destination="store";}
+  }
+  return draft;
+}
+export function handoffReviewDestinationLabel(draft,po){
+  if(po)return `ลูกค้า ${po.customer||"ไม่ระบุชื่อ"} · ${po.name||""} · ${m(po.qty)} ชิ้น (PO ${po.poNo||""})`;
+  return draft.destination==="store"||draft.finishedSku?"🏪 เข้าร้าน (ไม่ผูก PO)":"🔍 กดเพื่อเลือก PO หรือเข้าร้าน";
+}
 function handoffReviewFields(card,sub,writer,paintRoute){
   if(card.role==="วนทอง")return "";
   const draft=handoffReviewDraft(sub.id),d=S.handoff||{},white=(d.whitewares||[]).find(x=>String(x.sku||"")===String(draft.whitewareSku||"")),finished=(d.products||[]).find(x=>String(x.code||"")===String(draft.finishedSku||"")),po=(d.preorderItems||[]).find(x=>`${x.poNo}|||${x.itemId}`===String(draft.preorderKey||""));
   const picker=(kind,label,value,placeholder)=>`<label>${label}<button type="button" class="pwa-handoff-picker-button" data-a="openHandoffReviewPicker" data-kind="${kind}" data-job="${e(card.id)}" data-sub="${e(sub.id)}">${value?e(value):placeholder}<span>⌕</span></button></label>`;
   let html=writer?picker("whiteware","ของขาวที่ตัดสต๊อก",white?`${white.sku} · ${white.name}${white.size?` · ${white.size}`:""} (เหลือ ${m(white.balance)})`:"","🔍 กดเพื่อเลือกของขาว"):"";
   if(!(writer&&paintRoute)){
-    html+=picker("po","ปลายทางสินค้า / ลูกค้า PO",po?`ลูกค้า ${po.customer||"ไม่ระบุชื่อ"} · ${po.name||""} · ${m(po.qty)} ชิ้น (PO ${po.poNo||""})`:"🔍 กดเพื่อเลือก PO หรือเข้าร้าน");
+    html+=picker("po","ปลายทางสินค้า / ลูกค้า PO",handoffReviewDestinationLabel(draft,po));
     html+='<small>เลือก PO ระบบใช้ SKU ของ PO; ไม่เลือกคือเข้าร้าน</small>';
     html+=picker("finished","SKU สินค้าหลังเผา",finished?`${finished.code} · ${product(finished)}`:"","🔍 กดเพื่อเลือก SKU สินค้า");
   }

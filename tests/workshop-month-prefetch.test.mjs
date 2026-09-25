@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
 
-const source=fs.readFileSync(new URL("../js/workshop.js",import.meta.url),"utf8").replace("export function renderWorkshop","function renderWorkshop");
+const source=fs.readFileSync(new URL("../js/workshop.js",import.meta.url),"utf8").replace(/export function /g,"function ");
 const timers=new Map();
 let nextTimer=0;
 const calls=[];
