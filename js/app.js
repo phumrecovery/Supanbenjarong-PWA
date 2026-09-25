@@ -345,6 +345,25 @@ function renderHome(){
       for(const name of ["--menu-tilt-x","--menu-tilt-y","--menu-glow-x","--menu-glow-y"])button.style.removeProperty(name);
     });
   });
+  const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  if(!reducedMotion)main.querySelectorAll(".home-summary,.card-stat").forEach(card=>{
+    const summary=card.classList.contains("home-summary");
+    const prefix=summary?"summary":"stat";
+    card.addEventListener("pointermove",event=>{
+      if(event.pointerType!=="mouse")return;
+      const rect=card.getBoundingClientRect();
+      const x=Math.max(-.5,Math.min(.5,(event.clientX-rect.left)/rect.width-.5));
+      const y=Math.max(-.5,Math.min(.5,(event.clientY-rect.top)/rect.height-.5));
+      const strength=summary?1.2:3;
+      card.style.setProperty(`--${prefix}-tilt-x`,`${(-y*strength).toFixed(2)}deg`);
+      card.style.setProperty(`--${prefix}-tilt-y`,`${(x*strength).toFixed(2)}deg`);
+      card.style.setProperty(`--${prefix}-glow-x`,`${((x+.5)*100).toFixed(1)}%`);
+      card.style.setProperty(`--${prefix}-glow-y`,`${((y+.5)*100).toFixed(1)}%`);
+    });
+    card.addEventListener("pointerleave",()=>{
+      for(const suffix of ["tilt-x","tilt-y","glow-x","glow-y"])card.style.removeProperty(`--${prefix}-${suffix}`);
+    });
+  });
   if(!homeData)loadHomeData();
 }
 
@@ -551,7 +570,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=128",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=129",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{

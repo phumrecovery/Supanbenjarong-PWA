@@ -1,4 +1,49 @@
 /* Soft raised menu cards: tactile feedback without reducing Thai label size. */
+.home-summary{
+  position:relative;
+  isolation:isolate;
+  border:1px solid #e9d5c2;
+  background:linear-gradient(135deg,#fffefd 0%,#fffaf4 54%,#f6e6d5 100%);
+  box-shadow:inset 1px 1px 0 #fff,0 5px 0 #ddbd9d,0 15px 28px rgba(99,54,27,.14);
+  transform:perspective(1100px) rotateX(var(--summary-tilt-x,0deg)) rotateY(var(--summary-tilt-y,0deg));
+  transform-style:preserve-3d;
+  transition:transform 180ms var(--ease),box-shadow 180ms var(--ease);
+}
+.home-summary::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  border-radius:inherit;
+  background:radial-gradient(circle at var(--summary-glow-x,75%) var(--summary-glow-y,25%),rgba(255,255,255,.95),transparent 56%);
+  pointer-events:none;
+}
+.home-summary:hover{box-shadow:inset 1px 1px 0 #fff,0 7px 0 #d7b28f,0 20px 32px rgba(99,54,27,.18)}
+.summary-values{align-items:stretch;gap:14px}
+.card-stat{
+  position:relative;
+  min-width:158px;
+  padding:13px 18px;
+  border:1px solid #ebd3bc;
+  border-radius:14px;
+  background:linear-gradient(145deg,#fff 0%,#fff9f1 62%,#f4dfca 100%);
+  box-shadow:inset 1px 1px 0 #fff,0 4px 0 #dbb68f,0 8px 16px rgba(102,53,25,.12);
+  transform:perspective(650px) rotateX(var(--stat-tilt-x,0deg)) rotateY(var(--stat-tilt-y,0deg));
+  transition:transform 160ms var(--ease),box-shadow 160ms var(--ease);
+}
+.card-stat::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:radial-gradient(circle at var(--stat-glow-x,50%) var(--stat-glow-y,0%),rgba(255,255,255,.95),transparent 65%);
+  pointer-events:none;
+}
+.card-stat:hover{box-shadow:inset 1px 1px 0 #fff,0 6px 0 #d2a77e,0 15px 22px rgba(102,53,25,.18);transform:perspective(650px) rotateX(var(--stat-tilt-x,0deg)) rotateY(var(--stat-tilt-y,0deg)) translateY(-2px)}
+.stat-value,.stat-label{position:relative}
+.stat-value{font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 2px 0 #e9c7a3,0 5px 12px rgba(90,45,18,.13);transition:transform 160ms var(--ease),text-shadow 160ms var(--ease)}
+.card-stat:hover .stat-value{transform:translateY(-2px);text-shadow:0 3px 0 #e9c7a3,0 8px 14px rgba(90,45,18,.18)}
+.stat-label{font-weight:600;color:#69503e}
 .home-menu-btn{
   position:relative;
   isolation:isolate;
@@ -58,10 +103,17 @@
 .pwa-update-notice:hover,.pwa-update-notice:focus-visible{background:#69350f;outline:3px solid #e3b288;outline-offset:2px}
 .pwa-update-notice:active{transform:translateY(2px)}
 @media (max-width:767px){
+  .home-summary{gap:18px}
+  .summary-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card-stat{box-sizing:border-box;min-width:0;padding:11px 8px}
+  .stat-value{font-size:clamp(22px,6vw,28px)}
+  .stat-label{font-size:15px}
   .home-menu-btn{min-height:122px;padding:16px 10px}
   .pwa-update-notice{left:16px;right:16px;width:auto}
 }
 @media (prefers-reduced-motion:reduce){
+  .home-summary,.home-summary:hover,.card-stat,.card-stat:hover{transform:none;transition:none}
+  .stat-value,.card-stat:hover .stat-value{transform:none;transition:none}
   .home-menu-btn,.home-menu-btn:hover,.home-menu-btn:active{transform:none;transition:none}
   .home-menu-icon,.home-menu-btn:hover .home-menu-icon,.home-menu-btn:active .home-menu-icon{transform:none;transition:none}
 }
