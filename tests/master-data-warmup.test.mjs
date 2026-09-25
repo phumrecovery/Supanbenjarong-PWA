@@ -12,7 +12,7 @@ const context=vm.createContext({
     const payload=JSON.parse(options.body);
     requests.push(payload.action);
     await new Promise(resolve=>setTimeout(resolve,120));
-    return {ok:true,json:async()=>({ok:true,products:[{code:'A1'}],result:{categories:['ค่าไฟ']}})};
+    return {ok:true,text:async()=>JSON.stringify({ok:true,products:[{code:'A1'}],result:{categories:['ค่าไฟ']}})};
   }
 });
 vm.runInContext(source+'\nthis.ApiClient=ApiClient',context);

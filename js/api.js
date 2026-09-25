@@ -39,7 +39,13 @@ export class ApiClient {
           error.code=`HTTP_${response.status}`;
           throw error;
         }
-        result=await response.json();
+        const responseText=await response.text();
+        try{result=JSON.parse(responseText);}
+        catch(parseError){
+          const detail=responseText.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim().slice(0,180);
+          if(payload.action==="stockTake")console.warn("Stocktake gateway non-JSON response",response.status,detail);
+          throw new Error("ระบบส่งข้อมูลผิดรูปแบบ กรุณาลองอีกครั้ง");
+        }
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
         if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
