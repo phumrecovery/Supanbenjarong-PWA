@@ -42,8 +42,6 @@ export class ApiClient {
         const responseText=await response.text();
         try{result=JSON.parse(responseText);}
         catch(parseError){
-          const detail=responseText.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim().slice(0,180);
-          if(payload.action==="stockTake")console.warn("Stocktake gateway non-JSON response",response.status,detail);
           throw new Error("ระบบส่งข้อมูลผิดรูปแบบ กรุณาลองอีกครั้ง");
         }
         // Successful writes may change master data on the next screen. Keep
@@ -122,7 +120,10 @@ export class ApiClient {
   }
   stockTake(session,operation,data={}){
     const read=operation==='getStockTakePageData'||operation==='getStockTakeReviewData';
-    return this.request({action:"stockTake",session,operation,data},60000,{retries:read?1:0,retryLogical:read});
+    // These writes are idempotent in GAS. A Google ContentService redirect can
+    // occasionally return HTML after the write; one retry reconciles the view.
+    const safeRetry=read||['startStockTakeRound','openStockTakeLocation','saveStockTakeItem','completeStockTakeLocation'].includes(operation);
+    return this.request({action:"stockTake",session,operation,data},60000,{retries:safeRetry?1:0,retryLogical:read});
   }
   barcodeBootstrap(session){
     return this.warmRead("barcodeBootstrap",session,5*60*1000,30000,1);
