@@ -345,7 +345,7 @@ function renderHome(){
       for(const name of ["--menu-tilt-x","--menu-tilt-y","--menu-glow-x","--menu-glow-y"])button.style.removeProperty(name);
     });
   });
-  const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
   if(!reducedMotion)main.querySelectorAll(".home-summary,.card-stat").forEach(card=>{
     const summary=card.classList.contains("home-summary");
     const prefix=summary?"summary":"stat";
@@ -570,7 +570,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=129",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=130",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{

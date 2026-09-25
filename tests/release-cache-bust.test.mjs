@@ -5,10 +5,10 @@ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const worker=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8');
 const app=fs.readFileSync(new URL('../js/app.js',import.meta.url),'utf8');
 
-assert.match(html,/\.\/js\/app\.js\?v=app-v53/,'HTML must request the current app bundle');
+assert.match(html,/\.\/js\/app\.js\?v=app-v54/,'HTML must request the current app bundle');
 assert.match(html,/\.\/css\/app\.css\?v=login-v2/,'HTML must request the login-preview stylesheet by a new URL');
-assert.match(worker,/const VERSION="suphan-pwa-v177"/,'service worker cache must be replaced for this release');
-assert.match(worker,/\.\/js\/app\.js\?v=app-v53/,'offline shell must match the new app bundle');
+assert.match(worker,/const VERSION="suphan-pwa-v178"/,'service worker cache must be replaced for this release');
+assert.match(worker,/\.\/js\/app\.js\?v=app-v54/,'offline shell must match the new app bundle');
 assert.match(worker,/\.\/css\/app\.css\?v=login-v2/,'offline shell must match the new stylesheet');
-assert.match(app,/service-worker\.js\?v=129/,'the browser must check the updated service worker');
+assert.match(app,/service-worker\.js\?v=130/,'the browser must check the updated service worker');
 console.log('release cache bust: PASS');
