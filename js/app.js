@@ -207,10 +207,9 @@ function showLogin(message=""){
   pinInput="";
   main.innerHTML=`<section class="login-screen" aria-label="เข้าสู่ระบบ"><img class="login-logo" src="${LOGO_FALLBACK}" alt="โลโก้สุพรรณบุรีเบญจรงค์"><h1 class="login-title">สุพรรณบุรีเบญจรงค์</h1><p class="login-sub">ใส่รหัส 6 หลัก</p><div id="pinDots" class="pin-dots" aria-label="รหัส PIN"></div><div id="pinPad" class="pin-pad"></div><p id="pinError" class="pin-error" aria-live="polite">${escapeHtml(message)}</p></section>`;
   renderPin();
-  // Start the lightweight health request while the user enters six digits.
-  // It refreshes display-only family-name hints; PINs and tokens are never
-  // stored in this browser cache.
-  api.health().then(result=>saveLoginPreview(result?.loginHints?.family)).catch(()=>{});
+  // The last authorized login already cached display-only names. Do not
+  // start a GAS health request here: rapid logout/login cycles otherwise
+  // overlap that request with PIN verification for no authentication benefit.
 }
 
 function renderPin(){
@@ -552,7 +551,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=126",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=127",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
