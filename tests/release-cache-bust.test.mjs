@@ -5,12 +5,12 @@ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const worker=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8');
 const app=fs.readFileSync(new URL('../js/app.js',import.meta.url),'utf8');
 
-assert.match(html,/\.\/js\/app\.js\?v=app-v58/,'HTML must request the current app bundle');
+assert.match(html,/\.\/js\/app\.js\?v=app-v59/,'HTML must request the current app bundle');
 assert.match(html,/\.\/css\/app\.css\?v=login-v2/,'HTML must request the login-preview stylesheet by a new URL');
-assert.match(worker,/const VERSION="suphan-pwa-v182"/,'service worker cache must be replaced for this release');
-assert.match(worker,/\.\/js\/app\.js\?v=app-v58/,'offline shell must match the new app bundle');
+assert.match(worker,/const VERSION="suphan-pwa-v183"/,'service worker cache must be replaced for this release');
+assert.match(worker,/\.\/js\/app\.js\?v=app-v59/,'offline shell must match the new app bundle');
 assert.match(worker,/\.\/css\/app\.css\?v=login-v2/,'offline shell must match the new stylesheet');
-assert.match(html,/\.\/css\/home-depth\.css\?v=home-depth-v4/,'HTML must request the updated home design');
-assert.match(worker,/\.\/css\/home-depth\.css\?v=home-depth-v4/,'offline shell must cache the updated home design');
-assert.match(app,/service-worker\.js\?v=134/,'the browser must check the updated service worker');
+assert.match(html,/\.\/css\/home-depth\.css\?v=home-depth-v5/,'HTML must request the updated home design');
+assert.match(worker,/\.\/css\/home-depth\.css\?v=home-depth-v5/,'offline shell must cache the updated home design');
+assert.match(app,/service-worker\.js\?v=135/,'the browser must check the updated service worker');
 console.log('release cache bust: PASS');

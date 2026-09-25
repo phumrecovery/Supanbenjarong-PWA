@@ -26,11 +26,11 @@
 .stat-value{font-variant-numeric:tabular-nums;white-space:nowrap;text-shadow:0 2px 0 #e9c7a3,0 5px 12px rgba(90,45,18,.13);transition:transform 160ms var(--ease),text-shadow 160ms var(--ease)}
 .home-summary:hover .stat-value{transform:translateY(-2px);text-shadow:0 3px 0 #e9c7a3,0 8px 14px rgba(90,45,18,.18)}
 .stat-label{font-weight:600;color:#69503e}
-.home-leaving .home-menu-btn{pointer-events:none;animation:home-menu-exit 190ms ease-in both;animation-delay:calc(var(--exit-index,0)*5ms)}
+.home-leaving .home-menu-btn{pointer-events:none;animation:home-menu-exit 310ms ease-in-out both;animation-delay:calc(var(--exit-index,0)*8ms)}
 .home-leaving .home-menu-btn:nth-child(even){--exit-shift:-20px}
 .home-leaving .home-menu-btn:nth-child(odd){--exit-shift:20px}
 .home-leaving .home-menu-chosen{filter:brightness(1.04);border-color:#b67238}
-.home-leaving .home-summary,.home-leaving .home-hero,.home-leaving .section-title{animation:home-header-exit 200ms ease-in both}
+.home-leaving .home-summary,.home-leaving .home-hero,.home-leaving .section-title{animation:home-header-exit 320ms ease-in-out both}
 @keyframes home-menu-exit{to{opacity:0;transform:translate3d(var(--exit-shift,20px),-6px,0) scale(.97)}}
 @keyframes home-header-exit{to{opacity:0;transform:translateY(-8px)}}
 .home-menu-btn{

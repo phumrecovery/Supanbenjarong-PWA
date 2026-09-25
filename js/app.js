@@ -341,7 +341,7 @@ function openHomeMenu(button){
     homeExitTimer=0;
     if(token!==sessionToken||flow!==loginFlowId||activeRoute!=="home"||main.dataset.route!=="home"||!currentSession?.user){cancelHomeExit();return;}
     navigate(route);
-  },230);
+  },380);
 }
 function featuredMarkup(items){
   if(!items||!items.length)return '<div class="empty-featured">⭐ ยังไม่มีสินค้าแนะนำ<br>ไปกดดาว ⭐ ในหน้าจัดการสินค้า</div>';
@@ -595,7 +595,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=134",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=135",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
