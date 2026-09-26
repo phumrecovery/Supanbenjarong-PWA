@@ -1,0 +1,20 @@
+/* Let Chromium skip layout and paint for long catalog rows outside the
+   scrollport. The browser keeps every card in the DOM, so search, keyboard
+   focus, buttons, and the authoritative GAS data paths remain unchanged. */
+@supports (content-visibility: auto) {
+  .legacy-product-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 270px;
+  }
+
+  .product-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 225px;
+  }
+
+  .pwa-stock-product,
+  .pwa-stock-move {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 82px;
+  }
+}
