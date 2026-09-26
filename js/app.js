@@ -304,10 +304,14 @@ const PICKER_AVATAR=`<div class="picker-icon picker-avatar" aria-hidden="true"><
   <circle cx="72" cy="67" r="58" fill="url(#avatar-halo)" stroke="#d9ad7d" stroke-width="1.5"/>
   <path d="M30 76v-9m-4 5h9M115 32v-8m-4 4h8" stroke="#c58f55" stroke-linecap="round" stroke-width="2.4" opacity=".7"/>
   <g filter="url(#avatar-shadow)">
+    <path d="M48 93c-11-4-18 1-22 12l-7 17c-2 5 0 10 5 12l13 4 5-12-8-4 9-16Z" fill="url(#avatar-jacket)" stroke="#683a21" stroke-width="1.5"/>
+    <path d="m23 130 13 5" stroke="#c69361" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 123c-2 4 0 9 5 11l8 3c4 1 7-2 8-6l-15-6Z" fill="url(#avatar-face)" stroke="#b77950" stroke-width="1.2"/>
     <g class="picker-avatar-wave">
-      <path d="M105 99c11-4 17-14 20-23l-9-5c-4 7-10 12-18 13Z" fill="url(#avatar-jacket)" stroke="#724222" stroke-width="1.5"/>
-      <path d="M114 74c-1-6 0-14 3-16 2-2 4 0 4 2v8c1-5 3-16 5-17 2-1 4 0 4 2l-1 15c2-6 4-13 6-13 2 0 3 2 2 4l-4 17c-2 8-8 12-13 12-5-1-7-7-6-14Z" fill="url(#avatar-face)" stroke="#b77950" stroke-width="1.5"/>
-      <path d="m113 82 8 4" stroke="#fff0da" stroke-width="2" stroke-linecap="round"/>
+      <path d="M95 89c9-2 17-9 21-17l11 6c-4 14-13 23-25 28Z" fill="url(#avatar-jacket)" stroke="#683a21" stroke-width="1.5"/>
+      <path d="m115 73 11 7" stroke="#fff2de" stroke-width="4" stroke-linecap="round"/>
+      <path d="M117 73c-2-5-6-9-5-12 1-3 4-2 6 0l5 5-1-20c0-4 5-5 6-1l2 16 2-19c1-4 6-3 6 1l-1 19 3-13c1-4 6-3 5 2l-3 19c-1 8-6 13-13 14-6 1-10-3-12-11Z" fill="url(#avatar-face)" stroke="#b77950" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M122 69c3-3 8-3 11-1" stroke="#fff0d7" stroke-opacity=".7" stroke-width="1.5" stroke-linecap="round"/>
     </g>
     <path d="M39 105c4-17 15-24 33-24s29 7 33 24l5 30H34Z" fill="url(#avatar-jacket)" stroke="#623719" stroke-width="1.5"/>
     <path d="m55 88 17 36 17-36-8-5H63Z" fill="#fff9ee"/>
@@ -666,7 +670,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=142",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=143",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
