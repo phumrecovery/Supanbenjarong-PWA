@@ -11,6 +11,10 @@ export class ApiClient {
     this.warmEpoch=0;
   }
   clearWarmCache(){this.warmEpoch++;this.warmCache.clear();}
+  peekWarm(action,session,params={}){
+    const hit=this.warmCache.get(action+":"+session+":"+JSON.stringify(params));
+    return hit&&!hit.promise&&hit.expiresAt>Date.now()?hit.value:null;
+  }
   warmRead(action,session,ttlMs,timeoutMs,retries,params={}){
     const key=action+":"+session+":"+JSON.stringify(params);
     const now=Date.now();
@@ -203,7 +207,8 @@ export class ApiClient {
   preorderPrintDocument(session,row,type){return this.request({action:"preorderPrintDocument",session,row,type},30000);}
   preorderCustomerSave(session,data,row){return this.request({action:"preorderCustomerSave",session,data,row},30000);}
   preorderUploadImage(session,dataUrl,fileName){return this.request({action:"preorderUploadImage",session,dataUrl,fileName},60000);}
-  settingsBootstrap(session){return this.request({action:"settingsBootstrap",session},30000,{retries:1,retryLogical:true});}
+  settingsBootstrap(session){return this.warmRead("settingsBootstrap",session,5*60_000,30000,1);}
+  cachedSettingsBootstrap(session){return this.peekWarm("settingsBootstrap",session);}
   settingsSaveConfig(session,data){return this.request({action:"settingsSaveConfig",session,data},30000);}
   settingsSaveUser(session,data){return this.request({action:"settingsSaveUser",session,data},30000);}
   settingsSaveEmployee(session,data){return this.request({action:"settingsSaveEmployee",session,data},30000);}

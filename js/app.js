@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v14";
+import {ApiClient} from "./api.js?v=api-v15";
 import {renderPos} from "./pos.js?v=pos-v20";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
@@ -6,7 +6,7 @@ import {renderExpense} from "./expense.js?v=expense-v13";
 import {renderPreorder} from "./preorder.js?v=preorder-v17";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
-import {renderSettings} from "./settings.js?v=settings-v10";
+import {renderSettings} from "./settings.js?v=settings-v11";
 import {renderWorkshop} from "./workshop.js?v=workshop-v28";
 import {renderClaim} from "./claim.js?v=claim-v4";
 import {renderBarcode} from "./barcode.js?v=barcode-v4";
@@ -677,7 +677,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=145",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=146",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
