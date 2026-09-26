@@ -294,24 +294,27 @@ async function submitPin(){
 
 const PICKER_AVATAR=`<div class="picker-icon picker-avatar" aria-hidden="true"><svg viewBox="0 0 144 150" focusable="false" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="avatar-halo"><stop stop-color="#fffaf1"/><stop offset=".75" stop-color="#f3dfc2"/><stop offset="1" stop-color="#e1b98f"/></radialGradient>
     <linearGradient id="avatar-jacket" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a66a3b"/><stop offset=".47" stop-color="#75401f"/><stop offset="1" stop-color="#4c281a"/></linearGradient>
     <linearGradient id="avatar-face" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe3bb"/><stop offset=".58" stop-color="#edb987"/><stop offset="1" stop-color="#cf8b5e"/></linearGradient>
     <linearGradient id="avatar-hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#69432f"/><stop offset="1" stop-color="#2d1c18"/></linearGradient>
     <filter id="avatar-shadow" x="-35%" y="-35%" width="170%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#815339" flood-opacity=".28"/></filter>
   </defs>
   <ellipse cx="72" cy="141" rx="47" ry="5" fill="#9d6a45" opacity=".17"/>
-  <circle cx="72" cy="67" r="58" fill="url(#avatar-halo)" stroke="#d9ad7d" stroke-width="1.5"/>
-  <path d="M30 76v-9m-4 5h9M115 32v-8m-4 4h8" stroke="#c58f55" stroke-linecap="round" stroke-width="2.4" opacity=".7"/>
   <g filter="url(#avatar-shadow)">
-    <path d="M48 93c-11-4-18 1-22 12l-7 17c-2 5 0 10 5 12l13 4 5-12-8-4 9-16Z" fill="url(#avatar-jacket)" stroke="#683a21" stroke-width="1.5"/>
-    <path d="m23 130 13 5" stroke="#c69361" stroke-width="2" stroke-linecap="round"/>
-    <path d="M20 123c-2 4 0 9 5 11l8 3c4 1 7-2 8-6l-15-6Z" fill="url(#avatar-face)" stroke="#b77950" stroke-width="1.2"/>
+    <path d="M47 89c-10 3-16 12-18 25l-2 21h14l2-24c1-9 3-16 4-22Z" fill="url(#avatar-jacket)" stroke="#623719" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M36 104c-2 9-3 20-3 31" stroke="#c38c58" stroke-opacity=".55" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M97 96 117 104" stroke="#623719" stroke-width="18" stroke-linecap="round"/>
+    <path d="M97 96 117 104" stroke="#6f3c1d" stroke-width="15" stroke-linecap="round"/>
     <g class="picker-avatar-wave">
-      <path d="M95 89c9-2 17-9 21-17l11 6c-4 14-13 23-25 28Z" fill="url(#avatar-jacket)" stroke="#683a21" stroke-width="1.5"/>
-      <path d="m115 73 11 7" stroke="#fff2de" stroke-width="4" stroke-linecap="round"/>
-      <path d="M117 73c-2-5-6-9-5-12 1-3 4-2 6 0l5 5-1-20c0-4 5-5 6-1l2 16 2-19c1-4 6-3 6 1l-1 19 3-13c1-4 6-3 5 2l-3 19c-1 8-6 13-13 14-6 1-10-3-12-11Z" fill="url(#avatar-face)" stroke="#b77950" stroke-width="1.5" stroke-linejoin="round"/>
-      <path d="M122 69c3-3 8-3 11-1" stroke="#fff0d7" stroke-opacity=".7" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M117 104 122 76" stroke="#623719" stroke-width="16.5" stroke-linecap="round"/>
+      <path d="M117 104 122 76" stroke="#7d4523" stroke-width="13.5" stroke-linecap="round"/>
+      <path d="M114.5 98 116.5 88" stroke="#a66a3b" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/>
+      <path d="M122.6 77.5 123.4 73" stroke="#b77950" stroke-width="14.5" stroke-linecap="round"/>
+      <path d="M122.6 77.5 123.4 73" stroke="#fff6e8" stroke-width="12" stroke-linecap="round"/>
+      <g stroke="#b77950" stroke-width="7.4" stroke-linecap="round"><path d="M116.5 62 111 55.5M118.4 57 117.2 45M123 56 123 42.5M127.6 57 128.8 44.5M131.4 60 134.2 50"/></g>
+      <rect x="115.2" y="56" width="17.6" height="17" rx="7" fill="url(#avatar-face)" stroke="#b77950" stroke-width="1.2"/>
+      <g stroke="#f6c89a" stroke-width="5" stroke-linecap="round"><path d="M116.5 62 111 55.5M118.4 57 117.2 45M123 56 123 42.5M127.6 57 128.8 44.5M131.4 60 134.2 50"/></g>
+      <path d="M118 66c3 2.5 8.5 2.5 11.5 0" stroke="#d99d6b" stroke-width="1.3" stroke-linecap="round"/>
     </g>
     <path d="M39 105c4-17 15-24 33-24s29 7 33 24l5 30H34Z" fill="url(#avatar-jacket)" stroke="#623719" stroke-width="1.5"/>
     <path d="m55 88 17 36 17-36-8-5H63Z" fill="#fff9ee"/>
@@ -670,7 +673,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=143",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=144",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{

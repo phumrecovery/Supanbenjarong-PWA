@@ -19,7 +19,7 @@
   animation:picker-avatar-glance 6.4s ease-in-out infinite;
 }
 .picker-avatar-wave{
-  transform-origin:105px 98px;
+  transform-origin:117px 104px;
   animation:picker-avatar-greet 6.4s ease-in-out infinite;
 }
 @keyframes picker-avatar-look{
@@ -34,8 +34,8 @@
 }
 @keyframes picker-avatar-greet{
   0%,64%,100%{transform:rotate(0)}
-  70%,82%,93%{transform:rotate(-8deg)}
-  76%,88%{transform:rotate(4deg)}
+  70%,82%,93%{transform:rotate(-12deg)}
+  76%,88%{transform:rotate(9deg)}
 }
 @media (max-width:380px){.picker-avatar{width:116px;height:122px}}
 @media (prefers-reduced-motion:reduce){
