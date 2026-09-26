@@ -29,6 +29,9 @@ const sidebarUser=document.querySelector("#sidebarUser");
 const toast=document.querySelector("#toast");
 const floatingLayer=document.querySelector("#floatingLayer");
 const SESSION_KEY="suphanbenjarong.pwa.session";
+// Each module is a new screen. Browser history must not restore Home's scroll
+// offset over a destination's pinned toolbar.
+if("scrollRestoration" in history)history.scrollRestoration="manual";
 const DISPLAY_USER_KEY="suphanbenjarong.pwa.display-user";
 const PENDING_BARCODE_KEY="suphanbenjarong.pwa.pending-barcode";
 const LOGIN_PREVIEW_KEY="suphanbenjarong.pwa.family-login-preview";
@@ -544,6 +547,7 @@ function navigate(route,{replace=false,animate=true}={}){
   const url=`#${clean}`;
   if(replace)history.replaceState({route:clean},"",url);else history.pushState({route:clean},"",url);
   render(clean,{animate});
+  window.scrollTo(0,0);
 }
 async function returnLimitedPosToLogin(){
   // A sales-only account has no permitted Home route. Its POS back button
@@ -560,7 +564,7 @@ async function returnLimitedPosToLogin(){
   showLogin("");
   try{if(token)await api.logout(token);}catch(error){}
 }
-window.addEventListener("popstate",()=>render(currentRoute(),{animate:true}));
+window.addEventListener("popstate",()=>{render(currentRoute(),{animate:true});window.scrollTo(0,0);});
 // Product mutations must never leave dashboard/POS master data looking current.
 window.addEventListener("suphan-data-mutated",()=>{homeData=null;});
 function barcodeChar(event){
@@ -673,7 +677,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=144",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=145",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
