@@ -12,6 +12,7 @@ import {renderClaim} from "./claim.js?v=claim-v4";
 import {renderBarcode} from "./barcode.js?v=barcode-v4";
 import {renderReceipt} from "./receipt.js?v=receipt-v1";
 import {renderStocktake} from "./stocktake.js?v=stocktake-v1";
+import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -37,15 +38,15 @@ const LOGIN_PREVIEW_TTL=30*24*60*60*1000;
 // URL เดียวกับ Web App เดิม เพื่อให้ก่อนโหลดข้อมูลร้าน PWA ยังใช้ตราร้านจริง
 const LOGO_FALLBACK="https://lh3.googleusercontent.com/d/18rwkqytClqwNtg0PReV1ILLFwkiIKa01";
 const MENU=[
-  ["sales","🧾","ขายของ","ออกบิลเงินสด"],
-  ["workshop","🖌️","จัดการงานช่าง","จ่ายงาน / บันทึกวัน / จ่ายค่าจ้าง"],
-  ["outsource","🚚","สั่งของ/รับของ","Outsource + ซื้อเข้าร้าน"],
-  ["expense","💸","ค่าใช้จ่าย","จดรายจ่าย"],
-  ["preorder","📋","งานสั่งทำ","Preorder / ใบเสนอราคา"],
-  ["report","📊","ดูสรุป","ยอดขาย / กำไร / Cashflow"],
-  ["product","📦","จัดการสินค้า","ดู / แก้ไข / เพิ่มสินค้า"],
-  ["stock","🗃️","สต๊อกสินค้า","คงเหลือ / รับเข้า / ปรับยอด"],
-  ["settings","⚙️","ตั้งค่าร้าน","ข้อมูลร้าน / ผู้ใช้ / พนักงาน"]
+  ["sales","ขายของ","ออกบิลเงินสด"],
+  ["workshop","จัดการงานช่าง","จ่ายงาน / บันทึกวัน / จ่ายค่าจ้าง"],
+  ["outsource","สั่งของ/รับของ","Outsource + ซื้อเข้าร้าน"],
+  ["expense","ค่าใช้จ่าย","จดรายจ่าย"],
+  ["preorder","งานสั่งทำ","Preorder / ใบเสนอราคา"],
+  ["report","ดูสรุป","ยอดขาย / กำไร / Cashflow"],
+  ["product","จัดการสินค้า","ดู / แก้ไข / เพิ่มสินค้า"],
+  ["stock","สต๊อกสินค้า","คงเหลือ / รับเข้า / ปรับยอด"],
+  ["settings","ตั้งค่าร้าน","ข้อมูลร้าน / ผู้ใช้ / พนักงาน"]
 ];
 const PAGES={
   claim:["🔄 รับคืน/เคลม","บันทึกรับคืนและดำเนินการเคลม"],
@@ -352,25 +353,31 @@ function isAllowedRoute(route){return hasFamilyAccess()||route==="sales";}
 function allowedStartRoute(route){return isAllowedRoute(route)?route:"sales";}
 function menuMarkup(){
   const visible=hasFamilyAccess()?MENU:MENU.filter(([route])=>route==="sales");
-  return visible.map(([route,icon,label,sub],index)=>`<button type="button" class="home-menu-btn" data-route="${route}" style="--exit-index:${index}"><span class="home-menu-icon">${icon}</span><span class="home-menu-label">${label}</span><span class="home-menu-sub">${sub}</span></button>`).join("");
+  return visible.map(([route,label,sub],index)=>`<button type="button" class="home-menu-btn" data-route="${route}" style="--exit-index:${index}"><span class="home-menu-icon">${MENU_ICONS[route]}</span><span class="home-menu-label">${label}</span><span class="home-menu-sub">${sub}</span></button>`).join("");
 }
 function cancelHomeExit(){
   if(homeExitTimer)clearTimeout(homeExitTimer);
   homeExitTimer=0;
   main.classList.remove("home-leaving");
+  main.querySelector?.(".home-menu-chosen")?.classList.remove("home-menu-chosen");
 }
 function openHomeMenu(button){
   if(homeExitTimer)return;
   const route=button.dataset.route;
   if(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches){navigate(route);return;}
   const token=sessionToken,flow=loginFlowId;
+  const stale=()=>token!==sessionToken||flow!==loginFlowId||activeRoute!=="home"||main.dataset.route!=="home"||!currentSession?.user;
+  // The icon's own animation plays first; the card exit overlaps its tail.
   button.classList.add("home-menu-chosen");
-  main.classList.add("home-leaving");
   homeExitTimer=setTimeout(()=>{
-    homeExitTimer=0;
-    if(token!==sessionToken||flow!==loginFlowId||activeRoute!=="home"||main.dataset.route!=="home"||!currentSession?.user){cancelHomeExit();return;}
-    navigate(route);
-  },380);
+    if(stale()){cancelHomeExit();return;}
+    main.classList.add("home-leaving");
+    homeExitTimer=setTimeout(()=>{
+      homeExitTimer=0;
+      if(stale()){cancelHomeExit();return;}
+      navigate(route);
+    },380);
+  },300);
 }
 function featuredMarkup(items){
   if(!items||!items.length)return '<div class="empty-featured">⭐ ยังไม่มีสินค้าแนะนำ<br>ไปกดดาว ⭐ ในหน้าจัดการสินค้า</div>';
@@ -621,7 +628,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=140",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=141",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
