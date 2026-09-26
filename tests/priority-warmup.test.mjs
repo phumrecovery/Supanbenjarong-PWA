@@ -43,5 +43,5 @@ const warmup=app.slice(app.indexOf('function schedulePriorityWarmup('),app.index
 for(const action of ['posBootstrap','workshopBootstrap','workerPortalOwnerQueue','expenseBootstrap','preorderBootstrap','productBootstrap','stockBootstrap'])
   assert.ok(warmup.includes(`api.${action}(`),`${action} should be eligible for background preparation`);
 assert.ok(!warmup.includes('barcodeBootstrap'),'rarely used barcode data should load on demand');
-assert.ok(warmup.includes('Date.now()-startedAt>=10_000'),'background work must have a bounded launch window');
+assert.ok(warmup.includes('Date.now()-startedAt>=30_000'),'background work must have a bounded launch window');
 console.log('PASS: prioritized warmup reuses live reads and respects user/session boundaries');

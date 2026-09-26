@@ -96,11 +96,12 @@ function schedulePriorityWarmup(token,flow){
     const startedAt=Date.now(),epoch=api.warmEpoch;
     setTimeout(()=>{if(flow===loginFlowId&&sessionToken===token)setWarmupStatus("");},10_000);
     // At most three GAS reads run together, all after authentication. The
-    // selected route shares an in-flight read; later tasks stop if the user
-    // changes route, a write invalidates data, or ten seconds have elapsed.
+    // selected route shares an in-flight read. Preparation remains optional:
+    // stop adding work when the user leaves, data changes, or 30 seconds pass.
+    // The Home screen itself never waits for this background work.
     const run=async tasks=>{
       for(const read of tasks){
-        if(!eligible()||epoch!==api.warmEpoch||Date.now()-startedAt>=10_000)break;
+        if(!eligible()||epoch!==api.warmEpoch||Date.now()-startedAt>=30_000)break;
         try{await read();}catch(error){}
       }
     };
@@ -620,7 +621,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=136",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=137",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
