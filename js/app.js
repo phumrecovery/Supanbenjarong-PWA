@@ -292,9 +292,47 @@ async function submitPin(){
   }finally{if(requestedFlow===loginFlowId)pinSubmitting=false;}
 }
 
+const PICKER_AVATAR=`<div class="picker-icon picker-avatar" aria-hidden="true"><svg viewBox="0 0 144 150" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="avatar-halo"><stop stop-color="#fffaf1"/><stop offset=".75" stop-color="#f3dfc2"/><stop offset="1" stop-color="#e1b98f"/></radialGradient>
+    <linearGradient id="avatar-jacket" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a66a3b"/><stop offset=".47" stop-color="#75401f"/><stop offset="1" stop-color="#4c281a"/></linearGradient>
+    <linearGradient id="avatar-face" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe3bb"/><stop offset=".58" stop-color="#edb987"/><stop offset="1" stop-color="#cf8b5e"/></linearGradient>
+    <linearGradient id="avatar-hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#69432f"/><stop offset="1" stop-color="#2d1c18"/></linearGradient>
+    <filter id="avatar-shadow" x="-35%" y="-35%" width="170%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#815339" flood-opacity=".28"/></filter>
+  </defs>
+  <ellipse cx="72" cy="141" rx="47" ry="5" fill="#9d6a45" opacity=".17"/>
+  <circle cx="72" cy="67" r="58" fill="url(#avatar-halo)" stroke="#d9ad7d" stroke-width="1.5"/>
+  <path d="M30 76v-9m-4 5h9M115 32v-8m-4 4h8" stroke="#c58f55" stroke-linecap="round" stroke-width="2.4" opacity=".7"/>
+  <g filter="url(#avatar-shadow)">
+    <g class="picker-avatar-wave">
+      <path d="M105 99c11-4 17-14 20-23l-9-5c-4 7-10 12-18 13Z" fill="url(#avatar-jacket)" stroke="#724222" stroke-width="1.5"/>
+      <path d="M114 74c-1-6 0-14 3-16 2-2 4 0 4 2v8c1-5 3-16 5-17 2-1 4 0 4 2l-1 15c2-6 4-13 6-13 2 0 3 2 2 4l-4 17c-2 8-8 12-13 12-5-1-7-7-6-14Z" fill="url(#avatar-face)" stroke="#b77950" stroke-width="1.5"/>
+      <path d="m113 82 8 4" stroke="#fff0da" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <path d="M39 105c4-17 15-24 33-24s29 7 33 24l5 30H34Z" fill="url(#avatar-jacket)" stroke="#623719" stroke-width="1.5"/>
+    <path d="m55 88 17 36 17-36-8-5H63Z" fill="#fff9ee"/>
+    <path d="m65 86 7 10 7-10-7-5Z" fill="#f8efe1"/>
+    <path d="m70 94 4 1 4 20-6 8-6-8Z" fill="#bc7a33" stroke="#8c5529" stroke-width="1"/>
+    <path d="M58 83 72 124 51 102l5-5-8-5m38-9-14 41 21-22-5-5 8-5" fill="#6a381e" stroke="#b27b4e" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M43 107c-3 9-4 20-4 28m62-28c3 9 4 20 4 28" stroke="#c38c58" stroke-opacity=".65" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="86" cy="120" r="1.8" fill="#d9ad65"/>
+    <g class="picker-avatar-head">
+      <path d="M62 77v11c5 7 15 7 20 0V77Z" fill="#d99d6b"/>
+      <ellipse cx="72" cy="56" rx="23" ry="29" fill="url(#avatar-face)" stroke="#be8056" stroke-width="1.2"/>
+      <path d="M49 52c-2-17 7-30 24-31 15-1 26 12 22 31-5-3-8-8-9-13-8 4-20 3-27-1-1 7-5 11-10 14Z" fill="url(#avatar-hair)"/>
+      <path d="M56 33c7-10 23-12 33-2" fill="none" stroke="#9e7053" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
+      <g class="picker-avatar-eyes" fill="#493022"><ellipse cx="63" cy="57" rx="1.6" ry="2"/><ellipse cx="81" cy="57" rx="1.6" ry="2"/></g>
+      <path d="M60 51c2-1 5-1 7 0m10 0c2-1 5-1 7 0" stroke="#70452f" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M72 60v5" stroke="#bc805a" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M66 70c4 3 8 3 12 0" stroke="#965039" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+      <path d="M52 62c-4-1-6-5-4-9 1-2 3-2 5-1m39 10c4-1 6-5 4-9-1-2-3-2-5-1" fill="#e2a775" stroke="#be8056" stroke-width="1"/>
+    </g>
+  </g>
+</svg></div>`;
+
 function showUserPicker(users,{pending=false}={}){
   const colors=["#e91e63","#9c27b0","#2196f3","#ff9800","#4caf50","#00bcd4","#f44336","#3f51b5"];
-  main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน"><div class="picker-icon" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><circle cx="32" cy="17" r="10"/><path d="M19 34c4-6 8-9 13-9s9 3 13 9l7 21H12l7-21Z"/><path d="m26 29 6 8 6-8 4 26H22l4-26Z" fill="currentColor" opacity=".82"/><path d="m32 34 4 7-4 5-4-5 4-7Z" fill="#fff8f0"/></svg></div><h1 class="picker-title">${pending?"กำลังตรวจ PIN และเตรียมข้อมูลร้าน…":"คุณคือใคร?"}</h1>${pending?'<p class="picker-loading" role="status"><span aria-hidden="true"></span>กำลังยืนยันสิทธิ์ ปุ่มจะพร้อมใช้ทันที</p>':""}<div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn${pending?" is-pending":""}" type="button" data-user-index="${index}" aria-pressed="false"${pending?" disabled":""}><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||(pending?'<p class="hint">กำลังโหลดรายชื่อจากระบบ…</p>':'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>')}</div></section>`;
+  main.innerHTML=`<section class="login-screen" aria-label="เลือกชื่อผู้ใช้งาน">${PICKER_AVATAR}<h1 class="picker-title">${pending?"กำลังตรวจ PIN และเตรียมข้อมูลร้าน…":"คุณคือใคร?"}</h1>${pending?'<p class="picker-loading" role="status"><span aria-hidden="true"></span>กำลังยืนยันสิทธิ์ ปุ่มจะพร้อมใช้ทันที</p>':""}<div class="picker-grid">${users.map((user,index)=>`<button class="picker-btn${pending?" is-pending":""}" type="button" data-user-index="${index}" aria-pressed="false"${pending?" disabled":""}><span class="picker-initial" style="background:${colors[index%colors.length]}">${escapeHtml((user.name||"?").charAt(0))}</span><span class="picker-name">${escapeHtml(user.name)}</span><span class="picker-role">${escapeHtml(user.role||"")}</span></button>`).join("")||(pending?'<p class="hint">กำลังโหลดรายชื่อจากระบบ…</p>':'<p class="hint">ไม่พบผู้ใช้งานที่เปิดใช้งาน</p>')}</div></section>`;
   if(!pending)main.querySelectorAll("[data-user-index]").forEach(button=>button.addEventListener("click",()=>selectUser(users[Number(button.dataset.userIndex)],button)));
 }
 
@@ -628,7 +666,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=141",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=142",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
