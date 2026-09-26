@@ -11,15 +11,15 @@ export class ApiClient {
     this.warmEpoch=0;
   }
   clearWarmCache(){this.warmEpoch++;this.warmCache.clear();}
-  warmRead(action,session,ttlMs,timeoutMs,retries){
-    const key=action+":"+session;
+  warmRead(action,session,ttlMs,timeoutMs,retries,params={}){
+    const key=action+":"+session+":"+JSON.stringify(params);
     const now=Date.now();
     const hit=this.warmCache.get(key);
     if(hit&&(hit.promise||hit.expiresAt>now))return hit.promise||Promise.resolve(hit.value);
     const epoch=this.warmEpoch;
-    const promise=this.request({action,session},timeoutMs,{retries,retryLogical:true})
+    const promise=this.request({action,session,...params},timeoutMs,{retries,retryLogical:true})
       .then(result=>{
-        if(!result?.ok){this.warmCache.delete(key);return result;}
+        if(!result?.ok){if(epoch===this.warmEpoch)this.warmCache.delete(key);return result;}
         if(epoch===this.warmEpoch)this.warmCache.set(key,{value:result,expiresAt:Date.now()+ttlMs});
         return result;
       }).catch(error=>{if(epoch===this.warmEpoch)this.warmCache.delete(key);throw error;});
@@ -81,7 +81,7 @@ export class ApiClient {
   posBootstrap(session){
     // POS loads the complete sellable-product and packaging catalog.  A GAS
     // cold start can legitimately exceed the generic 15-second request limit.
-    return this.request({action:"posBootstrap",session},45000,{retries:2,retryLogical:true});
+    return this.warmRead("posBootstrap",session,15_000,45000,2);
   }
   posCategoryOrder(session,categories){
     return this.request({action:"posCategoryOrder",session,categories},30000);
@@ -92,7 +92,7 @@ export class ApiClient {
   productBootstrap(session,layer="store"){
     // This is a read-only request: GAS/Sheets can briefly be cold or busy,
     // therefore it is safe to retry rather than replacing the page with empty data.
-    return this.request({action:"productBootstrap",session,layer},30000,{retries:2,retryLogical:true});
+    return this.warmRead("productBootstrap",session,5*60_000,30000,2,{layer});
   }
   productAdd(session,product){
     return this.request({action:"productAdd",session,product});
@@ -113,7 +113,7 @@ export class ApiClient {
     return this.request({action:"productUploadImage",session,row,layer,data,fileName},60000);
   }
   stockBootstrap(session){
-    return this.request({action:"stockBootstrap",session},30000,{retries:1,retryLogical:true});
+    return this.warmRead("stockBootstrap",session,10_000,30000,1);
   }
   stockSaveMovement(session,data){
     return this.request({action:"stockSaveMovement",session,data},30000);
@@ -130,7 +130,7 @@ export class ApiClient {
   }
   receiptBootstrap(session){return this.request({action:"receiptBootstrap",session},45000,{retries:1,retryLogical:true});}
   receiptCancel(session,billNo,reason){return this.request({action:"receiptCancel",session,billNo,reason},60000);}
-  workshopBootstrap(session){return this.request({action:"workshopBootstrap",session},45000,{retries:1,retryLogical:true});}
+  workshopBootstrap(session){return this.warmRead("workshopBootstrap",session,15_000,45000,1);}
   workshopSaveJob(session,data){return this.request({action:"workshopSaveJob",session,data},45000);}
   workshopAttendance(session,date){return this.request({action:"workshopAttendance",session,date},30000,{retries:1,retryLogical:true});}
   workshopMonthlyAttendance(session,year,month){return this.request({action:"workshopMonthlyAttendance",session,year,month},45000,{retries:1,retryLogical:true});}
@@ -141,7 +141,7 @@ export class ApiClient {
   workshopConfirmWagePeriod(session,start,end){return this.request({action:"workshopConfirmWagePeriod",session,start,end},60000);}
   workshopConfirmFiring(session,rowIdx,passed,damaged){return this.request({action:"workshopConfirmFiring",session,rowIdx,passed,damaged},45000);}
   workshopSetFiringMode(session,mode){return this.request({action:"workshopSetFiringMode",session,mode},30000);}
-  workerPortalOwnerQueue(session){return this.request({action:"workerPortalOwnerQueue",session},30000,{retries:1,retryLogical:true});}
+  workerPortalOwnerQueue(session){return this.warmRead("workerPortalOwnerQueue",session,10_000,30000,1);}
   workerPortalOwnerUpdate(session,data){return this.request({action:"workerPortalOwnerUpdate",session,data},45000);}
   workerPortalOwnerReturn(session,data){return this.request({action:"workerPortalOwnerReturn",session,data},45000);}
   workerPortalOwnerCancel(session,data){return this.request({action:"workerPortalOwnerCancel",session,data},45000);}
@@ -193,7 +193,7 @@ export class ApiClient {
   claimSupport(session){return this.request({action:"claimSupport",session},45000,{retries:1,retryLogical:true});}
   claimSave(session,data){return this.request({action:"claimSave",session,data},60000);}
   claimComplete(session,rowIdx){return this.request({action:"claimComplete",session,rowIdx},60000);}
-  preorderBootstrap(session){return this.request({action:"preorderBootstrap",session},30000);}
+  preorderBootstrap(session){return this.warmRead("preorderBootstrap",session,60_000,30000,0);}
   preorderQuotationSave(session,data,row){return this.request({action:"preorderQuotationSave",session,data,row},30000);}
   preorderQuotationStatus(session,row,status){return this.request({action:"preorderQuotationStatus",session,row,status},30000);}
   preorderCreatePoFromQt(session,row){return this.request({action:"preorderCreatePoFromQt",session,row},30000);}

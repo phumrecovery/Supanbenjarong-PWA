@@ -1,4 +1,6 @@
 /* Soft raised menu cards: tactile feedback without reducing Thai label size. */
+.home-warmup-status{margin:8px 0 0;color:#78553b;font-size:14px;line-height:1.45}
+.home-warmup-status[hidden]{display:none}
 .home-summary{
   position:relative;
   isolation:isolate;

@@ -7,7 +7,7 @@ const pos=read("js/pos.js");
 const preorder=read("js/preorder.js");
 const preorderCss=read("css/preorder-fixes.css");
 
-assert.match(api,/posBootstrap\(session\)[\s\S]*45000,\{retries:2,retryLogical:true\}/,
+assert.match(api,/posBootstrap\(session\)[\s\S]*warmRead\("posBootstrap",session,15_000,45000,2\)/,
   "POS bootstrap must tolerate GAS cold starts and retry read-only loading");
 assert.match(pos,/data-pos-retry/,
   "POS load failure must offer an in-page retry action");

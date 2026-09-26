@@ -8,7 +8,7 @@ assert.ok(body,'login screen handler exists');
 let healthCalls=0;
 const context=vm.createContext({
   loginFlowId:0,pinSubmitting:true,activeRoute:'home',main:{dataset:{},innerHTML:'',_settingsAbort:null},
-  cancelHomeExit:()=>{},closeSidebar:()=>{},setShell:()=>{},pinInput:'123456',renderPin:()=>{},
+  cancelHomeExit:()=>{},setWarmupStatus:()=>{},closeSidebar:()=>{},setShell:()=>{},pinInput:'123456',renderPin:()=>{},
   api:{health:()=>{healthCalls++;return Promise.resolve({ok:true});}},
   LOGO_FALLBACK:'logo',escapeHtml:text=>text
 });

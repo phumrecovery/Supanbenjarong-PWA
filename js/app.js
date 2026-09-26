@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v12";
+import {ApiClient} from "./api.js?v=api-v13";
 import {renderPos} from "./pos.js?v=pos-v19";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
@@ -78,21 +78,45 @@ let barcodeTimer=0;
 // Increment whenever the authenticated flow ends.  Async responses capture
 // this number and cannot redraw a page belonging to an older session.
 let loginFlowId=0;
-let masterWarmupToken="";
+let priorityWarmupToken="";
+let warmupStatus="";
 
-function scheduleMasterWarmup(token,flow){
-  if(!token||masterWarmupToken===token)return;
-  const warm=async()=>{
-    if(flow!==loginFlowId||sessionToken!==token||activeRoute!=="sales")return;
-    masterWarmupToken=token;
-    // POS has already rendered. Warm only two low-churn read models, one at
-    // a time, so background work cannot compete with the initial POS load.
-    try{await api.expenseBootstrap(token);}catch(error){}
-    if(flow!==loginFlowId||sessionToken!==token)return;
-    try{await api.barcodeBootstrap(token);}catch(error){}
-  };
-  if("requestIdleCallback" in window)window.requestIdleCallback(warm,{timeout:4000});
-  else setTimeout(warm,1200);
+function setWarmupStatus(value){
+  warmupStatus=value;
+  const label=main.querySelector("#homeWarmupStatus");
+  if(label){label.textContent=value;label.hidden=!value;}
+}
+function schedulePriorityWarmup(token,flow){
+  if(!token||!hasFamilyAccess()||priorityWarmupToken===token)return;
+  priorityWarmupToken=token;
+  setWarmupStatus("⚡ กำลังเตรียมข้อมูลหมวดที่ใช้บ่อย · เข้าใช้งานได้เลย");
+  const eligible=()=>flow===loginFlowId&&sessionToken===token&&!!currentSession?.user&&["home","sales"].includes(activeRoute);
+  setTimeout(()=>{
+    if(!eligible()){if(priorityWarmupToken===token)setWarmupStatus("");return;}
+    const startedAt=Date.now(),epoch=api.warmEpoch;
+    setTimeout(()=>{if(flow===loginFlowId&&sessionToken===token)setWarmupStatus("");},10_000);
+    // At most three GAS reads run together, all after authentication. The
+    // selected route shares an in-flight read; later tasks stop if the user
+    // changes route, a write invalidates data, or ten seconds have elapsed.
+    const run=async tasks=>{
+      for(const read of tasks){
+        if(!eligible()||epoch!==api.warmEpoch||Date.now()-startedAt>=10_000)break;
+        try{await read();}catch(error){}
+      }
+    };
+    const pos=run([()=>api.posBootstrap(token)]);
+    const stock=()=>run([()=>api.stockBootstrap(token)]);
+    const others=()=>Promise.allSettled([
+      run([()=>api.workshopBootstrap(token),()=>api.workerPortalOwnerQueue(token)]),
+      run([()=>api.expenseBootstrap(token),()=>api.preorderBootstrap(token),()=>api.productBootstrap(token,"store")])
+    ]);
+    // If the user entered POS directly, let its catalog load before adding
+    // competing background reads. Home has no foreground catalog to protect.
+    const work=activeRoute==="sales"
+      ?pos.then(()=>Promise.allSettled([stock(),others()]))
+      :Promise.allSettled([pos.then(stock),others()]);
+    work.finally(()=>{if(flow===loginFlowId&&sessionToken===token)setWarmupStatus("");});
+  },700);
 }
 
 function readLoginPreview(){
@@ -203,6 +227,8 @@ sidebar.addEventListener("click",event=>{
 
 function showLogin(message=""){
   cancelHomeExit();
+  priorityWarmupToken="";
+  setWarmupStatus("");
   loginFlowId++;
   pinSubmitting=false;
   activeRoute="login";
@@ -289,6 +315,7 @@ async function selectUser(user,selectedButton){
       setAuthenticatedHeader();
       sound.success();
       navigate(currentRoute(),{replace:true,animate:true});
+      schedulePriorityWarmup(sessionToken,loginFlowId);
       return;
     }
     const result=await api.selectUser(sessionToken,user.name);
@@ -303,6 +330,7 @@ async function selectUser(user,selectedButton){
     setAuthenticatedHeader();
     sound.success();
     navigate(currentRoute(),{replace:true,animate:true});
+    schedulePriorityWarmup(sessionToken,loginFlowId);
   }catch(error){sound.error();showLogin("เลือกชื่อไม่สำเร็จ โปรดลองเข้าสู่ระบบใหม่");}
 }
 
@@ -352,7 +380,7 @@ function renderHome(){
   const shop=data.shop||{};
   const name=shop.name||"สุพรรณบุรีเบญจรงค์";
   const daily=data.daily||{};
-  main.innerHTML=`<section class="home-hero"><img id="homeLogo" class="home-logo" src="${escapeHtml(shop.logo||LOGO_FALLBACK)}" alt="โลโก้"><h1 class="home-name">${escapeHtml(name)}</h1><p class="home-tagline">งานฝีมือไทยแท้ ✨</p></section><section class="home-summary"><div><div class="welcome-title">สวัสดีครับ 🙏</div><div class="welcome-date">${thaiDate()}</div></div><div class="summary-values"><div class="summary-stat"><div class="stat-value">฿${money(daily.totalSales)}</div><div class="stat-label">ยอดขายวันนี้</div></div><div class="summary-stat"><div class="stat-value">${money(daily.billCount)} บิล</div><div class="stat-label">จำนวนบิล</div></div></div></section><h2 class="section-title">📋 เมนูหลัก</h2><section class="home-menu-grid">${menuMarkup()}</section><h2 class="section-title">⭐ สินค้าขายดี</h2><section class="featured-grid">${featuredMarkup(data.starred)}</section><footer class="home-footer"><div>🏺 ${escapeHtml(name)} — งานฝีมือไทยแท้</div><div>${escapeHtml([shop.address,shop.phone?`โทร ${shop.phone}`:""].filter(Boolean).join(" | "))}</div><div>Version 2.0</div></footer>`;
+  main.innerHTML=`<section class="home-hero"><img id="homeLogo" class="home-logo" src="${escapeHtml(shop.logo||LOGO_FALLBACK)}" alt="โลโก้"><h1 class="home-name">${escapeHtml(name)}</h1><p class="home-tagline">งานฝีมือไทยแท้ ✨</p><p id="homeWarmupStatus" class="home-warmup-status" role="status"${warmupStatus?"":" hidden"}>${escapeHtml(warmupStatus)}</p></section><section class="home-summary"><div><div class="welcome-title">สวัสดีครับ 🙏</div><div class="welcome-date">${thaiDate()}</div></div><div class="summary-values"><div class="summary-stat"><div class="stat-value">฿${money(daily.totalSales)}</div><div class="stat-label">ยอดขายวันนี้</div></div><div class="summary-stat"><div class="stat-value">${money(daily.billCount)} บิล</div><div class="stat-label">จำนวนบิล</div></div></div></section><h2 class="section-title">📋 เมนูหลัก</h2><section class="home-menu-grid">${menuMarkup()}</section><h2 class="section-title">⭐ สินค้าขายดี</h2><section class="featured-grid">${featuredMarkup(data.starred)}</section><footer class="home-footer"><div>🏺 ${escapeHtml(name)} — งานฝีมือไทยแท้</div><div>${escapeHtml([shop.address,shop.phone?`โทร ${shop.phone}`:""].filter(Boolean).join(" | "))}</div><div>Version 2.0</div></footer>`;
   const homeLogo=main.querySelector("#homeLogo");if(homeLogo)homeLogo.onerror=()=>{homeLogo.src=LOGO_FALLBACK;};
   main.querySelectorAll("[data-route]").forEach(button=>{
     button.addEventListener("click",()=>openHomeMenu(button));
@@ -439,10 +467,7 @@ function render(route,{animate=true,direction}={}){
   main.classList.toggle("receipt-main",route==="receipt");
   main.classList.toggle("stocktake-main",route==="stocktake");
   if(route==="sales"){
-    const token=sessionToken,flow=loginFlowId;
-    renderPos(main,api,token,()=>hasFamilyAccess()?navigate("home"):void returnLimitedPosToLogin(),{...(currentSession||{}),displayUser})
-      .then(()=>{if(hasFamilyAccess()&&main.dataset.route==="sales"&&!main.querySelector('.pos-load-failure')&&sessionToken===token)scheduleMasterWarmup(token,flow);})
-      .catch(()=>{});
+    renderPos(main,api,sessionToken,()=>hasFamilyAccess()?navigate("home"):void returnLimitedPosToLogin(),{...(currentSession||{}),displayUser}).catch(()=>{});
     return;
   }
   if(route==="workshop"){renderWorkshop(main,api,sessionToken,()=>navigate("home"),{toast:showToast,displayUser});return;}
@@ -578,7 +603,7 @@ async function initialize(){
     if(!result.ok||!result.session||!result.session.user)throw new Error("SESSION_EXPIRED");
     currentSession=result.session;
     try{displayUser=JSON.parse(sessionStorage.getItem(DISPLAY_USER_KEY)||"null");}catch(error){displayUser=null;}
-    setAuthenticatedHeader();navigate(currentRoute(),{replace:true,animate:false});
+    setAuthenticatedHeader();navigate(currentRoute(),{replace:true,animate:false});schedulePriorityWarmup(sessionToken,loginFlowId);
   }catch(error){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
@@ -595,7 +620,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=135",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=136",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
