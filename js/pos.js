@@ -2,10 +2,12 @@
 // The PWA calls the original GAS saveSale path through the authenticated API.
 const DEFAULT_CHANNELS=["หน้าร้าน","โทรสั่ง","Line","Facebook","Lot/ส่ง","อื่นๆ"];
 const PAYMENTS=["💵 เงินสด","🏦 โอนธนาคาร"];
-let state={data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false,mobileCartOpen:false,submitting:false,submitError:"",lastBill:null,successOpen:false,printOpen:false,printSize:"size-a4",buyerEnabled:false,receiptHtml:"",requestId:"",scanNotice:"",categoryOrderMode:false,categorySaving:false};
+const initialState=()=>({data:null,category:"",query:"",cart:[],step:0,animation:"",channel:"หน้าร้าน",payIndex:0,cash:0,shipping:0,shippingOpen:false,discountType:0,discountAll:0,lumpDiscount:0,editingDiscount:null,backdate:false,backdateValue:"",unlockStock:false,showBackdatePicker:false,mobileCartOpen:false,submitting:false,submitError:"",lastBill:null,successOpen:false,printOpen:false,printSize:"size-a4",buyerEnabled:false,receiptHtml:"",requestId:"",scanNotice:"",categoryOrderMode:false,categorySaving:false});
+let state=initialState();
 let runtime={api:null,session:"",onBack:null,level:"",userName:"",root:null};
 
 export async function renderPos(root,api,session,onBack,context={}){
+  if(runtime.session&&runtime.session!==session)state=initialState();
   runtime={api,session,onBack,level:context.level||"",userName:(context.displayUser&&context.displayUser.name)||(context.user&&context.user.name)||"",root};
   const header=document.querySelector("#appHeader");
   if(header){header.hidden=true;header.style.display="none";}

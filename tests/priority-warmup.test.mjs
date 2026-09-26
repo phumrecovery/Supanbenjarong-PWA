@@ -45,3 +45,26 @@ for(const action of ['posBootstrap','workshopBootstrap','workerPortalOwnerQueue'
 assert.ok(!warmup.includes('barcodeBootstrap'),'rarely used barcode data should load on demand');
 assert.ok(warmup.includes('Date.now()-startedAt>=30_000'),'background work must have a bounded launch window');
 console.log('PASS: prioritized warmup reuses live reads and respects user/session boundaries');
+
+// A user may spend longer than 15 seconds choosing the next area on Home.
+// The prepared POS catalog should still be reusable one minute later, while
+// a stock write or a different session still forces a fresh read.
+let clock=0, posReads=0;
+const timedContext=vm.createContext({
+  globalThis:{SUPANBENJARONG_RUNTIME_CONFIG:{gatewayApiUrl:'https://gateway.example.test/api'}},
+  AbortController,setTimeout,clearTimeout,Date:{now:()=>clock},
+  fetch:async(_url,options)=>{
+    const payload=JSON.parse(options.body);
+    if(payload.action==='posBootstrap')posReads++;
+    return {ok:true,text:async()=>JSON.stringify({ok:true,products:[]})};
+  }
+});
+vm.runInContext(source+'\nthis.ApiClient=ApiClient',timedContext);
+const timedApi=new timedContext.ApiClient();
+await timedApi.posBootstrap('family-a');
+clock=30_000;
+await timedApi.posBootstrap('family-a');
+assert.equal(posReads,1,'POS should stay warm during a normal minute on Home');
+clock=61_000;
+await timedApi.posBootstrap('family-a');
+assert.equal(posReads,2,'the first route after a minute must refresh old catalog data');
