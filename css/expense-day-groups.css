@@ -10,6 +10,7 @@
 /* GAS keeps the four expense tabs in one row. Let labels wrap on phones so
    the tab strip needs neither a horizontal nor a stray vertical scrollbar. */
 @media(max-width:650px){
+  .expense-top{box-sizing:border-box;width:calc(100% + 20px);margin:0 -10px 10px}
   .expense-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}
   .expense-tab{min-width:0;min-height:56px;padding:8px 3px;line-height:1.25;white-space:normal;overflow-wrap:anywhere}
 }
