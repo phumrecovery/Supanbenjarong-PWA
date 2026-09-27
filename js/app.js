@@ -22,7 +22,7 @@ const topbarTitle=document.querySelector("#topbarTitle");
 const topbarLogo=document.querySelector("#topbarLogo");
 const sidebarLogo=document.querySelector("#sidebarLogo");
 sidebarLogo.src=topbarLogo.src;
-sidebarLogo.onerror=()=>{sidebarLogo.src="./assets/main-app-icon.png";};
+sidebarLogo.onerror=()=>{sidebarLogo.src="./assets/main-app-icon.png?v=icon-v2";};
 const sidebar=document.querySelector("#sidebar");
 const sidebarOverlay=document.querySelector("#sidebarOverlay");
 const sidebarUser=document.querySelector("#sidebarUser");
@@ -214,7 +214,7 @@ function animatePage(direction){
 }
 function setShell(visible){appHeader.hidden=!visible;appHeader.style.display=visible?"":"none";}
 function showToast(message){toast.textContent=message;toast.classList.add("show");try{sound.notify();}catch(error){}clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
-function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;sidebarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};sidebarLogo.onerror=()=>{sidebarLogo.src="./assets/main-app-icon.png";};}
+function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;sidebarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};sidebarLogo.onerror=()=>{sidebarLogo.src="./assets/main-app-icon.png?v=icon-v2";};}
 
 function openSidebar(){sidebar.classList.add("open");sidebarOverlay.classList.add("show");}
 function closeSidebar(){sidebar.classList.remove("open");sidebarOverlay.classList.remove("show");}
@@ -677,7 +677,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=146",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=147",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
