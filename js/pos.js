@@ -20,8 +20,15 @@ export async function renderPos(root,api,session,onBack,context={}){
   if(pending){sessionStorage.removeItem("suphanbenjarong.pwa.pending-barcode");handleBarcodeScan(pending);}
 }
 
+function closeEmptyCart(){
+  if(state.cart.length)return;
+  state.mobileCartOpen=false;
+  state.step=0;
+  state.editingDiscount=null;
+}
 function draw(root){
   if(!root.isConnected||root.dataset.route!=="sales")return;
+  closeEmptyCart();
   const data=state.data;
   if(!data||!data.ok){root.innerHTML='<section class="card"><h1>เปิด POS ไม่สำเร็จ</h1><p class="hint">ไม่พบข้อมูลสินค้าสำหรับผู้ใช้นี้</p></section>';return;}
   const family=runtime.level==="family";

@@ -63,6 +63,8 @@
   .mobile-cart-sheet .legacy-cart-note{font-size:12px}
 }
 
+.item-remove{padding:0;line-height:1}
+
 /* Desktop/tablet cart text: retain readable controls while avoiding an
    oversized panel beside the product grid. */
 @media(min-width:768px){
