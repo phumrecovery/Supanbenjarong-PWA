@@ -23,7 +23,11 @@ assert.equal(context.cartState().step,0,'an empty cart returns to item selection
 assert.equal(context.cartState().editingDiscount,null,'the removed item leaves no discount editor');
 assert.match(pos,/function draw\(root\)\{\s*if\(!root\.isConnected\|\|root\.dataset\.route!=="sales"\)return;\s*closeEmptyCart\(\);/,
   'every POS redraw must reconcile the mobile cart after remove and quantity changes');
-assert.match(css,/\.item-remove\{padding:0;line-height:1\}/,
-  'the remove glyph must fit inside its button at mobile size');
+assert.match(css,/\.item-remove\{position:relative;padding:0;font-size:0!important;line-height:0;overflow:hidden\}/,
+  'the remove button must hide the off-center font glyph');
+assert.match(css,/\.item-remove::before,\.item-remove::after\{[^}]*top:50%;left:50%;[^}]*transform:translate\(-50%,-50%\) rotate\(45deg\)/,
+  'the visible cross must be drawn at the button center');
+assert.match(pos,/class="item-remove"[^>]*aria-label="ลบ \$\{escAttr\(item\.name\)\} ออกจากตะกร้า"/,
+  'the icon-only remove button must remain accessible');
 
 console.log('PASS: mobile cart closes after the last item and the remove glyph fits its button');

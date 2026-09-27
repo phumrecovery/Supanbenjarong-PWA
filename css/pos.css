@@ -63,7 +63,9 @@
   .mobile-cart-sheet .legacy-cart-note{font-size:12px}
 }
 
-.item-remove{padding:0;line-height:1}
+.item-remove{position:relative;padding:0;font-size:0!important;line-height:0;overflow:hidden}
+.item-remove::before,.item-remove::after{position:absolute;top:50%;left:50%;width:18px;height:2.5px;border-radius:2px;background:currentColor;content:"";transform:translate(-50%,-50%) rotate(45deg)}
+.item-remove::after{transform:translate(-50%,-50%) rotate(-45deg)}
 
 /* Desktop/tablet cart text: retain readable controls while avoiding an
    oversized panel beside the product grid. */
