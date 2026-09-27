@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v15";
+import {ApiClient} from "./api.js?v=api-v16";
 import {renderPos} from "./pos.js?v=pos-v23";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
@@ -678,7 +678,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=156",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=157",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{

@@ -46,11 +46,13 @@ export class ApiClient {
         const responseText=await response.text();
         try{result=JSON.parse(responseText);}
         catch(parseError){
-          throw new Error("ระบบส่งข้อมูลผิดรูปแบบ กรุณาลองอีกครั้ง");
+          const error=new Error("ระบบตอบกลับผิดรูปแบบ");
+          error.code="INVALID_RESPONSE";
+          throw error;
         }
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
-        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
+        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
       }catch(error){
@@ -177,14 +179,29 @@ export class ApiClient {
   expenseTransactions(session){return this.request({action:"expenseTransactions",session},45000,{retries:1,retryLogical:true});}
   expenseSupport(session){return this.request({action:"expenseSupport",session});}
   expenseAdd(session,expense){return this.request({action:"expenseAdd",session,expense});}
-  expenseUpdate(session,row,expense){return this.request({action:"expenseUpdate",session,row,expense});}
+  async confirmExpenseEdit(kind,session,row,expected,write){
+    try{return await write();}
+    catch(error){
+      // Never repeat a financial edit: GAS may have written the row before
+      // its response was lost or replaced by an HTML gateway error.
+      try{
+        const check=await this.request({action:"expenseUpdateStatus",session,kind,row,expected},30000,{retries:1,retryLogical:true});
+        if(check.ok&&check.result?.applied){
+          this.clearWarmCache();
+          return {ok:true,message:"บันทึกการแก้ไขแล้ว (ตรวจยืนยันจากข้อมูลจริง)"};
+        }
+      }catch(_){/* The result remains uncertain; do not submit the write again. */}
+      throw new Error("ยังยืนยันผลการแก้ไขไม่ได้ กรุณารีเฟรชและตรวจรายการก่อนกดบันทึกซ้ำ");
+    }
+  }
+  expenseUpdate(session,row,expense){return this.confirmExpenseEdit("expense",session,row,expense,()=>this.request({action:"expenseUpdate",session,row,expense}));}
   expenseDelete(session,row){return this.request({action:"expenseDelete",session,row});}
   expensePurchase(session,purchase){return this.request({action:"expensePurchase",session,purchase});}
   fixedAdd(session,fixed){return this.request({action:"fixedAdd",session,fixed});}
-  fixedUpdate(session,row,fixed){return this.request({action:"fixedUpdate",session,row,fixed});}
+  fixedUpdate(session,row,fixed){return this.confirmExpenseEdit("fixed",session,row,fixed,()=>this.request({action:"fixedUpdate",session,row,fixed}));}
   fixedStatus(session,row,status){return this.request({action:"fixedStatus",session,row,status});}
   investmentAdd(session,investment){return this.request({action:"investmentAdd",session,investment});}
-  investmentUpdate(session,row,investment){return this.request({action:"investmentUpdate",session,row,investment});}
+  investmentUpdate(session,row,investment){return this.confirmExpenseEdit("investment",session,row,investment,()=>this.request({action:"investmentUpdate",session,row,investment}));}
   investmentDelete(session,row){return this.request({action:"investmentDelete",session,row});}
   expenseMonthSummary(session,month,year){return this.request({action:"expenseMonthSummary",session,month,year});}
   expenseUploadImage(session,data,fileName){return this.request({action:"expenseUploadImage",session,data,fileName},60000);}
