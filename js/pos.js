@@ -35,7 +35,7 @@ function draw(root){
   const channels=(data.channels&&data.channels.length?data.channels:DEFAULT_CHANNELS);
   if(!channels.includes(state.channel))state.channel=channels[0]||"หน้าร้าน";
   const products=filteredProducts(data.products||[]);
-  root.innerHTML=`<section class="legacy-pos-page">
+  root.innerHTML=`<section class="legacy-pos-page ${family?"pos-family-tools":""}">
     <header class="legacy-pos-topbar"><div class="legacy-pos-heading"><button class="legacy-back-btn" type="button" data-action="back">← กลับ</button><h1>🧾 ขายของ</h1></div><div class="legacy-pos-actions"><select data-channel aria-label="ช่องทางการขาย">${channels.map(value=>`<option value="${escAttr(value)}" ${state.channel===value?"selected":""}>${esc(value)}</option>`).join("")}</select>${family?`<button class="legacy-lock-btn ${state.unlockStock?"active":""}" type="button" data-action="unlock">🔓 ${state.unlockStock?"ปิดปลดล็อก":"ปลดล็อกสต๊อก"}</button><button class="legacy-history-btn ${state.backdate?"active":""}" type="button" data-action="backdate">🕘 ย้อนหลัง</button>`:""}</div></header>
     ${state.unlockStock?'<div class="stock-unlock-banner show">🔓 เปิดขายสินค้าที่สต๊อกไม่พอ ระบบจะปรับเฉพาะจำนวนที่ขาดให้อัตโนมัติก่อนออกบิล</div>':""}
     ${state.backdate?`<div class="back-sale-banner show">🕘 บันทึกยอดขายย้อนหลัง: ${state.backdateValue||"กรุณาเลือกวันที่ขายจริง"}<button type="button" data-action="choose-backdate">เลือกวันที่</button><button type="button" data-action="backdate">ปิด</button></div>`:""}
