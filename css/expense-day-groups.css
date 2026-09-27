@@ -7,6 +7,13 @@
 .expense-category-icon{display:inline-grid;flex:0 0 27px;place-items:center;width:27px;height:27px;border-radius:8px;background:#f7eee5;font-size:17px;line-height:1}
 .expense-cat-text{min-width:0;overflow-wrap:anywhere}
 .expense-card.income .expense-category-icon{background:#e8f5e9}
+/* The four tabs fit on desktop too. Overflow creates a vertical scrollbar
+   because the active underline extends slightly below the tab strip. */
+.expense-tabs{overflow:visible}
+@media(min-width:651px){
+  .main.expense-main{container-type:inline-size}
+  .expense-top{width:100cqw;margin-left:calc(50% - 50cqw);margin-right:calc(50% - 50cqw)}
+}
 /* GAS keeps the four expense tabs in one row. Let labels wrap on phones so
    the tab strip needs neither a horizontal nor a stray vertical scrollbar. */
 @media(max-width:650px){
