@@ -20,3 +20,19 @@
 .pwa-stock-quick-modal .pwa-stock-qty input{text-align:center;font-size:19px;font-weight:800}
 .pwa-stock-quick-modal .pwa-stock-save.out{background:#b42318}
 @media(max-width:420px){.pwa-stock-product{gap:8px}.pwa-stock-product-icon{width:34px;height:34px}.pwa-stock-row-actions{gap:4px}.pwa-stock-row-actions button{width:31px;height:31px}.pwa-stock-balance{min-width:45px;padding:7px 6px}}
+/* A grid's bare 1fr keeps its min-content width. The stock form and balance panel
+   must be allowed to shrink inside the mobile viewport instead of widening it. */
+@media(max-width:720px){
+  .pwa-stock-page,.pwa-stock-content,.pwa-stock-layout,.pwa-stock-panel{min-width:0}
+  .pwa-stock-layout{grid-template-columns:minmax(0,1fr)}
+  .pwa-stock-panel{box-sizing:border-box;width:100%}
+  .pwa-stock-direction,.pwa-stock-qty,.pwa-stock-seg,.pwa-stock-list{min-width:0}
+  .pwa-stock-qty{grid-template-columns:44px minmax(0,1fr) 44px}
+  .pwa-stock-product small,.pwa-stock-move small,.pwa-stock-move-title strong{overflow-wrap:anywhere}
+}
+@media(max-width:420px){
+  .pwa-stock-product{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center}
+  .pwa-stock-product>div:not(.pwa-stock-row-actions){min-width:0}
+  .pwa-stock-row-actions{grid-column:2/-1;grid-row:2;justify-self:end}
+  .pwa-stock-balance{grid-column:3;grid-row:1}
+}
