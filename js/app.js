@@ -2,7 +2,7 @@ import {ApiClient} from "./api.js?v=api-v15";
 import {renderPos} from "./pos.js?v=pos-v23";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
-import {renderExpense} from "./expense.js?v=expense-v13";
+import {renderExpense} from "./expense.js?v=expense-v14";
 import {renderPreorder} from "./preorder.js?v=preorder-v17";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
@@ -678,7 +678,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=152",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=153",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{

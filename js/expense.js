@@ -7,6 +7,22 @@ const date=v=>{try{return new Date(v).toLocaleDateString("th-TH",{day:"numeric",
 const ymd=v=>{const d=v?new Date(v):new Date();return Number.isNaN(d.getTime())?"":d.toISOString().slice(0,10)};
 const select=(a,current,placeholder="-- เลือก --")=>`<option value="">${placeholder}</option>${(a||[]).map(v=>`<option value="${esc(v)}" ${String(v)===String(current)?"selected":""}>${esc(v)}</option>`).join("")}`;
 const selected=(v,current)=>String(v)===String(current)?"selected":"";
+const expenseCategoryIcons={
+  "ค่าของขาว":"⚪","วัตถุดิบ":"🎨","ซื้อสินค้าเข้าร้าน":"📦",
+  "ค่าไฟ/น้ำ":"💡","ค่าขนส่ง":"🚚","ค่าร้าน":"🏠",
+  "ค่าสติ๊กเกอร์":"🏷️","ค่าโฆษณาออนไลน์ Facebook/Tiktok":"📣",
+  "ค่าน้ำมัน":"⛽","ทินเนอร์":"🧴","เบิกค่าจ้างล่วงหน้า":"🛠️",
+  "ค่าจ้างช่าง":"🛠️","ค่าแรงช่าง":"🛠️","อื่นๆ":"🧾","ค่าอื่นๆ":"🧾"
+};
+function expenseCategoryIcon(category,type){
+  if(type==="รายรับ")return "💰";
+  const name=String(category||"").trim();
+  if(expenseCategoryIcons[name])return expenseCategoryIcons[name];
+  if(/ค่าจ้าง|ค่าแรง|เบิก.*ล่วงหน้า/.test(name))return "🛠️";
+  if(/โฆษณา|การตลาด/.test(name))return "📣";
+  if(/ขนส่ง|จัดส่ง/.test(name))return "🚚";
+  return "🧾";
+}
 const isPurchase=(d,cat,kind)=>kind==="expense"&&cat===d.shopPurchaseCategory;
 const isAdvance=(d,cat,kind)=>kind==="expense"&&cat===d.advanceWageCategory;
 const materialMode=(d,cat,kind)=>{if(kind!=="expense"||isPurchase(d,cat,kind)||isAdvance(d,cat,kind))return "";if(String(cat).includes("ของขาว"))return "ของขาว";return (d.materialCats||[]).includes(cat)?"วัตถุดิบ":"";};
@@ -98,7 +114,7 @@ function expenseDayLabel(value){
 function expenseCard(x){
   const purchase=x.source==="purchase",fixed=x.source==="fixed",income=!purchase&&x.type==="รายรับ";
   const purchaseInfo=[`${Number(x.itemCount)||1} รายการ`,Number(x.qty)>0?`รวม ${Number(x.qty).toLocaleString("th-TH")} ชิ้น`:"",x.billNo?`บิล ${x.billNo}`:"",x.note||""].filter(Boolean).join(" · ");
-  return `<article class="expense-card ${income?"income":""}"><div class="expense-info"><div class="expense-cat">${esc(x.cat||"")}${purchase?' <span class="purchase-badge">รับเข้าสต๊อกแล้ว</span>':fixed?' <span class="purchase-badge">ค่าใช้จ่ายประจำ</span>':""}</div><div class="expense-detail">${esc(purchase?(x.vendor||x.detail||x.cat||""):(x.detail||x.cat||""))}</div><div class="expense-date">${purchase?esc(purchaseInfo):`${date(x.date)}${x.note?` · ${esc(x.note)}`:""}`}</div></div><b class="expense-money">${income?"+":"-"}${money(x.amount)}</b>${x.img?`<button type="button" class="expense-thumb expense-photo-thumb" data-exp="image-preview" data-url="${esc(x.img)}" aria-label="ดูรูปหลักฐาน"><img src="${esc(x.img)}" alt="รูปหลักฐาน"></button>`:""}${purchase||fixed?`<span class="expense-lock">${fixed?"🔁":"🔒"}</span>`:`<div class="expense-actions"><button type="button" data-exp="expense-edit" data-row="${x.row}">✏️</button><button type="button" data-exp="expense-delete" data-row="${x.row}">🗑️</button></div>`}</article>`;
+  return `<article class="expense-card ${income?"income":""}"><div class="expense-info"><div class="expense-cat"><span class="expense-category-icon" aria-hidden="true">${expenseCategoryIcon(x.cat,x.type)}</span><span class="expense-cat-text">${esc(x.cat||"")}</span>${purchase?'<span class="purchase-badge">รับเข้าสต๊อกแล้ว</span>':fixed?'<span class="purchase-badge">ค่าใช้จ่ายประจำ</span>':""}</div><div class="expense-detail">${esc(purchase?(x.vendor||x.detail||x.cat||""):(x.detail||x.cat||""))}</div><div class="expense-date">${purchase?esc(purchaseInfo):`${date(x.date)}${x.note?` · ${esc(x.note)}`:""}`}</div></div><b class="expense-money">${income?"+":"-"}${money(x.amount)}</b>${x.img?`<button type="button" class="expense-thumb expense-photo-thumb" data-exp="image-preview" data-url="${esc(x.img)}" aria-label="ดูรูปหลักฐาน"><img src="${esc(x.img)}" alt="รูปหลักฐาน"></button>`:""}${purchase||fixed?`<span class="expense-lock">${fixed?"🔁":"🔒"}</span>`:`<div class="expense-actions"><button type="button" data-exp="expense-edit" data-row="${x.row}">✏️</button><button type="button" data-exp="expense-delete" data-row="${x.row}">🗑️</button></div>`}</article>`;
 }
 function expenseRows(rows){
   if(!rows.length)return '<div class="expense-empty">ยังไม่มีรายการ</div>';
