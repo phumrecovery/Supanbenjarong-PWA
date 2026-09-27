@@ -99,8 +99,20 @@
   .summary-stat{box-sizing:border-box;min-width:0;padding:0 8px}
   .stat-value{font-size:clamp(19px,5vw,28px);white-space:normal;overflow-wrap:anywhere}
   .stat-label{font-size:15px}
-  .home-menu-btn{min-height:122px;padding:16px 10px}
+  .home-menu-btn{min-width:0;min-height:122px;width:100%;padding:16px 10px}
+  .home-menu-label,.home-menu-sub{max-width:100%;overflow-wrap:anywhere}
+  .home-menu-btn:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc((100% - 12px)/2)}
   .pwa-update-notice{left:16px;right:16px;width:auto}
+}
+@media (max-width:480px){
+  .app-header{gap:8px}
+  .header-left{flex:1;min-width:0;gap:8px}
+  .menu-toggle{flex:0 0 42px}
+  .brand{flex:1;min-width:0;gap:6px;font-size:clamp(14px,4.2vw,18px);line-height:1.25}
+  .brand img{flex:0 0 32px;width:32px;height:32px}
+  #topbarTitle{display:-webkit-box;min-width:0;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
+  .header-right{flex:0 1 auto;min-width:0}
+  .connection{display:block;max-width:clamp(72px,25vw,108px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 }
 @media (prefers-reduced-motion:reduce){
   .home-summary,.home-summary:hover{transform:none;transition:none}

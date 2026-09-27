@@ -192,7 +192,8 @@ const sound={
   notify:()=>playTone(700,.15,.45,"sine")
 };
 window.SuphanSound=sound;
-document.addEventListener("pointerdown",event=>{unlockAudio();const button=event.target.closest("button");if(button&&!button.disabled) sound.tap();},{capture:true,passive:true});
+document.addEventListener("pointerdown",()=>{unlockAudio();},{capture:true,passive:true});
+document.addEventListener("click",event=>{const button=event.target.closest("button");if(button&&!button.disabled)sound.tap();},{capture:true});
 document.addEventListener("keydown",event=>{if(event.key!=="Tab"&&event.key!=="Shift")unlockAudio();},{capture:true});
 
 function escapeHtml(value){return String(value??"").replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
@@ -677,7 +678,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=149",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=150",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
