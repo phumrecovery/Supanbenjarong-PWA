@@ -95,3 +95,19 @@
   .qt-footer-area{display:flex!important;gap:20px!important;margin-top:16px!important;font-size:11px!important}.qt-terms,.qt-bank{flex:1!important;padding:14px!important;border:1px solid #d5c9a6!important;border-radius:6px!important;background:#f5f2ea!important}.qt-terms h4,.qt-bank h4{margin:0 0 6px!important;color:#1a3c2a!important;font-size:12px!important}.qt-payment{margin:0 0 16px!important;padding:14px!important;border:2px solid #1a3c2a!important;border-radius:6px!important;font-size:12px!important}.qt-payment>b{display:block!important;margin-bottom:6px!important;color:#1a3c2a!important}.qt-payment>div{display:flex!important;justify-content:space-between!important;gap:12px!important}.qt-payment .good{color:#2e7d32!important}.qt-payment .bad{color:#c62828!important}.qt-payment .due{margin-top:6px!important;padding-top:6px!important;border-top:1px solid #ddd!important;color:#1a3c2a!important;font-size:14px!important;font-weight:700!important}.qt-delivery-note{margin-bottom:16px!important;color:#555!important;font-size:11px!important}
   .qt-sig{display:flex!important;justify-content:space-between!important;align-items:flex-end!important;margin-top:30px!important;padding:0 40px!important}.qt-sig-box{width:200px!important;text-align:center!important}.qt-sig-box img{display:block!important;height:80px!important;max-width:180px!important;margin:0 auto -50px!important;object-fit:contain!important}.qt-sig-line{margin-top:50px!important;padding-top:4px!important;border-top:1px solid #000!important;font-size:11px!important}.qt-sig-role{font-size:10px!important;color:#666!important}.qt-thank{margin-top:20px!important;padding:10px!important;background:linear-gradient(135deg,#1a3c2a,#3d7a55)!important;color:#fff!important;text-align:center!important;font-size:11px!important;letter-spacing:1px!important}.qt-accent{position:absolute!important;top:0!important;right:0!important;width:120px!important;height:120px!important;background:linear-gradient(135deg,transparent 50%,rgba(197,167,95,.3) 50%)!important}
 }
+
+/* Repeat the document identity and column labels on every printed QT/PO page.
+   The final amount remains in a normal tbody so it prints only once. */
+@media print{
+  body.preorder-printing .pre-print{position:static!important;inset:auto!important}
+  .qt-print{overflow:visible!important}
+  .qt-print .qt-body{padding-top:0!important}
+  .qt-print .qt-document-table thead{display:table-header-group!important}
+  .qt-print .qt-document-table tbody{display:table-row-group!important}
+  .qt-print .qt-document-table tbody tr{break-inside:avoid-page!important;page-break-inside:avoid!important}
+  .qt-print .qt-document-table .qt-summary-body{break-inside:avoid-page!important;page-break-inside:avoid!important}
+  .qt-print .qt-repeat-head>td{padding:18px 0 0!important;border:0!important;background:#fff!important;text-align:initial!important}
+  .qt-print .qt-repeat-head .qt-header{box-sizing:border-box!important;width:calc(100% + 60px)!important;margin:0 -30px 20px!important}
+  .qt-print .qt-final-row>td{padding:0!important;border:0!important;background:#fff!important;text-align:initial!important}
+  .qt-print .qt-footer-area,.qt-print .qt-payment,.qt-print .qt-sig,.qt-print .qt-thank{break-inside:avoid-page!important;page-break-inside:avoid!important}
+}

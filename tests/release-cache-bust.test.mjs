@@ -5,10 +5,10 @@ const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const worker=fs.readFileSync(new URL('../service-worker.js',import.meta.url),'utf8');
 const app=fs.readFileSync(new URL('../js/app.js',import.meta.url),'utf8');
 
-assert.match(html,/\.\/js\/app\.js\?v=app-v83/,'HTML must request the current app bundle');
+assert.match(html,/\.\/js\/app\.js\?v=app-v84/,'HTML must request the current app bundle');
 assert.match(html,/\.\/css\/app\.css\?v=login-v2/,'HTML must request the login-preview stylesheet by a new URL');
-assert.match(worker,/const VERSION="suphan-pwa-v207"/,'service worker cache must be replaced for this release');
-assert.match(worker,/\.\/js\/app\.js\?v=app-v83/,'offline shell must match the new app bundle');
+assert.match(worker,/const VERSION="suphan-pwa-v208"/,'service worker cache must be replaced for this release');
+assert.match(worker,/\.\/js\/app\.js\?v=app-v84/,'offline shell must match the new app bundle');
 assert.match(worker,/\.\/css\/app\.css\?v=login-v2/,'offline shell must match the new stylesheet');
 assert.match(html,/\.\/css\/home-depth\.css\?v=home-depth-v7/,'HTML must request the updated home design');
 assert.match(worker,/\.\/css\/home-depth\.css\?v=home-depth-v7/,'offline shell must cache the updated home design');
@@ -26,5 +26,8 @@ assert.match(app,/\.\/menu-icons\.js\?v=menu-icons-v1/,'app must import the vers
 assert.match(worker,/\.\/js\/menu-icons\.js\?v=menu-icons-v1/,'offline shell must cache the menu icons module');
 assert.match(html,/\.\/css\/list-performance\.css\?v=list-performance-v1/,'HTML must request the catalog performance stylesheet');
 assert.match(worker,/\.\/css\/list-performance\.css\?v=list-performance-v1/,'offline shell must cache the catalog performance stylesheet');
-assert.match(app,/service-worker\.js\?v=159/,'the browser must check the updated service worker');
+assert.match(app,/service-worker\.js\?v=160/,'the browser must check the updated service worker');
+assert.match(html,/preorder-fixes\.css\?v=preorder-fix-v11/,'HTML must request QT/PO multipage print styles');
+assert.match(worker,/preorder-fixes\.css\?v=preorder-fix-v11/,'offline shell must cache QT/PO print styles');
+assert.match(worker,/preorder\.js\?v=preorder-v18/,'offline shell must cache the current QT/PO module');
 console.log('release cache bust: PASS');
