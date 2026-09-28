@@ -3,7 +3,7 @@ import {renderPos} from "./pos.js?v=pos-v25";
 import {renderProduct} from "./product.js";
 import {renderStock} from "./stock.js?v=stock-v4";
 import {renderExpense} from "./expense.js?v=expense-v14";
-import {renderPreorder} from "./preorder.js?v=preorder-v18";
+import {renderPreorder} from "./preorder.js?v=preorder-v19";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v11";
@@ -678,7 +678,7 @@ if("serviceWorker" in navigator){
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
-  navigator.serviceWorker.register("./service-worker.js?v=160",{updateViaCache:"none"}).then(registration=>{
+  navigator.serviceWorker.register("./service-worker.js?v=161",{updateViaCache:"none"}).then(registration=>{
     if(hadController&&registration.waiting)showUpdateNotice();
     let lastChecked=0;
     document.addEventListener("visibilitychange",()=>{
