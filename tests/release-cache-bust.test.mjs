@@ -7,7 +7,7 @@ const app=fs.readFileSync(new URL('../js/app.js',import.meta.url),'utf8');
 
 assert.match(html,/\.\/js\/app\.js\?v=app-v86/,'HTML must request the current app bundle');
 assert.match(html,/\.\/css\/app\.css\?v=login-v2/,'HTML must request the login-preview stylesheet by a new URL');
-assert.match(worker,/const VERSION="suphan-pwa-v210"/,'service worker cache must be replaced for this release');
+assert.match(worker,/const VERSION="suphan-pwa-v211"/,'service worker cache must be replaced for this release');
 assert.match(worker,/\.\/js\/app\.js\?v=app-v86/,'offline shell must match the new app bundle');
 assert.match(worker,/\.\/css\/app\.css\?v=login-v2/,'offline shell must match the new stylesheet');
 assert.match(html,/\.\/css\/home-depth\.css\?v=home-depth-v7/,'HTML must request the updated home design');
@@ -26,12 +26,12 @@ assert.match(app,/\.\/menu-icons\.js\?v=menu-icons-v1/,'app must import the vers
 assert.match(worker,/\.\/js\/menu-icons\.js\?v=menu-icons-v1/,'offline shell must cache the menu icons module');
 assert.match(html,/\.\/css\/list-performance\.css\?v=list-performance-v1/,'HTML must request the catalog performance stylesheet');
 assert.match(worker,/\.\/css\/list-performance\.css\?v=list-performance-v1/,'offline shell must cache the catalog performance stylesheet');
-assert.match(app,/service-worker\.js\?v=162/,'the browser must check the updated service worker');
+assert.match(app,/service-worker\.js\?v=163/,'the browser must check the updated service worker');
 assert.match(html,/preorder-fixes\.css\?v=preorder-fix-v11/,'HTML must request QT/PO multipage print styles');
 assert.match(worker,/preorder-fixes\.css\?v=preorder-fix-v11/,'offline shell must cache QT/PO print styles');
 assert.match(worker,/preorder\.js\?v=preorder-v19/,'offline shell must cache the current QT/PO module');
-assert.match(html,/workshop\.css\?v=workshop-v19/,'HTML must request the wage print styles');
-assert.match(worker,/workshop\.css\?v=workshop-v19/,'offline shell must cache the wage print styles');
-assert.match(app,/workshop\.js\?v=workshop-v29/,'app must import the batch wage print control');
-assert.match(worker,/workshop\.js\?v=workshop-v29/,'offline shell must cache the batch wage print control');
+assert.match(html,/workshop\.css\?v=workshop-v20/,'HTML must request multipage wage print styles');
+assert.match(worker,/workshop\.css\?v=workshop-v20/,'offline shell must cache multipage wage print styles');
+assert.match(app,/workshop\.js\?v=workshop-v30/,'app must import the multipage wage print module');
+assert.match(worker,/workshop\.js\?v=workshop-v30/,'offline shell must cache the multipage wage print module');
 console.log('release cache bust: PASS');
