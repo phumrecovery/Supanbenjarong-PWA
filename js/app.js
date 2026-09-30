@@ -7,7 +7,7 @@ import {renderPreorder} from "./preorder.js?v=preorder-v20";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v11";
-import {renderWorkshop} from "./workshop.js?v=workshop-v31";
+import {renderWorkshop} from "./workshop.js?v=workshop-v32";
 import {renderClaim} from "./claim.js?v=claim-v4";
 import {renderBarcode} from "./barcode.js?v=barcode-v4";
 import {renderReceipt} from "./receipt.js?v=receipt-v1";
@@ -494,7 +494,8 @@ async function loadHomeData(){
     if(name)topbarTitle.textContent=name;
     setLogo(data.shop&&data.shop.logo);
     if(activeRoute==="home"&&!homeExitTimer)renderHome();
-    checkSheetFilters(requestedToken);
+    // Uncached, the scan takes ~13s of GAS time; start after the login warm-up.
+    setTimeout(()=>checkSheetFilters(requestedToken),25000);
   }catch(error){if(requestedFlow===loginFlowId&&activeRoute==="home"&&main.dataset.route==="home")showToast("แสดงโครงหน้าแรกแล้ว กำลังเชื่อมข้อมูลล่าสุด");}
 }
 
