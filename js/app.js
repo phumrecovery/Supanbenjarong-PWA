@@ -1,13 +1,13 @@
-import {ApiClient} from "./api.js?v=api-v16";
-import {renderPos} from "./pos.js?v=pos-v25";
-import {renderProduct} from "./product.js";
-import {renderStock} from "./stock.js?v=stock-v4";
+import {ApiClient} from "./api.js?v=api-v17";
+import {renderPos} from "./pos.js?v=pos-v26";
+import {renderProduct} from "./product.js?v=product-v2";
+import {renderStock} from "./stock.js?v=stock-v5";
 import {renderExpense} from "./expense.js?v=expense-v14";
-import {renderPreorder} from "./preorder.js?v=preorder-v19";
+import {renderPreorder} from "./preorder.js?v=preorder-v20";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v11";
-import {renderWorkshop} from "./workshop.js?v=workshop-v30";
+import {renderWorkshop} from "./workshop.js?v=workshop-v31";
 import {renderClaim} from "./claim.js?v=claim-v4";
 import {renderBarcode} from "./barcode.js?v=barcode-v4";
 import {renderReceipt} from "./receipt.js?v=receipt-v1";
@@ -437,7 +437,7 @@ function renderHome(){
   const shop=data.shop||{};
   const name=shop.name||"สุพรรณบุรีเบญจรงค์";
   const daily=data.daily||{};
-  main.innerHTML=`<section class="home-hero"><img id="homeLogo" class="home-logo" src="${escapeHtml(shop.logo||LOGO_FALLBACK)}" alt="โลโก้"><h1 class="home-name">${escapeHtml(name)}</h1><p class="home-tagline">งานฝีมือไทยแท้ ✨</p><p id="homeWarmupStatus" class="home-warmup-status" role="status"${warmupStatus?"":" hidden"}>${escapeHtml(warmupStatus)}</p></section><section class="home-summary"><div><div class="welcome-title">สวัสดีครับ 🙏</div><div class="welcome-date">${thaiDate()}</div></div><div class="summary-values"><div class="summary-stat"><div class="stat-value">฿${money(daily.totalSales)}</div><div class="stat-label">ยอดขายวันนี้</div></div><div class="summary-stat"><div class="stat-value">${money(daily.billCount)} บิล</div><div class="stat-label">จำนวนบิล</div></div></div></section><h2 class="section-title">📋 เมนูหลัก</h2><section class="home-menu-grid">${menuMarkup()}</section><h2 class="section-title">⭐ สินค้าขายดี</h2><section class="featured-grid">${featuredMarkup(data.starred)}</section><footer class="home-footer"><div>🏺 ${escapeHtml(name)} — งานฝีมือไทยแท้</div><div>${escapeHtml([shop.address,shop.phone?`โทร ${shop.phone}`:""].filter(Boolean).join(" | "))}</div><div>Version 2.0</div></footer>`;
+  main.innerHTML=`<section class="home-hero"><img id="homeLogo" class="home-logo" src="${escapeHtml(shop.logo||LOGO_FALLBACK)}" alt="โลโก้"><h1 class="home-name">${escapeHtml(name)}</h1><p class="home-tagline">งานฝีมือไทยแท้ ✨</p><p id="homeWarmupStatus" class="home-warmup-status" role="status"${warmupStatus?"":" hidden"}>${escapeHtml(warmupStatus)}</p></section>${filterWarningMarkup()}<section class="home-summary"><div><div class="welcome-title">สวัสดีครับ 🙏</div><div class="welcome-date">${thaiDate()}</div></div><div class="summary-values"><div class="summary-stat"><div class="stat-value">฿${money(daily.totalSales)}</div><div class="stat-label">ยอดขายวันนี้</div></div><div class="summary-stat"><div class="stat-value">${money(daily.billCount)} บิล</div><div class="stat-label">จำนวนบิล</div></div></div></section><h2 class="section-title">📋 เมนูหลัก</h2><section class="home-menu-grid">${menuMarkup()}</section><h2 class="section-title">⭐ สินค้าขายดี</h2><section class="featured-grid">${featuredMarkup(data.starred)}</section><footer class="home-footer"><div>🏺 ${escapeHtml(name)} — งานฝีมือไทยแท้</div><div>${escapeHtml([shop.address,shop.phone?`โทร ${shop.phone}`:""].filter(Boolean).join(" | "))}</div><div>Version 2.0</div></footer>`;
   const homeLogo=main.querySelector("#homeLogo");if(homeLogo)homeLogo.onerror=()=>{homeLogo.src=LOGO_FALLBACK;};
   main.querySelectorAll("[data-route]").forEach(button=>{
     button.addEventListener("click",()=>openHomeMenu(button));
@@ -474,6 +474,11 @@ function renderHome(){
   if(!homeData)loadHomeData();
 }
 
+// Tabs left with a basic filter silently lose app writes; warn the owner.
+let filterWarning=[];
+function filterWarningMarkup(){return filterWarning.length?`<section class="home-filter-warning" role="alert"><b>⚠️ มีการเปิด filter ค้างไว้ในชีต</b><span>แท็บ ${escapeHtml(filterWarning.join(", "))} — ระบบอาจบันทึกข้อมูลลงแท็บนี้ไม่สำเร็จ กรุณาปิด filter แล้วใช้ “Filter view” (ข้อมูล › สร้าง Filter view) แทน</span></section>`:"";}
+function checkSheetFilters(token){if(!token||!hasFamilyAccess())return;api.sheetFilterCheck(token).then(r=>{if(!r?.ok||token!==sessionToken)return;filterWarning=r.result?.filtered||[];const old=main.querySelector(".home-filter-warning");if(old)old.remove();if(activeRoute==="home"&&filterWarning.length)main.querySelector(".home-hero")?.insertAdjacentHTML("afterend",filterWarningMarkup());}).catch(()=>{});}
+
 async function loadHomeData(){
   const requestedToken=sessionToken;
   const requestedFlow=loginFlowId;
@@ -489,6 +494,7 @@ async function loadHomeData(){
     if(name)topbarTitle.textContent=name;
     setLogo(data.shop&&data.shop.logo);
     if(activeRoute==="home"&&!homeExitTimer)renderHome();
+    checkSheetFilters(requestedToken);
   }catch(error){if(requestedFlow===loginFlowId&&activeRoute==="home"&&main.dataset.route==="home")showToast("แสดงโครงหน้าแรกแล้ว กำลังเชื่อมข้อมูลล่าสุด");}
 }
 

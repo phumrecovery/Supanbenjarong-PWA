@@ -11,13 +11,37 @@ export async function renderPos(root,api,session,onBack,context={}){
   runtime={api,session,onBack,level:context.level||"",userName:(context.displayUser&&context.displayUser.name)||(context.user&&context.user.name)||"",root};
   const header=document.querySelector("#appHeader");
   if(header){header.hidden=true;header.style.display="none";}
+  // Paint the warm-up/last catalog at once, then refresh it: the kept catalog
+  // used to be reused unchanged for the whole login, so stock counts drifted.
+  const lastPos=!state.data&&api.lastBootstrap?.("posBootstrap",session);
+  if(lastPos)state.data=lastPos;
+  const shownCached=!!state.data;
   if(!state.data){
     root.innerHTML='<section class="pos-loading"><span class="spinner"></span><p>กำลังโหลดข้อมูล...</p></section>';
     try{state.data=await api.posBootstrap(session);}catch(error){if(!root.isConnected||root.dataset.route!=="sales")return;root.innerHTML='<section class="card pos-load-failure"><h1>เปิดหน้าขายของไม่สำเร็จ</h1><p class="hint">ไม่สามารถโหลดสินค้าหน้าร้านได้ โปรดลองใหม่อีกครั้ง</p><button type="button" data-pos-retry>ลองโหลดอีกครั้ง</button></section>';root.querySelector("[data-pos-retry]")?.addEventListener("click",()=>{state.data=null;void renderPos(root,api,session,onBack,context);});return;}
   }
   draw(root);
+  if(shownCached)refreshPosInBackground(root,session);
   const pending=sessionStorage.getItem("suphanbenjarong.pwa.pending-barcode")||"";
   if(pending){sessionStorage.removeItem("suphanbenjarong.pwa.pending-barcode");handleBarcodeScan(pending);}
+}
+
+// Redraw only while the cashier is idle on the product grid; otherwise keep
+// the fresh catalog for the next draw so an open form or payment is untouched.
+function posIdle(root){
+  const active=document.activeElement;
+  if(active&&root.contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))return false;
+  return state.step===0&&!state.submitting&&!state.printOpen&&!state.shippingOpen&&!state.showBackdatePicker&&!state.editingDiscount&&!state.categoryOrderMode&&!root.querySelector(".legacy-pos-modal");
+}
+function refreshPosInBackground(root,session){
+  if(state.refreshing)return;
+  state.refreshing=true;
+  document.body.classList.add("pwa-refreshing");
+  runtime.api.posBootstrap(session).then(data=>{
+    if(runtime.session!==session||!data||data.ok===false)return;
+    state.data=data;
+    if(root.isConnected&&root.dataset.route==="sales"&&posIdle(root))draw(root);
+  }).catch(()=>{}).finally(()=>{state.refreshing=false;document.body.classList.remove("pwa-refreshing");});
 }
 
 function closeEmptyCart(){

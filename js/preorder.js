@@ -17,12 +17,14 @@ export async function renderPreorder(root,api,session,onBack,context={}){
   if(context.resetView){state.tab=0;state.filter="pending";state.query="";state.modal=null;}
   runtime={root,api,session,back:onBack,toast:context.toast||(()=>{})};
   const header=document.querySelector("#appHeader");if(header){header.hidden=true;header.style.display="none";}bindEscape();
+  // First visit after login: paint the warm-up copy, then revalidate below.
+  if(!state.data){const last=api.lastBootstrap?.("preorderBootstrap",session);if(last?.ok){state.data=last;state.loadedAt=0;}}
   if(!state.data){state.loading=true;draw();try{await loadPreorderData();}catch(error){if(!active())return;root.innerHTML=`<section class="pre-failure"><h1>เปิดงานสั่งทำไม่สำเร็จ</h1><p>${esc(error.message||error)}</p><button data-pre="back">← กลับ</button></section>`;bind();return;}finally{state.loading=false;}draw();return;}
   draw();
   if(Date.now()-state.loadedAt>45000)refreshPreorderInBackground();
 }
 async function loadPreorderData(){const result=await runtime.api.preorderBootstrap(runtime.session);if(!result.ok)throw new Error(result.message||"โหลดข้อมูลไม่สำเร็จ");state.data=result;state.loadedAt=Date.now();return result;}
-async function refreshPreorderInBackground(){const modalAtStart=state.modal;try{await loadPreorderData();if(state.modal===modalAtStart)draw();}catch(_){/* Retain the last successful page; users can keep working. */}}
+async function refreshPreorderInBackground(){const modalAtStart=state.modal;document.body.classList.add("pwa-refreshing");try{await loadPreorderData();if(state.modal===modalAtStart)draw();}catch(_){/* Retain the last successful page; users can keep working. */}finally{document.body.classList.remove("pwa-refreshing");}}
 function modalPortal(){let portal=document.querySelector("#preorder-modal-portal");if(!portal){portal=document.createElement("div");portal.id="preorder-modal-portal";document.body.appendChild(portal);}return portal;}
 function bindEscape(){if(escapeBound)return;escapeBound=true;document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.querySelector("#preorder-modal-portal .pre-modal-back")){state.modal=null;draw();}});}
 function bind(){const portal=modalPortal();[runtime.root,portal].forEach(target=>{target.onclick=e=>{const button=e.target.closest("[data-pre]"),action=button?.dataset.pre;if(["product-picker","picker-close","picker-select"].includes(action))return productPickerClick(e,action);if(action==="do-print")return preparePrint(e);if(action==="new"&&button?.dataset.kind==="customer"&&state.modal?.type==="order")return openInlineCustomer(e);if(action==="customer-close"&&state.modal?.type==="order"){e.preventDefault();state.modal.customerPopup=null;return draw();}return click(e)};target.oninput=input;target.onchange=change;target.onsubmit=submit;});}

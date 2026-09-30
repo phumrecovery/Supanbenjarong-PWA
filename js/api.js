@@ -2,6 +2,19 @@
 // The Worker accepts requests only from this GitHub Pages origin and signs the
 // server-to-server request before forwarding it to GAS.
 const GATEWAY_API_URL=String(globalThis.SUPANBENJARONG_RUNTIME_CONFIG?.gatewayApiUrl||"").trim();
+// Create-style writes deduplicated by GAS (PWA_API_ONCE_ACTIONS_). The same
+// payload keeps one requestId until it succeeds, so a retry after an
+// ambiguous gateway error replays the stored result instead of saving twice.
+const ONCE_ACTIONS=new Set(["workshopSaveJob","workshopSaveAttendance","workshopConfirmFiring","stockSaveMovement","expenseAdd","expensePurchase","preorderQuotationSave","preorderPoSave","productAdd","productDuplicate"]);
+const ONCE_STORE="suphanbenjarong.pwa.pending-writes";
+function onceHash(payload){
+  const text=JSON.stringify({...payload,session:undefined});
+  let h=0x811c9dc5;
+  for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0;}
+  return `${payload.action}:${h.toString(36)}:${text.length}`;
+}
+function onceRead(){try{return JSON.parse(sessionStorage.getItem(ONCE_STORE)||"{}")}catch{return {}}}
+function onceWrite(all){try{sessionStorage.setItem(ONCE_STORE,JSON.stringify(all))}catch{}}
 
 export class ApiClient {
   constructor(){
@@ -9,6 +22,14 @@ export class ApiClient {
     // never enter IndexedDB, localStorage, or the service-worker cache.
     this.warmCache=new Map();
     this.warmEpoch=0;
+    // Last successful bootstrap per key, kept across write invalidation so a
+    // page can paint instantly and then refresh (see lastBootstrap).
+    this.lastGood=new Map();
+  }
+  // Display-only: the most recent successful bootstrap of any age. Callers
+  // must still fetch fresh data before relying on it.
+  lastBootstrap(action,session,params={}){
+    return this.lastGood.get(action+":"+session+":"+JSON.stringify(params))||null;
   }
   clearWarmCache(){this.warmEpoch++;this.warmCache.clear();}
   peekWarm(action,session,params={}){
@@ -25,12 +46,21 @@ export class ApiClient {
       .then(result=>{
         if(!result?.ok){if(epoch===this.warmEpoch)this.warmCache.delete(key);return result;}
         if(epoch===this.warmEpoch)this.warmCache.set(key,{value:result,expiresAt:Date.now()+ttlMs});
+        this.lastGood.set(key,result);
         return result;
       }).catch(error=>{if(epoch===this.warmEpoch)this.warmCache.delete(key);throw error;});
     this.warmCache.set(key,{promise,expiresAt:0});
     return promise;
   }
-  async request(payload,timeoutMs=15000,{retries=0,retryLogical=false}={}){
+  async request(payload,timeoutMs=15000,options={}){
+    if(!ONCE_ACTIONS.has(payload.action)||payload.requestId)return this.send(payload,timeoutMs,options);
+    const slot=onceHash(payload),all=onceRead();
+    if(!all[slot]){all[slot]=`pw_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,12)}`;onceWrite(all);}
+    const result=await this.send({...payload,requestId:all[slot]},timeoutMs,options);
+    if(result?.ok){const done=onceRead();delete done[slot];onceWrite(done);}
+    return result;
+  }
+  async send(payload,timeoutMs=15000,{retries=0,retryLogical=false}={}){
     if(!GATEWAY_API_URL)throw new Error("ยังไม่ได้ตั้งค่า API ของระบบ");
     let result;
     for(let attempt=0;attempt<=retries;attempt++){
@@ -52,7 +82,7 @@ export class ApiClient {
         }
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
-        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
+        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
       }catch(error){
@@ -84,6 +114,8 @@ export class ApiClient {
   bootstrap(session){
     return this.request({action:"bootstrap",session});
   }
+  // Owner warning for tabs left with a basic filter (see pwaApiSheetFilterCheck_).
+  sheetFilterCheck(session){return this.warmRead("sheetFilterCheck",session,10*60_000,30000,0);}
   posBootstrap(session){
     // POS loads the complete sellable-product and packaging catalog.  A GAS
     // cold start can legitimately exceed the generic 15-second request limit.
