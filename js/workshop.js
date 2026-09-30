@@ -1,8 +1,9 @@
 // UI adapter only.  08_Workshop.gs remains the source of truth for all wages,
 // attendance, stock deduction and LockService-protected mutations.
+import {localWageSupported,loadLocalWage,localWageReady,computeLocalWage,syncLocalWage,localWageInfo} from "./wage-local.js?v=wage-local-v1";
 const TAB_KEY="suphanbenjarong.pwa.workshop-tab";
 function savedTab(){try{const t=localStorage.getItem(TAB_KEY);return ["assign","receive","firing","daily","wage"].includes(t)?t:"assign"}catch{return "assign"}}
-const S={api:null,token:"",back:null,toast:()=>{},data:null,tab:savedTab(),step:"เขียนลายน้ำทอง",pick:false,pickQ:"",chosen:null,day:"",daily:{},months:{},monthFetchedAt:{},monthRequests:{},monthErrors:{},monthGeneration:0,monthPrefetchTimer:null,wages:{},wageRequests:{},wageLoadedAt:{},wageStale:{},wageErrors:{},wageGeneration:0,wagePrefetchTimer:null,wageInitialTimer:null,handoff:null,handoffConfirm:null,handoffReview:null,handoffPhoto:null,handoffPhotoZoom:1,handoffEdit:null,handoffAction:null,handoffPicker:null,handoffReviewPicker:null,handoffReviewDrafts:{},handoffDraft:{},handoffSaving:false,wageMode:"half",wageView:"table",wageKey:"",periodOpen:false,saving:false,wageConfirm:false,wageConfirming:false,wageEdit:null,wageEditSaving:false,wagePrint:false,advanceSettlement:null,advanceSettlementSaving:false};
+const S={api:null,token:"",back:null,toast:()=>{},data:null,tab:savedTab(),step:"เขียนลายน้ำทอง",pick:false,pickQ:"",chosen:null,day:"",daily:{},months:{},monthFetchedAt:{},monthRequests:{},monthErrors:{},monthGeneration:0,monthPrefetchTimer:null,wages:{},wageRequests:{},wageLoadedAt:{},wageStale:{},wageErrors:{},wageLocal:{},owner:"",localLoaded:false,localSyncing:false,localNeedsSync:false,wageGeneration:0,wagePrefetchTimer:null,wageInitialTimer:null,handoff:null,handoffConfirm:null,handoffReview:null,handoffPhoto:null,handoffPhotoZoom:1,handoffEdit:null,handoffAction:null,handoffPicker:null,handoffReviewPicker:null,handoffReviewDrafts:{},handoffDraft:{},handoffSaving:false,wageMode:"half",wageView:"table",wageKey:"",periodOpen:false,saving:false,wageConfirm:false,wageConfirming:false,wageEdit:null,wageEditSaving:false,wagePrint:false,advanceSettlement:null,advanceSettlementSaving:false};
 /*
  * ซ่อนไว้จากหน้าผู้ใช้ปกติเพื่อลดความสับสน:
  * เปิดใช้เฉพาะกรณีตรวจยืนยันแล้วว่าเงินเบิกล่วงหน้าถูกหักจริง แต่กู้ข้อมูล
@@ -113,7 +114,7 @@ function loadMonth(root,key,{prefetch=false}={}){
   return request;
 }
 async function saveDay(root){let reason=root.querySelector("#reason")?.value.trim()||"";if(S.day<today()&&!reason)return S.toast("กรุณาระบุเหตุผลการแก้ไขย้อนหลัง");let items=[...root.querySelectorAll(".pwa-att-card")].map(c=>{const dayFactor=Number(c.querySelector('[data-k="factor"]')?.value)||1;return {name:c.dataset.name,type:c.dataset.type,rate:Number(c.dataset.rate)||0,present:c.dataset.present==="true",timeIn:c.querySelector('[data-k="in"]')?.value||"",timeOut:c.querySelector('[data-k="out"]')?.value||"",dayFactor,dayType:dayFactor===.5?"ครึ่งวัน":"เต็มวัน",otHours:Number(c.querySelector('[data-k="ot"]')?.value)||0,otStart:c.querySelector('[data-k="otStart"]')?.value||"",otEnd:c.querySelector('[data-k="otEnd"]')?.value||"",otReason:reason,note:c.querySelector('[data-k="note"]')?.value||""};});for(let x of items){if(x.timeIn&&x.timeOut&&x.timeOut<x.timeIn)return S.toast(`เวลาออกของ ${x.name} ต้องไม่ก่อนเวลาเข้า`);if(x.otHours>0&&!x.present)return S.toast(`ไม่สามารถบันทึก OT ให้ ${x.name} ที่ไม่มาทำงานได้`)}S.saving=true;render(root);try{let r=await S.api.workshopSaveAttendance(S.token,{targetDate:S.day,items,reason}),o=r.result;if(!r.ok||!o?.success)throw Error(o?.message||r.message);delete S.daily[S.day];const changedMonth=S.day.slice(0,7);S.monthGeneration++;clearTimeout(S.monthPrefetchTimer);S.monthRequests={};delete S.months[changedMonth];delete S.monthFetchedAt[changedMonth];invalidateWages();S.toast(o.message||"บันทึกสำเร็จ");loadDay(root)}catch(x){S.toast(`❌ ${x.message||x}`)}finally{S.saving=false;render(root)}}
-function invalidateWages(){S.wageGeneration++;clearTimeout(S.wagePrefetchTimer);clearTimeout(S.wageInitialTimer);S.wages={};S.wageRequests={};S.wageLoadedAt={};S.wageStale={};S.wageErrors={};document.body.classList.remove("pwa-refreshing");}
+function invalidateWages(){S.wageGeneration++;clearTimeout(S.wagePrefetchTimer);clearTimeout(S.wageInitialTimer);S.wages={};S.wageRequests={};S.wageLoadedAt={};S.wageStale={};S.wageErrors={};S.wageLocal={};S.localNeedsSync=true;document.body.classList.remove("pwa-refreshing");}
 function queueInitialWage(root){
   clearTimeout(S.wageInitialTimer);
   const token=S.token,generation=S.wageGeneration;
@@ -134,7 +135,43 @@ function queuePreviousWage(root,key,mode){
     void loadWagePeriod(root,nextKey,{prefetch:true});
   },600);
 }
+// Local-first: with a stored snapshot (wage-local.js) any period is computed
+// on the device by WageCore, the same code GAS runs, and the snapshot is
+// revalidated in the background. Without one, the server path below runs
+// and a snapshot is fetched for next time.
+function viewingWage(root){return S.tab==="wage"&&root?.isConnected&&root.dataset.route==="workshop";}
+function wageIdle(){return !S.saving&&!document.querySelector(".pwa-workshop-modal,.pwa-workshop-dialog");}
+function computeWageLocally(key){
+  const [start,end]=key.split("|");
+  S.wages[key]=computeLocalWage(start,end);S.wageLoadedAt[key]=Date.now();S.wageLocal[key]=true;
+  delete S.wageErrors[key];
+  if(S.localNeedsSync)S.wageStale[key]=true;else delete S.wageStale[key];
+  return S.wages[key];
+}
+function syncLocalWages(root){
+  if(!localWageSupported()||!S.owner)return;
+  const token=S.token,force=S.localNeedsSync;
+  S.localSyncing=true;
+  if(viewingWage(root))document.body.classList.add("pwa-refreshing");
+  syncLocalWage(S.api,token,S.owner,{force}).then(({changed})=>{
+    if(token!==S.token)return;
+    if(force)S.localNeedsSync=false;
+    if(!changed&&!force&&Object.keys(S.wageLocal).length)return;
+    const keys=new Set([...Object.keys(S.wages),S.wageKey].filter(Boolean));
+    keys.forEach(computeWageLocally);
+    if(viewingWage(root)&&wageIdle())render(root);
+  }).catch(()=>{}).finally(()=>{
+    S.localSyncing=false;
+    if(!Object.keys(S.wageStale).length)document.body.classList.remove("pwa-refreshing");
+  });
+}
 function loadWagePeriod(root,key,{prefetch=false,mode="half"}={}){
+  if(localWageReady(S.owner)){
+    const value=computeWageLocally(key);
+    if(!prefetch){if(viewingWage(root)&&S.wageKey===key&&wageIdle())render(root);syncLocalWages(root);}
+    return Promise.resolve(value);
+  }
+  if(!prefetch&&localWageSupported()&&S.owner&&!S.localSyncing)syncLocalWages(root);
   // A period shown within the last 20s is used as is. Older figures (viewed
   // or prefetched) are painted at once and revalidated; wage actions wait
   // for the fresh figures (see wageActionBlocked). Writes still clear all
@@ -167,11 +204,12 @@ function loadWagePeriod(root,key,{prefetch=false,mode="half"}={}){
 // Printing, confirming or settling from figures that are still being
 // revalidated could use a superseded total; wait for the fresh summary.
 function wageActionBlocked(a){
-  if(!["printWage","confirmWagePrint","printAllWages","confirmWages","submitWageConfirm","openAdvanceSettlement","saveAdvanceSettlement","editClosedWage","saveClosedWage"].includes(a)||!S.wageStale[S.wageKey])return false;
+  if(!["printWage","confirmWagePrint","printAllWages","confirmWages","submitWageConfirm","openAdvanceSettlement","saveAdvanceSettlement","editClosedWage","saveClosedWage"].includes(a)||!(S.wageStale[S.wageKey]||S.localSyncing))return false;
   S.toast("กำลังอัปเดตตัวเลขค่าแรงล่าสุด รอสักครู่แล้วกดอีกครั้ง");
   return true;
 }
 function loadWage(root){
+  if(!S.localLoaded&&localWageSupported()&&S.owner){S.localLoaded=true;return loadLocalWage(S.owner).catch(()=>null).then(()=>loadWage(root));}
   const mode=S.wageMode==="person"?(S.personPeriod||"half"):S.wageMode;
   const ps=periods(mode),key=S.wageKey||`${ps[0][0]}|${ps[0][1]}`;
   S.wageKey=key;
@@ -192,7 +230,8 @@ function wageBase(){
   const names=[...new Map((S.data?.employees||[]).filter(x=>x?.name).map(x=>[x.name,{name:x.name,type:x.type||""}])).values()];
   return `<section class="pwa-workshop-panel pwa-wage-wrap"><div class="pwa-wage-modes"><button data-a="half" class="${S.wageMode==="half"?"active":""}">📅 15 วัน</button><button data-a="full" class="${S.wageMode==="full"?"active":""}">📆 รายเดือน</button><button data-a="person" class="${personMode?"active":""}">👤 รายคน</button></div>${personMode?`<div class="pwa-person-period"><button data-a="personHalf" class="${periodMode==="half"?"active":""}">งวด 15 วัน</button><button data-a="personFull" class="${periodMode==="full"?"active":""}">รายเดือน</button></div><label class="pwa-person-select">เลือกช่าง<select id="wagePerson"><option value="">-- เลือกช่าง --</option>${names.map(x=>`<option value="${e(x.name)}" ${S.wagePerson===x.name?"selected":""}>${e(x.name)}${x.type?` (${e(x.type)})`:""}</option>`).join("")}</select></label>`:""}${periodPicker(ps,key)}${!personMode?`<div class="pwa-wage-view"><button data-a="table" class="${S.wageView==="table"?"active":""}">📋 ตาราง</button><button data-a="chart" class="${S.wageView==="chart"?"active":""}">📊 กราฟ</button></div>`:""}${!data?(S.wageErrors[key]?`<p class="pwa-workshop-empty">⚠️ โหลดสรุปค่าแรงไม่สำเร็จ: ${e(S.wageErrors[key])}<br><button data-a="retryWage">ลองโหลดอีกครั้ง</button></p>`:'<p class="pwa-workshop-empty">⏳ กำลังโหลด... ถ้าระบบ Google ตอบช้าอาจใช้เวลาถึงหนึ่งนาที</p>'):personMode?(S.wagePerson?personWage(data,S.wagePerson):'<p class="pwa-workshop-empty">เลือกช่างเพื่อดูรายละเอียดค่าจ้าง</p>'):S.wageView==="chart"?wageChart(data):wageTables(data)}</section>`;
 }
-function periodPicker(ps,key){const selected=ps.find(p=>`${p[0]}|${p[1]}`===key)||ps[0];return `<div class="pwa-period-picker"><button type="button" class="pwa-period-trigger" data-a="togglePeriods" aria-expanded="${S.periodOpen}"><span>${e(selected?.[2]||"เลือกงวด")}</span><b>⌄</b></button>${S.periodOpen?`<div class="pwa-period-menu" role="listbox">${ps.map(p=>{const value=`${p[0]}|${p[1]}`;return `<button type="button" data-a="selectPeriod" data-period="${value}" class="${value===key?"active":""}">${e(p[2])}</button>`}).join("")}</div>`:""}</div>`;}
+function localWageNote(key){if(!S.wageLocal[key])return "";const info=localWageInfo(),t=info?.checkedAt||info?.fetchedAt;return `<p class="pwa-wage-local-note">⚡ คำนวณในเครื่อง${t?` · ตรวจข้อมูลล่าสุด ${new Date(t).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})} น.`:""}</p>`;}
+function periodPicker(ps,key){const selected=ps.find(p=>`${p[0]}|${p[1]}`===key)||ps[0];return `${localWageNote(key)}<div class="pwa-period-picker"><button type="button" class="pwa-period-trigger" data-a="togglePeriods" aria-expanded="${S.periodOpen}"><span>${e(selected?.[2]||"เลือกงวด")}</span><b>⌄</b></button>${S.periodOpen?`<div class="pwa-period-menu" role="listbox">${ps.map(p=>{const value=`${p[0]}|${p[1]}`;return `<button type="button" data-a="selectPeriod" data-period="${value}" class="${value===key?"active":""}">${e(p[2])}</button>`}).join("")}</div>`:""}</div>`;}
 function wage(){
   const periodMode=S.wageMode==="person"?(S.personPeriod||"half"):S.wageMode;
   if(periodMode!=="half"||S.wageMode==="person")return wageBase();
@@ -383,7 +422,7 @@ async function saveHandoffFromReview(root,button){
   if(writer&&!whitewareSku)return S.toast("กรุณาเลือกของขาว");if(!gold&&!paint&&!finishedSku&&!pair[0])return S.toast("กรุณาเลือก SKU หรือรายการ PO");S.handoffSaving=true;button.disabled=true;button.textContent="⏳ กำลังยืนยัน...";
   try{const r=await S.api.workerPortalConfirmToFiring(S.token,{submissionId:sub.id,whitewareSku,finishedSku,priceEach:Number(card.priceEach)||0,preorderNo:finishedSku?"":pair[0]||"",preorderItemId:finishedSku?"":pair[1]||""});if(!r.ok||!r.result?.success)throw Error(r.result?.message||r.message||"ยืนยันไม่สำเร็จ");delete S.handoffReviewDrafts[String(sub.id)];S.handoffReview=null;invalidateWages();S.toast(`✅ ${r.result.message||"ยืนยันงานแล้ว"}`);await loadHandoff(root);}catch(error){S.handoffSaving=false;button.disabled=false;button.textContent=gold?"ยืนยันบันทึกค่าแรงวนทอง":"✅ ยืนยันรับรองงาน";S.toast(`❌ ${error.message||error}`);}
 }
-export function renderWorkshop(root,api,token,onBack,context={}){if(S.token&&S.token!==token){S.monthGeneration++;clearTimeout(S.monthPrefetchTimer);S.monthRequests={};S.months={};S.monthFetchedAt={};S.monthErrors={};S.daily={};invalidateWages();S.handoff=null;S.data=null;S.tab=savedTab();S.monthKey="";}S.api=api;S.token=token;S.back=onBack;S.toast=context.toast||(()=>{});if(!S.day)S.day=today();if(S.step!=="วนทอง")S.step="เขียนลาย";if(!S.data){const last=api.lastBootstrap?.("workshopBootstrap",token);if(last?.ok)S.data=last.result||{};}render(root);if(S.tab==="receive")refreshHandoff(root);if(!S.data){load(root);/* the wage summary does not need workshop data: start it in parallel */if(S.tab==="wage")void loadWage(root);return;}load(root,true);loadTabData(root);}
+export function renderWorkshop(root,api,token,onBack,context={}){if(S.token&&S.token!==token){S.monthGeneration++;clearTimeout(S.monthPrefetchTimer);S.monthRequests={};S.months={};S.monthFetchedAt={};S.monthErrors={};S.daily={};invalidateWages();S.handoff=null;S.data=null;S.tab=savedTab();S.monthKey="";S.localLoaded=false;}S.api=api;S.token=token;S.owner=String(context.displayUser?.name||"");S.back=onBack;S.toast=context.toast||(()=>{});if(!S.day)S.day=today();if(S.step!=="วนทอง")S.step="เขียนลาย";if(!S.data){const last=api.lastBootstrap?.("workshopBootstrap",token);if(last?.ok)S.data=last.result||{};}render(root);if(S.tab==="receive")refreshHandoff(root);if(!S.data){load(root);/* the wage summary does not need workshop data: start it in parallel */if(S.tab==="wage")void loadWage(root);return;}load(root,true);loadTabData(root);}
 // The page can now open directly on a remembered tab, so fetch that tab's own
 // data here; previously only a tab click loaded the wage or daily view.
 function loadTabData(root){if(S.tab==="wage")void loadWage(root);else if(S.tab==="daily")loadDay(root);else if(S.tab!=="receive")queueInitialWage(root);}
