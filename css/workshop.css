@@ -91,3 +91,11 @@
 .pwa-att-edit-dialog .pwa-att-note{display:block;margin-top:8px}
 .pwa-att-edit-dialog .pwa-att-note input{width:100%}
 .pwa-att-edit-dialog .pwa-dialog-actions{margin-top:14px}
+/* PC: show both wage periods side by side so the whole month is visible. */
+@media (min-width:1100px){
+  .pwa-workshop-panel.pwa-att-month{max-width:1180px}
+  .pwa-att-month .pwa-att-periods{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .pwa-att-month .pwa-att-period .pwa-att-matrix table{min-width:0;width:100%}
+  .pwa-att-month .pwa-att-cell{width:26px;height:28px;font-size:13px}
+  .pwa-att-month .pwa-sum-table{max-width:760px;margin-left:auto;margin-right:auto}
+}
