@@ -72,3 +72,22 @@
 .pwa-wage-batch-print{display:block;width:100%;min-height:48px;margin:12px 0;padding:10px 14px;border:2px solid var(--primary);border-radius:10px;background:#fff;color:var(--primary-dark);font:700 16px var(--font);cursor:pointer}.pwa-wage-batch-print:hover,.pwa-wage-batch-print:focus-visible{background:var(--primary-light)}
 @media print{body.pwa-wage-batch-printing>*:not(.pwa-wage-batch-host){display:none!important}.pwa-wage-batch-host{position:static!important;inset:auto!important}.pwa-wage-batch-host .pwa-wage-print-sheet{box-sizing:border-box;padding:12mm 8mm 0!important;break-after:page;page-break-after:always}.pwa-wage-batch-host .pwa-wage-print-sheet:last-child{break-after:auto;page-break-after:auto}.pwa-wage-batch-host .pf-summary,.pwa-wage-batch-host .pf-sign,.pwa-wage-batch-host .pf-note{break-inside:avoid;page-break-inside:avoid}}
 @media print{.pwa-wage-print-sheet .pf-table{break-inside:auto!important;page-break-inside:auto!important}.pwa-wage-print-sheet .pf-table thead{display:table-header-group!important}.pwa-wage-print-sheet .pf-table tbody{display:table-row-group!important}.pwa-wage-print-sheet .pf-table tbody tr{break-inside:avoid-page!important;page-break-inside:avoid!important}.pwa-wage-print-sheet .pf-table .pf-repeat-head td{padding:0 0 8px!important;border:0!important;background:#fff!important;text-align:initial!important}.pwa-wage-print-sheet .pf-table .pf-repeat-head .pf-header{margin-bottom:8px!important;padding-bottom:8px!important}.pwa-wage-print-sheet .pf-summary,.pwa-wage-print-sheet .pf-sign,.pwa-wage-print-sheet .pf-note{break-inside:avoid-page!important;page-break-inside:avoid!important}}
+
+/* Monthly attendance calendar: one table per wage period, tappable days. */
+.pwa-att-period{margin:14px auto 0}
+.pwa-att-period h3{margin:0 0 4px;font-size:15px;color:var(--primary-dark)}
+.pwa-att-period .pwa-att-matrix{margin-top:6px}
+.pwa-att-period .pwa-att-matrix table{min-width:520px}
+.pwa-att-period th span{display:block;font-size:12px}
+.pwa-att-period th small{display:block;font-size:10px;font-weight:400;opacity:.85}
+.pwa-att-period td.pwa-att-name{position:sticky;left:0;z-index:1;background:#fff;text-align:left;font-size:13px;white-space:nowrap;padding-left:8px}
+.pwa-att-period td.weekend{background:#faf3ec}
+.pwa-att-cell{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:#fff;color:#2e7d32;font:700 14px var(--font);cursor:pointer;padding:0}
+.pwa-att-cell.present{background:#e8f5e9;border-color:#81c784}
+.pwa-att-cell.absent{color:var(--text-muted)}
+.pwa-att-cell:hover:not(:disabled){border-color:var(--primary)}
+.pwa-att-cell:disabled{opacity:.35;cursor:default}
+.pwa-att-edit-dialog .pwa-att-edit-grid{margin:10px 0}
+.pwa-att-edit-dialog .pwa-att-note{display:block;margin-top:8px}
+.pwa-att-edit-dialog .pwa-att-note input{width:100%}
+.pwa-att-edit-dialog .pwa-dialog-actions{margin-top:14px}
