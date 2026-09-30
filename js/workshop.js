@@ -167,7 +167,7 @@ function loadWagePeriod(root,key,{prefetch=false,mode="half"}={}){
 // Printing, confirming or settling from figures that are still being
 // revalidated could use a superseded total; wait for the fresh summary.
 function wageActionBlocked(a){
-  if(!["printWage","printAllWages","confirmWages","openAdvanceSettlement","editClosedWage"].includes(a)||!S.wageStale[S.wageKey])return false;
+  if(!["printWage","confirmWagePrint","printAllWages","confirmWages","submitWageConfirm","openAdvanceSettlement","saveAdvanceSettlement","editClosedWage","saveClosedWage"].includes(a)||!S.wageStale[S.wageKey])return false;
   S.toast("กำลังอัปเดตตัวเลขค่าแรงล่าสุด รอสักครู่แล้วกดอีกครั้ง");
   return true;
 }
@@ -250,6 +250,8 @@ function bind(root){
       render(root);return;
     }
     const button=ev.target.closest("button"),a=button?.dataset.a;
+    // Wage actions are handled here, before click(); guard them here too.
+    if(wageActionBlocked(a))return;
     if(a==="handoffRefresh"){S.handoff=null;render(root);loadHandoff(root);return;}
     if(a==="handoffReview"){S.handoffReview=button.dataset.job;render(root);return;}
     if(a==="closeHandoffReview"){S.handoffReviewPicker=null;S.handoffReview=null;render(root);return;}
