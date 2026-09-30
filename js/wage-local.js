@@ -45,7 +45,7 @@ function decodeRows(rows){
 function hydrate(data){
   return {jobs:decodeRows(data.jobs),attendance:decodeRows(data.attendance),employees:decodeRows(data.employees),
     expenses:decodeRows(data.expenses),payments:decodeRows(data.payments),whitewareMap:data.whitewareMap||{},
-    patternMap:data.patternMap||{},config:data.config||{}};
+    patternMap:data.patternMap||{},config:data.config||{},attendanceRecords:Array.isArray(data.attendanceRecords)?data.attendanceRecords:null};
 }
 function accept(record,owner){
   return record&&record.owner===owner&&record.coreVersion===core()?.version&&record.data;
@@ -92,6 +92,10 @@ export function syncLocalWage(api,token,owner,{force=false}={}){
   return syncing;
 }
 export function localWageSyncing(){return !!syncing;}
+// Attendance views (same filters GAS uses, via WageCore).
+export function localAttendanceReady(owner){return !!memo&&memo.owner===owner&&!!memo.input.attendanceRecords;}
+export function localAttendanceByDate(iso){return JSON.parse(JSON.stringify(core().attendanceByDate(memo.input.attendanceRecords,iso)));}
+export function localAttendanceMonth(year,month){return JSON.parse(JSON.stringify(core().attendanceMonth(memo.input.attendanceRecords,year,month)));}
 export function localWageInfo(){return memo?{version:memo.version,fetchedAt:memo.fetchedAt,checkedAt:memo.checkedAt}:null;}
 
 export async function clearLocalWage(){

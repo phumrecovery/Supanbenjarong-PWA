@@ -7,13 +7,13 @@ import {renderPreorder} from "./preorder.js?v=preorder-v20";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
 import {renderReport} from "./report.js?v=report-v18";
 import {renderSettings} from "./settings.js?v=settings-v11";
-import {renderWorkshop} from "./workshop.js?v=workshop-v40";
+import {renderWorkshop} from "./workshop.js?v=workshop-v41";
 import {renderClaim} from "./claim.js?v=claim-v4";
 import {renderBarcode} from "./barcode.js?v=barcode-v4";
 import {renderReceipt} from "./receipt.js?v=receipt-v1";
 import {renderStocktake} from "./stocktake.js?v=stocktake-v1";
 import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
-import {clearLocalWage} from "./wage-local.js?v=wage-local-v1";
+import {clearLocalWage} from "./wage-local.js?v=wage-local-v2";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");

@@ -1,6 +1,6 @@
 // UI adapter only.  08_Workshop.gs remains the source of truth for all wages,
 // attendance, stock deduction and LockService-protected mutations.
-import {localWageSupported,loadLocalWage,localWageReady,computeLocalWage,syncLocalWage,localWageInfo} from "./wage-local.js?v=wage-local-v1";
+import {localWageSupported,loadLocalWage,localWageReady,computeLocalWage,syncLocalWage,localWageInfo,localAttendanceReady,localAttendanceByDate,localAttendanceMonth} from "./wage-local.js?v=wage-local-v2";
 const TAB_KEY="suphanbenjarong.pwa.workshop-tab";
 function savedTab(){try{const t=localStorage.getItem(TAB_KEY);return ["assign","receive","firing","daily","wage"].includes(t)?t:"assign"}catch{return "assign"}}
 const S={api:null,token:"",back:null,toast:()=>{},data:null,tab:savedTab(),step:"เขียนลายน้ำทอง",pick:false,pickQ:"",chosen:null,day:"",daily:{},months:{},monthFetchedAt:{},monthRequests:{},monthErrors:{},monthGeneration:0,monthPrefetchTimer:null,wages:{},wageRequests:{},wageLoadedAt:{},wageStale:{},wageErrors:{},wageLocal:{},owner:"",localLoaded:false,localSyncing:false,localNeedsSync:false,wageGeneration:0,wagePrefetchTimer:null,wageInitialTimer:null,handoff:null,handoffConfirm:null,handoffReview:null,handoffPhoto:null,handoffPhotoZoom:1,handoffEdit:null,handoffAction:null,handoffPicker:null,handoffReviewPicker:null,handoffReviewDrafts:{},handoffDraft:{},handoffSaving:false,wageMode:"half",wageView:"table",wageKey:"",periodOpen:false,saving:false,wageConfirm:false,wageConfirming:false,wageEdit:null,wageEditSaving:false,wagePrint:false,advanceSettlement:null,advanceSettlementSaving:false};
@@ -160,7 +160,13 @@ function workshopIdle(root){const a=document.activeElement;if(a&&root.contains(a
 async function saveJob(root,ev){ev.preventDefault();const isGold=S.step==="วนทอง";if(!isGold&&!S.chosen)return S.toast("กรุณาเลือกของขาว");let v=id=>root.querySelector(id)?.value||"",d=isGold?{worker:v("#worker"),step:"วนทอง",whitewareSku:"",product:"วนทอง",size:"",pattern:"",sku:"",refRow:"",autoComplete:true,qty:Number(v("#qty")),priceEach:Number(v("#price")),stickerQty:0,stickerRate:0,jobDate:v("#jobDate"),dueDate:""}:{worker:v("#worker"),step:"เขียนลาย",whitewareSku:S.chosen.sku,product:S.chosen.name||S.chosen.product,size:S.chosen.size||"",pattern:S.chosen.pattern||"",sku:S.chosen.sku,qty:Number(v("#qty")),priceEach:Number(v("#price")),stickerQty:Number(v("#stickerQty")),stickerRate:Number(v("#stickerRate")),jobDate:v("#jobDate"),dueDate:v("#dueDate")};if(!d.worker)return S.toast("กรุณาเลือกช่าง");if(!Number.isInteger(d.qty)||d.qty<=0)return S.toast(isGold?"กรุณาใส่จำนวนครั้งเป็นจำนวนเต็ม":"กรุณาใส่จำนวนเป็นจำนวนเต็ม");if(!Number.isFinite(d.priceEach)||d.priceEach<=0)return S.toast("กรุณาระบุค่าจ้างที่มากกว่า 0");if(!d.jobDate)return S.toast("กรุณาเลือกวันที่จ่ายงาน");S.saving=true;render(root);try{let r=await S.api.workshopSaveJob(S.token,d),o=r.result;if(!r.ok||!o?.success)throw Error(o?.message||r.message);S.toast(o.message||"บันทึกสำเร็จ");S.chosen=null;invalidateWages();await load(root);}catch(x){S.toast(`❌ ${x.message||x}`)}finally{S.saving=false;render(root);}}
 async function fire(root,row){let pass=Number(row.querySelector('[data-k="pass"]')?.value),bad=Number(row.querySelector('[data-k="damaged"]')?.value),qty=Number(row.dataset.qty);if(!Number.isInteger(pass)||!Number.isInteger(bad)||pass<0||bad<0||pass+bad!==qty)return S.toast(`จำนวนผ่าน + เสีย ต้องเท่ากับ ${m(qty)}`);try{let r=await S.api.workshopConfirmFiring(S.token,Number(row.dataset.row),pass,bad),o=r.result;if(!r.ok||!o?.success)throw Error(o?.message||r.message);S.toast(o.message||"บันทึกสำเร็จ");load(root)}catch(x){S.toast(`❌ ${x.message||x}`)}}
 async function toggleFiringMode(root){const target=S.data?.firingMode?.autoStock?"MANUAL_QC":"AUTO_STOCK";try{const r=await S.api.workshopSetFiringMode(S.token,target),o=r.result;if(!r.ok||!o?.success)throw Error(o?.message||r.message);S.data.firingMode={mode:o.mode,autoStock:o.autoStock,notice:o.message};S.toast(`✅ ${o.message}`);render(root);}catch(x){S.toast(`❌ ${x.message||x}`);}}
-async function setDay(root,d){if(!d||d>today())return;S.day=d;render(root);loadDay(root)}async function loadDay(root){if(S.daily[S.day])return;try{let r=await S.api.workshopAttendance(S.token,S.day);if(!r.ok)throw Error(r.message);S.daily[S.day]=r.result||[];if(S.tab==="daily")render(root)}catch(x){S.toast(`โหลดลงเวลาไม่สำเร็จ: ${x.message||x}`)}}
+async function setDay(root,d){if(!d||d>today())return;S.day=d;render(root);loadDay(root)}async function loadDay(root){if(S.daily[S.day])return;
+  // Local-first like the wage tab; right after a save (localNeedsSync) the
+  // server answers until the device copy has caught up.
+  if(!S.localLoaded&&localWageSupported()&&S.owner){S.localLoaded=true;await loadLocalWage(S.owner).catch(()=>null);if(S.daily[S.day])return;}
+  if(localAttendanceReady(S.owner)&&!S.localNeedsSync){S.daily[S.day]=localAttendanceByDate(S.day);if(S.tab==="daily")render(root);syncLocalWages(root);return;}
+  if(localWageSupported()&&S.owner&&!S.localSyncing)syncLocalWages(root);
+  try{let r=await S.api.workshopAttendance(S.token,S.day);if(!r.ok)throw Error(r.message);S.daily[S.day]=r.result||[];if(S.tab==="daily")render(root)}catch(x){S.toast(`โหลดลงเวลาไม่สำเร็จ: ${x.message||x}`)}}
 function previousMonthKey(key){const [year,month]=key.split("-").map(Number);return date(new Date(year,month-2,1)).slice(0,7)}
 function queuePreviousMonth(root,key){
   clearTimeout(S.monthPrefetchTimer);
@@ -171,6 +177,14 @@ function queuePreviousMonth(root,key){
   },400);
 }
 function loadMonth(root,key,{prefetch=false}={}){
+  if(!S.localLoaded&&localWageSupported()&&S.owner){S.localLoaded=true;return loadLocalWage(S.owner).catch(()=>null).then(()=>loadMonth(root,key,{prefetch}));}
+  if(localAttendanceReady(S.owner)&&!S.localNeedsSync){
+    const [ly,lm]=key.split("-").map(Number);
+    S.months[key]=localAttendanceMonth(ly,lm);S.monthFetchedAt[key]=Date.now();delete S.monthErrors[key];
+    if(!prefetch){if(S.tab==="monthly"&&S.monthKey===key&&root?.isConnected&&root.dataset.route==="workshop"&&!S.attEdit)render(root);syncLocalWages(root);}
+    return Promise.resolve(S.months[key]);
+  }
+  if(!prefetch&&localWageSupported()&&S.owner&&!S.localSyncing)syncLocalWages(root);
   const cached=Object.prototype.hasOwnProperty.call(S.months,key);
   const ttl=key===today().slice(0,7)?60_000:5*60_000;
   if(cached&&Date.now()-Number(S.monthFetchedAt[key]||0)<ttl){if(!prefetch)queuePreviousMonth(root,key);return Promise.resolve(S.months[key]);}
@@ -229,6 +243,14 @@ function computeWageLocally(key){
   if(S.localNeedsSync)S.wageStale[key]=true;else delete S.wageStale[key];
   return S.wages[key];
 }
+// After a newer snapshot arrives, update cached attendance views. The open
+// daily page is left alone: its unsaved status toggles live only in the DOM.
+function refreshLocalAttendance(root){
+  if(!localAttendanceReady(S.owner))return;
+  Object.keys(S.months).forEach(key=>{const [y,mo]=key.split("-").map(Number);S.months[key]=localAttendanceMonth(y,mo);S.monthFetchedAt[key]=Date.now();});
+  Object.keys(S.daily).forEach(day=>{if(!(S.tab==="daily"&&day===S.day))S.daily[day]=localAttendanceByDate(day);});
+  if(S.tab==="monthly"&&root?.isConnected&&root.dataset.route==="workshop"&&!S.attEdit&&wageIdle())render(root);
+}
 function syncLocalWages(root){
   if(!localWageSupported()||!S.owner)return;
   const token=S.token,force=S.localNeedsSync;
@@ -237,6 +259,7 @@ function syncLocalWages(root){
   syncLocalWage(S.api,token,S.owner,{force}).then(({changed})=>{
     if(token!==S.token)return;
     if(force)S.localNeedsSync=false;
+    if(changed||force)refreshLocalAttendance(root);
     if(!changed&&!force&&Object.keys(S.wageLocal).length)return;
     const keys=new Set([...Object.keys(S.wages),S.wageKey].filter(Boolean));
     keys.forEach(computeWageLocally);

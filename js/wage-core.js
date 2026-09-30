@@ -383,7 +383,31 @@ var WageCore=(function(){
     return result;
   }
 
-  return {version:1,isSupportedRuntime:isSupportedRuntime,formatDate:formatDate,parseDate:parseDate,periodKey:periodKey,
+  // Attendance views. records: [{iso:"yyyy-MM-dd",rec:{...}}] in sheet order,
+  // built on the server by workshopAttendanceRecords_() (times already
+  // formatted there, so no device time-zone maths is involved).
+  // Same as getAttendanceByDate(iso).
+  function attendanceByDate(records,iso){
+    var out=[];
+    for(var i=0;i<(records||[]).length;i++)if(records[i].iso===iso)out.push(records[i].rec);
+    return out;
+  }
+  // Same as getMonthlyAttendance(year,month): present days only.
+  function attendanceMonth(records,year,month){
+    var prefix=String(year)+"-"+pad_(Number(month)),out=[];
+    for(var i=0;i<(records||[]).length;i++){
+      var item=records[i],rec=item.rec;
+      if(String(item.iso).slice(0,7)!==prefix)continue;
+      if(String(rec.present||"").trim()!=="มา")continue;
+      out.push({date:String(Number(String(item.iso).slice(8,10))),name:rec.name,type:rec.type,rate:rec.rate,
+        timeIn:rec.timeIn,timeOut:rec.timeOut,dayFactor:rec.dayFactor,dayType:rec.dayType,
+        otStart:rec.otStart,otEnd:rec.otEnd,otReason:rec.otReason});
+    }
+    return out;
+  }
+
+  return {version:2,attendanceByDate:attendanceByDate,attendanceMonth:attendanceMonth,
+    isSupportedRuntime:isSupportedRuntime,formatDate:formatDate,parseDate:parseDate,periodKey:periodKey,
     parsePeriodKey:parsePeriodKey,wageValues:wageValues,socialMap:socialMap,socialEligible:socialEligible,
     buildSummary:buildSummary,wageMap:wageMap,existingAutoWageWorkers:existingAutoWageWorkers,advanceMap:advanceMap,
     calculateAutomatic:calculateAutomatic,prepareWorkers:prepareWorkers,periodStatus:periodStatus,summarize:summarize};
