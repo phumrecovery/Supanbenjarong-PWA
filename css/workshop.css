@@ -111,3 +111,11 @@
 .pwa-handoff-remark p{margin:0;white-space:pre-wrap;word-break:break-word;color:var(--text-main)}
 .pwa-handoff-card-remark{margin:8px 0 0;padding:6px 10px;border-radius:10px;background:#fff8e1;color:#5d4a00;font-size:13px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pwa-handoff-card.has-remark{height:auto!important;min-height:252px}
+/* iOS renders type=date wider than its box; keep every edit field inside the dialog. */
+.pwa-handoff-edit-dialog .pwa-edit-grid>label{min-width:0}
+.pwa-handoff-edit-dialog input,.pwa-handoff-edit-dialog textarea{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+.pwa-handoff-edit-dialog input[type=date]{-webkit-appearance:none;appearance:none;display:block;text-align:left;min-height:46px}
+.pwa-handoff-edit-dialog input[type=date]::-webkit-date-and-time-value{text-align:left}
+.pwa-handoff-stock-warn{margin:6px 0 2px;padding:8px 10px;border-radius:10px;background:#fdecea;border:1px solid #f5c2c0;color:#b3261e;font-size:14px;font-weight:600}
+.pwa-handoff-error-dialog h2{color:#b3261e}
+.pwa-handoff-error-message{margin:8px 0;padding:10px 12px;border-radius:12px;background:#fdecea;color:#b3261e;font-weight:700}
