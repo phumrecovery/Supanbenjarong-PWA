@@ -35,10 +35,6 @@ const SESSION_KEY="suphanbenjarong.pwa.session";
 if("scrollRestoration" in history)history.scrollRestoration="manual";
 const DISPLAY_USER_KEY="suphanbenjarong.pwa.display-user";
 const PENDING_BARCODE_KEY="suphanbenjarong.pwa.pending-barcode";
-const LOGIN_PREVIEW_KEY="suphanbenjarong.pwa.family-login-preview";
-// Display-only names may survive idle days. They remain disabled until GAS
-// verifies the PIN, then the server's current list replaces this preview.
-const LOGIN_PREVIEW_TTL=30*24*60*60*1000;
 // URL เดียวกับ Web App เดิม เพื่อให้ก่อนโหลดข้อมูลร้าน PWA ยังใช้ตราร้านจริง
 const LOGO_FALLBACK="https://lh3.googleusercontent.com/d/18rwkqytClqwNtg0PReV1ILLFwkiIKa01";
 const MENU=[
@@ -125,20 +121,6 @@ function schedulePriorityWarmup(token,flow){
   },700);
 }
 
-function readLoginPreview(){
-  try{
-    const saved=JSON.parse(localStorage.getItem(LOGIN_PREVIEW_KEY)||"null");
-    const users=Array.isArray(saved?.users)?saved.users:[];
-    if(!users.length||Date.now()-Number(saved?.savedAt||0)>LOGIN_PREVIEW_TTL)return [];
-    return users.map(user=>({name:String(user?.name||""),role:String(user?.role||"")})).filter(user=>user.name);
-  }catch(error){return [];}
-}
-function saveLoginPreview(users){
-  try{
-    const safe=(Array.isArray(users)?users:[]).map(user=>({name:String(user?.name||""),role:String(user?.role||"")})).filter(user=>user.name);
-    if(safe.length)localStorage.setItem(LOGIN_PREVIEW_KEY,JSON.stringify({savedAt:Date.now(),users:safe}));
-  }catch(error){}
-}
 function preloadHomeData(token){
   const requestedFlow=loginFlowId;
   if(!token||homeData)return;
@@ -263,6 +245,7 @@ function renderPin(){
 }
 
 function enterPin(key){
+  if(pinSubmitting)return;
   const error=document.querySelector("#pinError");
   if(key==="del")pinInput=pinInput.slice(0,-1);
   else if(pinInput.length<6)pinInput+=key;
@@ -276,8 +259,12 @@ async function submitPin(){
   pinSubmitting=true;
   const requestedFlow=loginFlowId;
   const submittedPin=pinInput;
-  const previewUsers=readLoginPreview();
-  showUserPicker(previewUsers,{pending:true});
+  // Stay on the PIN screen until GAS accepts the PIN: a wrong PIN must never
+  // flash the name picker first.
+  document.querySelector("#pinPad")?.classList.add("is-checking");
+  document.querySelectorAll("#pinPad button").forEach(button=>{button.disabled=true;});
+  const status=document.querySelector("#pinError");
+  if(status){status.textContent="กำลังตรวจรหัส…";status.classList.add("is-checking");}
   try{
     const result=await api.login(submittedPin);
     if(requestedFlow!==loginFlowId)return;
@@ -285,7 +272,6 @@ async function submitPin(){
     sessionToken=result.session;
     sessionStorage.setItem(SESSION_KEY,sessionToken);
     currentSession={level:result.level,user:null};
-    if(result.level==="family")saveLoginPreview(result.users||[]);
     // Any signed user choice token is already authenticated. Warm this small
     // common home payload while the user decides which name to select.
     preloadHomeData((result.users||[])[0]?.token);
