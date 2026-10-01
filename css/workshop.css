@@ -82,7 +82,8 @@
 .pwa-att-period th small{display:block;font-size:10px;font-weight:400;opacity:.85}
 .pwa-att-period td.pwa-att-name{position:sticky;left:0;z-index:1;background:#fff;text-align:left;font-size:13px;white-space:nowrap;padding-left:8px}
 .pwa-att-period td.weekend{background:#faf3ec}
-.pwa-att-cell{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:#fff;color:#2e7d32;font:700 14px var(--font);cursor:pointer;padding:0}
+.pwa-att-period td{vertical-align:middle}
+.pwa-att-cell{display:block;margin:0 auto;box-sizing:border-box;width:30px;height:30px;line-height:1;border:1px solid var(--border);border-radius:8px;background:#fff;color:#2e7d32;font:700 14px var(--font);cursor:pointer;padding:0}
 .pwa-att-cell.present{background:#e8f5e9;border-color:#81c784}
 .pwa-att-cell.absent{color:var(--text-muted)}
 .pwa-att-cell:hover:not(:disabled){border-color:var(--primary)}
@@ -91,11 +92,10 @@
 .pwa-att-edit-dialog .pwa-att-note{display:block;margin-top:8px}
 .pwa-att-edit-dialog .pwa-att-note input{width:100%}
 .pwa-att-edit-dialog .pwa-dialog-actions{margin-top:14px}
-/* PC: show both wage periods side by side so the whole month is visible. */
+/* PC: both wage periods stacked full width, cells grow to fill the row. */
 @media (min-width:1100px){
   .pwa-workshop-panel.pwa-att-month{max-width:1180px}
-  .pwa-att-month .pwa-att-periods{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
   .pwa-att-month .pwa-att-period .pwa-att-matrix table{min-width:0;width:100%}
-  .pwa-att-month .pwa-att-cell{width:26px;height:28px;font-size:13px}
+  .pwa-att-month .pwa-att-cell{width:100%;min-width:26px;max-width:44px;height:32px}
   .pwa-att-month .pwa-sum-table{max-width:760px;margin-left:auto;margin-right:auto}
 }
