@@ -5,7 +5,7 @@ import {renderStock} from "./stock.js?v=stock-v5";
 import {renderExpense} from "./expense.js?v=expense-v14";
 import {renderPreorder} from "./preorder.js?v=preorder-v20";
 import {renderOutsource} from "./outsource.js?v=outsource-v3";
-import {renderReport} from "./report.js?v=report-v18";
+import {renderReport} from "./report.js?v=report-v19";
 import {renderSettings} from "./settings.js?v=settings-v11";
 import {renderWorkshop} from "./workshop.js?v=workshop-v41";
 import {renderClaim} from "./claim.js?v=claim-v4";
@@ -14,6 +14,7 @@ import {renderReceipt} from "./receipt.js?v=receipt-v1";
 import {renderStocktake} from "./stocktake.js?v=stocktake-v1";
 import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
 import {clearLocalWage} from "./wage-local.js?v=wage-local-v2";
+import {clearLocalReport} from "./report-local.js?v=report-local-v1";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -548,7 +549,7 @@ async function returnLimitedPosToLogin(){
   // A sales-only account has no permitted Home route. Its POS back button
   // ends the session instead of silently navigating back to #sales.
   const token=sessionToken;
-  sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();
+  sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();
   sessionStorage.removeItem(DISPLAY_USER_KEY);
   sessionToken="";
   api.clearWarmCache?.();
@@ -633,7 +634,7 @@ function logoutFromSidebar(){
   // request.  The server-side revoke is still sent immediately in background,
   // so an old token remains unusable once that request reaches the gateway.
   const token=sessionToken;
-  sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();
+  sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();
   sessionStorage.removeItem(DISPLAY_USER_KEY);
   sessionToken="";
   api.clearWarmCache?.();
@@ -656,7 +657,7 @@ async function initialize(){
     currentSession=result.session;
     try{displayUser=JSON.parse(sessionStorage.getItem(DISPLAY_USER_KEY)||"null");}catch(error){displayUser=null;}
     setAuthenticatedHeader();navigate(currentRoute(),{replace:true,animate:false});schedulePriorityWarmup(sessionToken,loginFlowId);
-  }catch(error){sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
+  }catch(error){sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
 if("serviceWorker" in navigator){
