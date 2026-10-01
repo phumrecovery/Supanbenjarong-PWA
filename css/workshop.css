@@ -99,3 +99,10 @@
   .pwa-att-month .pwa-att-cell{width:100%;min-width:26px;max-width:44px;height:32px}
   .pwa-att-month .pwa-sum-table{max-width:760px;margin-left:auto;margin-right:auto}
 }
+.pwa-handoff-done-dialog{text-align:center;max-width:380px}
+.pwa-handoff-done-icon{font-size:48px;line-height:1;margin:4px 0 8px}
+.pwa-handoff-done-dialog h2{margin:0 0 10px;color:#2e7d32}
+.pwa-handoff-done-dialog p{margin:4px 0}
+.pwa-handoff-done-note{color:var(--text-muted);font-size:14px}
+.pwa-handoff-done-dialog .pwa-dialog-actions{justify-content:center;margin-top:16px}
+.pwa-handoff-done-dialog .pwa-dialog-actions button{min-width:140px;flex:0 0 auto;justify-content:center;text-align:center}
