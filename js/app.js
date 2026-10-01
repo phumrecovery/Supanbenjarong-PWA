@@ -230,9 +230,18 @@ function showLogin(message=""){
   pinInput="";
   main.innerHTML=`<section class="login-screen" aria-label="เข้าสู่ระบบ"><img class="login-logo" src="${LOGO_FALLBACK}" alt="โลโก้สุพรรณบุรีเบญจรงค์"><h1 class="login-title">สุพรรณบุรีเบญจรงค์</h1><p class="login-sub">ใส่รหัส 6 หลัก</p><div id="pinDots" class="pin-dots" aria-label="รหัส PIN"></div><div id="pinPad" class="pin-pad"></div><p id="pinError" class="pin-error" aria-live="polite">${escapeHtml(message)}</p></section>`;
   renderPin();
-  // The last authorized login already cached display-only names. Do not
-  // start a GAS health request here: rapid logout/login cycles otherwise
-  // overlap that request with PIN verification for no authentication benefit.
+  warmGasForLogin();
+}
+
+// After a few idle minutes Google needs ~5-7s to start the web app before
+// our code runs (Executions show ~1.5s for the login itself). A cache-only
+// health call (no Sheets, no lock; see tryHandlePwaApiPost_) absorbs that
+// start while the PIN is typed. At most once a minute.
+let lastGasWarmAt=0;
+function warmGasForLogin(){
+  if(Date.now()-lastGasWarmAt<60_000)return;
+  lastGasWarmAt=Date.now();
+  api.request({action:"health"},20000).catch(()=>{});
 }
 
 function renderPin(){
@@ -250,6 +259,7 @@ function enterPin(key){
   const error=document.querySelector("#pinError");
   if(key==="del")pinInput=pinInput.slice(0,-1);
   else if(pinInput.length<6)pinInput+=key;
+  if(pinInput.length===1)warmGasForLogin();
   if(error)error.textContent="";
   renderPin();
   if(pinInput.length===6)setTimeout(submitPin,180);
