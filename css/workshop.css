@@ -106,3 +106,8 @@
 .pwa-handoff-done-note{color:var(--text-muted);font-size:14px}
 .pwa-handoff-done-dialog .pwa-dialog-actions{justify-content:center;margin-top:16px}
 .pwa-handoff-done-dialog .pwa-dialog-actions button{min-width:140px;flex:0 0 auto;justify-content:center;text-align:center}
+.pwa-handoff-remark{margin:10px 0;padding:10px 12px;border-radius:12px;background:#fff8e1;border:1px solid #ffe082;text-align:left}
+.pwa-handoff-remark span{display:block;font-size:13px;font-weight:700;color:#8d6e00;margin-bottom:4px}
+.pwa-handoff-remark p{margin:0;white-space:pre-wrap;word-break:break-word;color:var(--text-main)}
+.pwa-handoff-card-remark{margin:8px 0 0;padding:6px 10px;border-radius:10px;background:#fff8e1;color:#5d4a00;font-size:13px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pwa-handoff-card.has-remark{height:auto!important;min-height:252px}
