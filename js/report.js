@@ -1,11 +1,13 @@
 /* Dashboard PWA — rendering only. Figures come from ReportCore (41_ReportCore.gs):
    on the device from a local snapshot when available (report-local.js),
    otherwise from GAS 14_Report.gs, which runs the same ReportCore. */
-import {localReportSupported,loadLocalReport,localReportReady,computeLocalReport,syncLocalReport,markLocalReportStale,localReportInit,localReportInfo} from "./report-local.js?v=report-local-v1";
+import {localReportSupported,loadLocalReport,localReportReady,computeLocalReport,syncLocalReport,markLocalReportStale,localReportInit,localReportInfo} from "./report-local.js?v=report-local-v2";
 const S={data:null,tab:0,date:new Date(),month:new Date().getMonth()+1,year:new Date().getFullYear(),yearTab:new Date().getFullYear(),costMonth:new Date().getMonth()+1,costYear:new Date().getFullYear(),cashYear:new Date().getFullYear(),topMode:"month",topMonth:new Date().getMonth()+1,topYear:new Date().getFullYear(),cmpA:new Date().getFullYear(),cmpB:new Date().getFullYear()-1,printMonth:new Date().getMonth()+1,printYear:new Date().getFullYear(),printMonths:{},printData:[],printBuilding:false,cache:{},pending:{},open:{},modal:null,loading:true};
 let R={root:null,api:null,token:"",back:null,toast:()=>{},shop:{},owner:""},escapeBound=false;
-// true after a write in this app until the local snapshot has been revalidated
-let localStale=false;
+// true after a write in this app until the local snapshot has been revalidated.
+// The local figures stay on screen meanwhile (marked as updating) and are
+// redrawn when the newer snapshot arrives; only a failed sync falls back to GAS.
+let localStale=false,localSyncFailed=false;
 const E=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':'&quot;'}[c]));
 const N=v=>(Number(v)||0).toLocaleString("th-TH"),B=v=>`฿${N(v)}`;
 const MS=["","มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
@@ -74,18 +76,23 @@ function loading(){return '<div class="rpt-loading">⏳ กำลังโหล
 function content(){const dailyData=S.cache[k("daily",dateKey(S.date))]||S.data?.daily;const monthData=S.cache[k("month",S.year,S.month)],yearData=S.cache[k("year",S.yearTab)],topData=S.cache[S.topMode==="month"?k("month",S.topYear,S.topMonth):k("year",S.topYear)],a=S.cache[k("year",S.cmpA)],b=S.cache[k("year",S.cmpB)],co=S.cache[k("cost",S.costYear,S.costMonth)],ca=S.cache[k("cash",S.cashYear)],pr=S.cache[k("print",S.printYear,S.printMonth)];const view=[()=>daily(dailyData),()=>monthly(monthData),()=>yearly(yearData),()=>top(topData),()=>compare(a,b),()=>printView(pr),()=>cost(co),()=>cash(ca)][S.tab];return view?view():"";}
 function modal(){if(!S.modal)return "";const d=S.cache[k("cash",S.cashYear)]||{},months=MS.slice(1);return `<div class="rpt-modal"><form class="rpt-modal-card" data-rpt-form="cash"><button type="button" class="rpt-close" data-rpt="modal-close">×</button><h2>💰 ตั้งค่าเงินสดตั้งต้น</h2><label>เงินสดตั้งต้น (บาท)<input name="amount" type="number" value="${Number(d.startAmount)||0}" inputmode="decimal"></label><label>เดือนเริ่ม<select name="month">${months.map((x,i)=>`<option value="${i+1}" ${Number(d.startMonth)===i+1?"selected":""}>${x}</option>`).join("")}</select></label><label>ปี (พ.ศ.)<input name="yearBE" type="number" value="${(Number(d.startYear)||S.cashYear)+543}"></label><p>💡 เงินสดที่มีจริง ณ เดือนที่เริ่มใช้ระบบ</p><button class="rpt-run">✅ บันทึก</button></form></div>`;}
 function draw(){if(!active())return;R.root.innerHTML=`<section class="rpt-page"><header class="rpt-top"><button data-rpt="back">← กลับ</button><h1>📊 ดูสรุป</h1></header><nav class="rpt-tabs">${tabs.map(([name],i)=>`<button class="${S.tab===i?"active":""}" data-rpt="tab" data-tab="${i}">${name}</button>`).join("")}</nav><div class="rpt-refresh"><button data-rpt="refresh">🔄 อัปเดตข้อมูลล่าสุด</button>${localNote()}</div><main class="rpt-content">${content()}</main></section>`;R.root.querySelectorAll("[data-rpt]").forEach(button=>button.addEventListener("click",click));R.root.querySelectorAll("[data-rpt-field]").forEach(field=>field.addEventListener("change",change));const layer=document.querySelector("#floatingLayer");if(layer){layer.innerHTML=modal();layer.onclick=click;layer.onchange=change;layer.onsubmit=submit;}}
-function localNote(){const info=localReportReady(R.owner)&&!localStale?localReportInfo():null;if(!info)return "";const t=new Date(info.fetchedAt);return `<small class="rpt-local-note">⚡ คำนวณในเครื่อง · ข้อมูล ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}</small>`;}
-function useLocal(){return !localStale&&localReportReady(R.owner);}
+function localNote(){const info=useLocal()?localReportInfo():null;if(!info)return "";if(localStale)return `<small class="rpt-local-note">⚡ คำนวณในเครื่อง · ⏳ กำลังอัปเดตข้อมูลล่าสุด…</small>`;const t=new Date(info.fetchedAt);return `<small class="rpt-local-note">⚡ คำนวณในเครื่อง · ข้อมูล ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}</small>`;}
+function useLocal(){return !localSyncFailed&&localReportReady(R.owner);}
 // Revalidates the local snapshot in the background; a newer one recomputes
 // the visible tab. Failures keep the server path.
 async function syncLocal({force=false}={}){
   if(!localReportSupported()||!R.owner)return false;
   try{
     const result=await syncLocalReport(R.api,R.token,R.owner,{force});
-    const wasStale=localStale;localStale=false;
-    if(result.changed||wasStale){S.cache={};if(!S.data&&localReportReady(R.owner))S.data={init:localReportInit()};if(active()){draw();loadTab();}}
+    const wasStale=localStale,hadFailed=localSyncFailed;localStale=false;localSyncFailed=false;
+    if(result.changed||wasStale||hadFailed){S.cache={};if(!S.data&&localReportReady(R.owner))S.data={init:localReportInit()};if(active()){draw();loadTab();}}
     return true;
-  }catch(error){console.warn("report local sync failed",error);return false;}
+  }catch(error){
+    console.warn("report local sync failed",error);
+    // Stale local figures must not stay on screen without an update coming.
+    if(localStale&&!localSyncFailed){localSyncFailed=true;S.cache={};if(active()){draw();loadTab();}}
+    return false;
+  }
 }
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 async function fetchData(type,...args){const key=k(type,...args);if(S.cache[key])return S.cache[key];if(useLocal()){try{const local=computeLocalReport(type,args);if(local){S.cache[key]=local;return local;}}catch(error){console.warn("local report failed",error);}}if(S.pending[key])return S.pending[key];const fn={daily:()=>R.api.reportDaily(R.token,args[0]),month:()=>R.api.reportMonthly(R.token,args[0],args[1]),year:()=>R.api.reportYearly(R.token,args[0]),cost:()=>R.api.reportCost(R.token,args[0],Number(args[1])-1),cash:()=>R.api.reportCashflow(R.token,args[0]),print:()=>R.api.reportPrint(R.token,args[0],Number(args[1])-1)}[type];S.pending[key]=fn().then(r=>{if(!r.ok)throw new Error(r.message||"โหลดข้อมูลไม่สำเร็จ");S.cache[key]=r.result;return r.result;}).finally(()=>delete S.pending[key]);return S.pending[key];}

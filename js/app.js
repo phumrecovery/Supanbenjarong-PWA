@@ -5,7 +5,7 @@ import {renderStock} from "./stock.js?v=stock-v5";
 import {renderExpense} from "./expense.js?v=expense-v15";
 import {renderPreorder} from "./preorder.js?v=preorder-v20";
 import {renderOutsource} from "./outsource.js?v=outsource-v4";
-import {renderReport} from "./report.js?v=report-v19";
+import {renderReport} from "./report.js?v=report-v20";
 import {renderSettings} from "./settings.js?v=settings-v11";
 import {renderWorkshop} from "./workshop.js?v=workshop-v45";
 import {renderClaim} from "./claim.js?v=claim-v5";
@@ -13,8 +13,8 @@ import {renderBarcode} from "./barcode.js?v=barcode-v5";
 import {renderReceipt} from "./receipt.js?v=receipt-v1";
 import {renderStocktake} from "./stocktake.js?v=stocktake-v1";
 import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
-import {clearLocalWage} from "./wage-local.js?v=wage-local-v2";
-import {clearLocalReport} from "./report-local.js?v=report-local-v1";
+import {clearLocalWage,syncLocalWage} from "./wage-local.js?v=wage-local-v2";
+import {clearLocalReport,syncLocalReport} from "./report-local.js?v=report-local-v2";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -88,6 +88,21 @@ function setWarmupStatus(value){
   const label=main.querySelector("#homeWarmupStatus");
   if(label){label.textContent=value;label.hidden=!value;}
 }
+// An installed PWA on a PC opens in a small default window. Fill the screen
+// once per launch; phones/tablets and normal browser tabs are left alone.
+function fillDesktopWindow(){
+  try{
+    const mode=query=>window.matchMedia?.(query)?.matches;
+    if(!mode("(display-mode: standalone)")&&!mode("(display-mode: window-controls-overlay)"))return;
+    if(!mode("(pointer: fine)")||screen.availWidth<1024)return;
+    const width=screen.availWidth,height=screen.availHeight;
+    if(window.outerWidth>=width-40&&window.outerHeight>=height-40)return;
+    window.moveTo(screen.availLeft||0,screen.availTop||0);
+    window.resizeTo(width,height);
+  }catch(error){}
+}
+fillDesktopWindow();
+
 function schedulePriorityWarmup(token,flow){
   if(!token||!hasFamilyAccess()||priorityWarmupToken===token)return;
   priorityWarmupToken=token;
@@ -110,8 +125,11 @@ function schedulePriorityWarmup(token,flow){
     const pos=run([()=>api.posBootstrap(token)]);
     const stock=()=>run([()=>api.stockBootstrap(token)]);
     const others=()=>Promise.allSettled([
-      run([()=>api.workshopBootstrap(token),()=>api.workerPortalOwnerQueue(token)]),
-      run([()=>api.expenseBootstrap(token),()=>api.preorderBootstrap(token),()=>api.productBootstrap(token,"store")])
+      // Logout deletes the local Dashboard/wage rows, so fetch them again here
+      // (inside the same two lanes): the first visit after login then opens
+      // from the device at once.
+      run([()=>syncLocalReport(api,token,String(displayUser?.name||"")),()=>api.workshopBootstrap(token),()=>api.workerPortalOwnerQueue(token)]),
+      run([()=>api.expenseBootstrap(token),()=>api.preorderBootstrap(token),()=>api.productBootstrap(token,"store"),()=>syncLocalWage(api,token,String(displayUser?.name||""))])
     ]);
     // If the user entered POS directly, let its catalog load before adding
     // competing background reads. Home has no foreground catalog to protect.
@@ -620,8 +638,9 @@ document.addEventListener("keydown",event=>{
   // POS also hides the App Shell header.  Only the visible PIN keypad may
   // claim number keys; otherwise number inputs in POS must receive them.
   if(document.querySelector("#pinPad")){
-    if(event.key>="0"&&event.key<="9"){enterPin(event.key);event.preventDefault();}
-    else if(event.key==="Backspace"||event.key==="Delete"){enterPin("del");event.preventDefault();}
+    // The on-screen pad gets its tap sound from the click; keyboard keys need their own.
+    if(event.key>="0"&&event.key<="9"){if(!pinSubmitting&&!event.repeat)sound.tap();enterPin(event.key);event.preventDefault();}
+    else if(event.key==="Backspace"||event.key==="Delete"){if(!pinSubmitting&&!event.repeat)sound.tap();enterPin("del");event.preventDefault();}
     return;
   }
   if(!currentSession||!currentSession.user)return;

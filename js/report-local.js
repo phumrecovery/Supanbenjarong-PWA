@@ -88,7 +88,8 @@ export function syncLocalReport(api,token,owner,{force=false}={}){
     await loadLocalReport(owner);
     if(!force&&memo&&Date.now()-memo.checkedAt<CHECK_INTERVAL_MS)return {changed:false};
     let version="";
-    if(!force||memo){
+    // The version only decides whether an existing snapshot can be kept.
+    if(memo&&!force){
       const versionReply=await api.request({action:"dataVersion",session:token},30000,{retries:1,retryLogical:true});
       if(!versionReply?.ok)throw new Error(versionReply?.message||versionReply?.error||"VERSION_FAILED");
       version=String(versionReply.result?.version||"");
