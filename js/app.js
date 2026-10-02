@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v18";
+import {ApiClient} from "./api.js?v=api-v19";
 import {renderPos} from "./pos.js?v=pos-v26";
 import {renderProduct} from "./product.js?v=product-v2";
 import {renderStock} from "./stock.js?v=stock-v5";
@@ -6,12 +6,12 @@ import {renderExpense} from "./expense.js?v=expense-v15";
 import {renderPreorder} from "./preorder.js?v=preorder-v20";
 import {renderOutsource} from "./outsource.js?v=outsource-v4";
 import {renderReport} from "./report.js?v=report-v20";
-import {renderSettings} from "./settings.js?v=settings-v11";
+import {renderSettings} from "./settings.js?v=settings-v12";
 import {renderWorkshop} from "./workshop.js?v=workshop-v45";
 import {renderClaim} from "./claim.js?v=claim-v5";
 import {renderBarcode} from "./barcode.js?v=barcode-v5";
-import {renderReceipt} from "./receipt.js?v=receipt-v1";
-import {renderStocktake} from "./stocktake.js?v=stocktake-v1";
+import {renderReceipt} from "./receipt.js?v=receipt-v2";
+import {renderStocktake} from "./stocktake.js?v=stocktake-v2";
 import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
 import {clearLocalWage,syncLocalWage} from "./wage-local.js?v=wage-local-v2";
 import {clearLocalReport,syncLocalReport} from "./report-local.js?v=report-local-v2";
@@ -128,8 +128,8 @@ function schedulePriorityWarmup(token,flow){
       // Logout deletes the local Dashboard/wage rows, so fetch them again here
       // (inside the same two lanes): the first visit after login then opens
       // from the device at once.
-      run([()=>syncLocalReport(api,token,String(displayUser?.name||"")),()=>api.workshopBootstrap(token),()=>api.workerPortalOwnerQueue(token)]),
-      run([()=>api.expenseBootstrap(token),()=>api.preorderBootstrap(token),()=>api.productBootstrap(token,"store"),()=>syncLocalWage(api,token,String(displayUser?.name||""))])
+      run([()=>syncLocalReport(api,token,String(displayUser?.name||"")),()=>api.workshopBootstrap(token),()=>api.workerPortalOwnerQueue(token),()=>api.receiptBootstrap(token),()=>api.stockTake(token,"getStockTakePageData")]),
+      run([()=>api.expenseBootstrap(token),()=>api.preorderBootstrap(token),()=>api.productBootstrap(token,"store"),()=>syncLocalWage(api,token,String(displayUser?.name||"")),()=>api.settingsBootstrap(token)])
     ]);
     // If the user entered POS directly, let its catalog load before adding
     // competing background reads. Home has no foreground catalog to protect.

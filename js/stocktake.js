@@ -3,7 +3,11 @@ export function renderStocktake(root,api,session,onBack,context={}){
   const viewId=root._stocktakeViewId=(root._stocktakeViewId||0)+1;
   const current=()=>root.isConnected&&root.dataset.route==='stocktake'&&root._stocktakeViewId===viewId;
   const bjSound=window.SuphanSound||{};
-  function runner(success,failure){return new Proxy({}, {get(_target,key){if(key==='withSuccessHandler')return fn=>runner(fn,failure);if(key==='withFailureHandler')return fn=>runner(success,fn);return (...args)=>{const data=key==='getStockTakeReviewData'?{roundId:args[0]}:(args[0]||{});api.stockTake(session,key,data).then(response=>{if(!current())return;if(response?.result)success?.(response.result);else if(response?.ok)success?.(response);else failure?.(new Error(response?.message||'เชื่อมต่อระบบไม่สำเร็จ'));}).catch(error=>{if(current())failure?.(error);});};}});}
+  // The last page copy is display-only: counting stays locked until GAS
+  // returns the current round, so nothing is counted against old data.
+  let PAGE_STALE=false,PAGE_FRESH=false;
+  const staleBlocked=()=>{if(!PAGE_STALE)return false;toastStockTake('⏳ กำลังอัปเดตข้อมูลล่าสุด รอสักครู่…');return true;};
+  function runner(success,failure){return new Proxy({}, {get(_target,key){if(key==='withSuccessHandler')return fn=>runner(fn,failure);if(key==='withFailureHandler')return fn=>runner(success,fn);return (...args)=>{const data=key==='getStockTakeReviewData'?{roundId:args[0]}:(args[0]||{});const page=key==='getStockTakePageData';if(page){const last=!PAGE_FRESH&&api.lastBootstrap?.('stockTakePage',session);if(last?.ok){PAGE_STALE=true;document.body.classList.add('pwa-refreshing');success?.(last.result||last);}}const settle=()=>{if(page&&PAGE_STALE){PAGE_STALE=false;document.body.classList.remove('pwa-refreshing');}};api.stockTake(session,key,data).then(response=>{if(!current()){settle();return;}if(page&&(response?.result||response?.ok)){PAGE_FRESH=true;settle();}if(response?.result)success?.(response.result);else if(response?.ok)success?.(response);else failure?.(new Error(response?.message||'เชื่อมต่อระบบไม่สำเร็จ'));}).catch(error=>{if(current())failure?.(error);}).finally(()=>{if(page)document.body.classList.remove('pwa-refreshing');});};}});}
   const google={script:{run:runner()}};
   root.innerHTML=`<section class="pwa-stocktake"><header class="st-pwa-topbar"><button type="button" onclick="goHome()">← กลับ</button><h1>📋 ตรวจนับสต๊อก</h1></header><div class="st-page">
 <div class="st-card">
@@ -153,6 +157,7 @@ function renderPage(){
 }
 
 function startRound(){
+  if(staleBlocked())return;
   var btn=byId("startBtn");
   btn.disabled=true;
   btn.textContent="⏳ กำลังเริ่ม...";
@@ -256,6 +261,7 @@ function getLocationState_(locationId){
 }
 
 function openLocation(locationId){
+  if(staleBlocked())return;
   if(!PAGE_DATA.round){
     toastStockTake("กรุณากดเริ่มตรวจนับก่อน");
     return;
@@ -632,6 +638,7 @@ function findLayoutItem_(locationId){
 }
 
 function openReviewModal(){
+  if(staleBlocked())return;
   if(!PAGE_DATA.round){
     toastStockTake("ยังไม่มีรอบตรวจนับ");
     return;

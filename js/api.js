@@ -161,12 +161,18 @@ export class ApiClient {
     // These writes are idempotent in GAS. A Google ContentService redirect can
     // occasionally return HTML after the write; one retry reconciles the view.
     const safeRetry=read||['startStockTakeRound','openStockTakeLocation','saveStockTakeItem','completeStockTakeLocation'].includes(operation);
-    return this.request({action:"stockTake",session,operation,data},60000,{retries:safeRetry?1:0,retryLogical:read});
+    const pending=this.request({action:"stockTake",session,operation,data},60000,{retries:safeRetry?1:0,retryLogical:read});
+    // Kept for a display-only first paint of the stock-take page (stocktake.js
+    // locks counting until the fresh copy arrives).
+    if(operation==='getStockTakePageData')pending.then(result=>{if(result?.ok)this.lastGood.set("stockTakePage:"+session+":{}",result);}).catch(()=>{});
+    return pending;
   }
   barcodeBootstrap(session){
     return this.warmRead("barcodeBootstrap",session,5*60*1000,30000,1);
   }
-  receiptBootstrap(session){return this.request({action:"receiptBootstrap",session},45000,{retries:1,retryLogical:true});}
+  // warmRead also records the result for lastBootstrap(), so the receipt list
+  // paints at once on the next visit and then refreshes.
+  receiptBootstrap(session){return this.warmRead("receiptBootstrap",session,15_000,45000,1);}
   receiptCancel(session,billNo,reason){return this.request({action:"receiptCancel",session,billNo,reason},60000);}
   workshopBootstrap(session){return this.warmRead("workshopBootstrap",session,15_000,45000,1);}
   workshopSaveJob(session,data){return this.request({action:"workshopSaveJob",session,data},45000);}
