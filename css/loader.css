@@ -1,0 +1,33 @@
+/* Shared Benjarong loader (js/loader.js). One look for every loading state:
+   full  — app start / after PIN: bowl + ring + shop name
+   block — a page or list with nothing to show yet: bowl + ring + "กำลังโหลดข้อมูล…"
+   mini  — buttons and the background-refresh badge: the ring only
+   The ring turns around the Y axis and cycles the five Benjarong colours. */
+.bj-loader{display:grid;justify-items:center;gap:8px;padding:22px 12px;text-align:center}
+.bj-stage{position:relative;display:block;width:var(--bj-size,72px);height:var(--bj-size,72px);perspective:calc(var(--bj-size,72px)*3.2)}
+.bj-stage svg{position:absolute;inset:0;width:100%;height:100%;display:block;overflow:visible}
+.bj-ring{transform-origin:50% 50%;animation:bj-orbit 3.2s linear infinite}
+.bj-ring-bg{fill:none;stroke:rgba(153,101,21,.18);stroke-width:5}
+.bj-ring-arc{fill:none;stroke:#c0392b;stroke-width:5;stroke-linecap:round;stroke-dasharray:300 140;transform-origin:80px 80px;animation:bj-spin 2.2s linear infinite,bj-colors 5.5s linear infinite}
+.bj-bowl path,.bj-bowl ellipse{fill:none;stroke:url(#bjGold);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:bj-draw 2.8s ease-in-out infinite}
+.bj-bowl .late{animation-delay:.35s}
+.bj-loader-title{font:700 20px var(--font);color:var(--primary-dark)}
+.bj-loader-text{font:500 14px var(--font);color:var(--text-muted)}
+.bj-loader.full{--bj-size:140px;gap:12px}
+.bj-loader.full .bj-loader-text{font-size:15px}
+.bj-overlay{position:fixed;inset:0;z-index:9990;display:grid;place-items:center;background:rgba(255,248,241,.96)}
+
+/* mini ring: pure CSS so it works inside any button or line of text */
+.bj-ring-mini{display:inline-block;width:1.05em;height:1.05em;margin-right:.4em;vertical-align:-.16em;border-radius:50%;border:.17em solid color-mix(in srgb,currentColor 28%,transparent);border-top-color:#c0392b;animation:bj-spin .9s linear infinite,bj-colors-top 5.5s linear infinite}
+
+/* background-refresh badge (replaces the old text-only pill) */
+body.pwa-refreshing::after{content:none}
+.bj-refresh-badge{position:fixed;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;display:none;align-items:center;padding:4px 12px 4px 9px;border-radius:999px;background:#fff;border:1px solid var(--border);color:var(--primary-dark);font:600 12px/1.6 var(--font);pointer-events:none;box-shadow:var(--shadow)}
+body.pwa-refreshing .bj-refresh-badge{display:inline-flex}
+
+@keyframes bj-orbit{to{transform:rotateY(360deg)}}
+@keyframes bj-spin{to{transform:rotate(360deg)}}
+@keyframes bj-colors{0%{stroke:#c0392b}20%{stroke:#e8b923}40%{stroke:#2e8b57}60%{stroke:#1f3a5f}80%{stroke:#b8a98a}100%{stroke:#c0392b}}
+@keyframes bj-colors-top{0%{border-top-color:#c0392b}20%{border-top-color:#e8b923}40%{border-top-color:#2e8b57}60%{border-top-color:#1f3a5f}80%{border-top-color:#b8a98a}100%{border-top-color:#c0392b}}
+@keyframes bj-draw{0%{stroke-dashoffset:1}55%,88%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:.2}}
+@media (prefers-reduced-motion:reduce){.bj-ring,.bj-ring-arc,.bj-ring-mini,.bj-bowl path,.bj-bowl ellipse{animation:none}.bj-bowl path,.bj-bowl ellipse{stroke-dashoffset:0}}

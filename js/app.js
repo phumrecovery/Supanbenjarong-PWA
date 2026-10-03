@@ -15,6 +15,7 @@ import {renderStocktake} from "./stocktake.js?v=stocktake-v2";
 import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
 import {clearLocalWage,syncLocalWage} from "./wage-local.js?v=wage-local-v2";
 import {clearLocalReport,syncLocalReport} from "./report-local.js?v=report-local-v2";
+import {installLoader,loaderFull} from "./loader.js?v=loader-v1";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -104,6 +105,8 @@ function fillDesktopWindow(){
 fillDesktopWindow();
 
 // Never let a slow IndexedDB delay the first screen by more than a moment.
+installLoader();
+
 function loadSavedPages(owner){return Promise.race([api.loadPersisted(owner).catch(()=>{}),new Promise(resolve=>setTimeout(resolve,400))]);}
 
 function schedulePriorityWarmup(token,flow){
@@ -298,6 +301,9 @@ async function submitPin(){
   document.querySelectorAll("#pinPad button").forEach(button=>{button.disabled=true;});
   const status=document.querySelector("#pinError");
   if(status){status.textContent="กำลังตรวจรหัส…";status.classList.add("is-checking");}
+  // Shared full-screen loader over the PIN pad; the next screen (or the PIN
+  // screen with its error) replaces it.
+  main.querySelector(".login-screen")?.insertAdjacentHTML("beforeend",`<div class="bj-overlay">${loaderFull()}</div>`);
   try{
     const result=await api.login(submittedPin);
     if(requestedFlow!==loginFlowId)return;
@@ -685,7 +691,7 @@ async function initialize(){
   // Never leave a blank canvas while the gateway is slow or unavailable.
   // A first-time user can always start at the PIN screen without waiting for health.
   if(!sessionToken){showLogin();return;}
-  main.innerHTML='<section class="card app-loading"><div class="spinner" aria-hidden="true"></div><p>กำลังเปิดข้อมูลร้าน…</p></section>';
+  main.innerHTML=`<div class="bj-overlay">${loaderFull()}</div>`;
   try{
     const result=await api.bootstrap(sessionToken);
     if(!result.ok||!result.session||!result.session.user)throw new Error("SESSION_EXPIRED");
