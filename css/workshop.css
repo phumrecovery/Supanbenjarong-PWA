@@ -131,3 +131,6 @@
 .pwa-att-fill-notes{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--text-muted)}
 .pwa-att-fill-done{margin:12px 0;padding:10px 12px;border-radius:12px;background:#e8f5e9;color:#2e7d32;font-weight:700}
 .pwa-att-fill-warn{margin:8px 0 0;color:#b3261e;font-weight:700}
+.pwa-att-fill:disabled{border-color:#d6d0ca;background:#f1eeeb;color:#9a918a;cursor:not-allowed}
+.pwa-att-fill:disabled:hover{background:#f1eeeb;color:#9a918a}
+.pwa-att-fill small{display:block;font-size:10px;font-weight:600}
