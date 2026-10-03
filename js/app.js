@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v19";
+import {ApiClient} from "./api.js?v=api-v20";
 import {renderPos} from "./pos.js?v=pos-v26";
 import {renderProduct} from "./product.js?v=product-v2";
 import {renderStock} from "./stock.js?v=stock-v5";
@@ -7,7 +7,7 @@ import {renderPreorder} from "./preorder.js?v=preorder-v20";
 import {renderOutsource} from "./outsource.js?v=outsource-v4";
 import {renderReport} from "./report.js?v=report-v20";
 import {renderSettings} from "./settings.js?v=settings-v12";
-import {renderWorkshop} from "./workshop.js?v=workshop-v45";
+import {renderWorkshop} from "./workshop.js?v=workshop-v46";
 import {renderClaim} from "./claim.js?v=claim-v5";
 import {renderBarcode} from "./barcode.js?v=barcode-v5";
 import {renderReceipt} from "./receipt.js?v=receipt-v2";

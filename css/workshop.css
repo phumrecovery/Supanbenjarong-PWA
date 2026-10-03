@@ -119,3 +119,15 @@
 .pwa-handoff-stock-warn{margin:6px 0 2px;padding:8px 10px;border-radius:10px;background:#fdecea;border:1px solid #f5c2c0;color:#b3261e;font-size:14px;font-weight:600}
 .pwa-handoff-error-dialog h2{color:#b3261e}
 .pwa-handoff-error-message{margin:8px 0;padding:10px 12px;border-radius:12px;background:#fdecea;color:#b3261e;font-weight:700}
+.pwa-att-period td.pwa-att-name span{display:block}
+.pwa-att-fill{display:block;margin-top:4px;padding:3px 8px;border:1px solid var(--primary);border-radius:8px;background:#fff8f1;color:var(--primary-dark);font:700 12px var(--font);cursor:pointer;white-space:nowrap}
+.pwa-att-fill:hover{background:var(--primary);color:#fff}
+.pwa-att-fill-dialog{max-width:440px}
+.pwa-att-fill-summary{display:grid;gap:8px;margin:12px 0}
+.pwa-att-fill-summary>div{padding:10px 12px;border-radius:12px;background:#fff8f1;border:1px solid var(--border)}
+.pwa-att-fill-summary span{display:block;font-size:13px;color:var(--text-muted)}
+.pwa-att-fill-summary b{font-size:17px;color:var(--primary-dark)}
+.pwa-att-fill-summary small{display:block;margin-top:2px;color:var(--text-muted);word-break:break-word}
+.pwa-att-fill-notes{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--text-muted)}
+.pwa-att-fill-done{margin:12px 0;padding:10px 12px;border-radius:12px;background:#e8f5e9;color:#2e7d32;font-weight:700}
+.pwa-att-fill-warn{margin:8px 0 0;color:#b3261e;font-weight:700}

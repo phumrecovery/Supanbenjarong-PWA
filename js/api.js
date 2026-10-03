@@ -179,6 +179,8 @@ export class ApiClient {
   workshopAttendance(session,date){return this.request({action:"workshopAttendance",session,date},30000,{retries:1,retryLogical:true});}
   workshopMonthlyAttendance(session,year,month){return this.request({action:"workshopMonthlyAttendance",session,year,month},45000,{retries:1,retryLogical:true});}
   workshopSaveAttendance(session,data){return this.request({action:"workshopSaveAttendance",session,data},45000);}
+  // Fills only missing days of one pay period, so a retry cannot double-count.
+  workshopSaveAttendancePeriod(session,data){return this.request({action:"workshopSaveAttendancePeriod",session,data},45000,{retries:1});}
   workshopWageSummary(session,start,end){return this.request({action:"workshopWageSummary",session,start,end},60000,{retries:1,retryLogical:true});}
   workshopRecordAdvanceSettlement(session,data){return this.request({action:"workshopRecordAdvanceSettlement",session,data},60000);}
   workshopUpdateClosedWage(session,data){return this.request({action:"workshopUpdateClosedWage",session,data},60000);}
