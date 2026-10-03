@@ -99,6 +99,7 @@ var WageCore=(function(){
 
   // Piece-work and daily-work part of getWageSummary. start/end are Dates
   // already normalised to 00:00:00.000 and 23:59:59.999.
+  var DAILY_STEPS={"เคลือบมุก":1,"ติดสติกเกอร์":1};
   function buildSummary(input,periodStartDate,periodEndDate,employeeSocialMap){
     var result={pieceWork:[],dailyWork:[],monthly:[],advanceWageByWorker:{},
       wagePeriodStatus:{status:"not_saved",hasSaved:false,isChanged:false,savedNetPaid:0,latestNetPaid:0,difference:0,changedWorkerCount:0,changedWorkers:[]}};
@@ -111,6 +112,9 @@ var WageCore=(function(){
         var worker=String(job[1]||"").trim();
         var status=String(job[13]||"").trim();
         if(!worker)continue;
+        // Day-paid worker jobs (เคลือบมุก / ติดสติกเกอร์) carry no piece wage:
+        // the worker is paid from attendance, so keep them out of piece work.
+        if(DAILY_STEPS[String(job[2]||"").trim()]&&!(Number(job[7])>0)&&!(Number(job[8])>0))continue;
         if(!pieceMap[worker]){
           pieceMap[worker]={name:worker,jobs:0,pieces:0,goodPieces:0,damagedPieces:0,completedTotal:0,pendingJobs:0,
             pendingPieces:0,pendingTotal:0,expectedTotal:0,socialSecurityBase:0,completedItems:[]};

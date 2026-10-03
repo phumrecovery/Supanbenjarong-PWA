@@ -5,7 +5,7 @@ const GATEWAY_API_URL=String(globalThis.SUPANBENJARONG_RUNTIME_CONFIG?.gatewayAp
 // Create-style writes deduplicated by GAS (PWA_API_ONCE_ACTIONS_). The same
 // payload keeps one requestId until it succeeds, so a retry after an
 // ambiguous gateway error replays the stored result instead of saving twice.
-const ONCE_ACTIONS=new Set(["workshopSaveJob","workshopSaveAttendance","workshopConfirmFiring","stockSaveMovement","expenseAdd","expensePurchase","preorderQuotationSave","preorderPoSave","productAdd","productDuplicate"]);
+const ONCE_ACTIONS=new Set(["workshopSaveJob","workshopSaveDailyJob","workshopSaveAttendance","workshopConfirmFiring","stockSaveMovement","expenseAdd","expensePurchase","preorderQuotationSave","preorderPoSave","productAdd","productDuplicate"]);
 const ONCE_STORE="suphanbenjarong.pwa.pending-writes";
 function onceHash(payload){
   const text=JSON.stringify({...payload,session:undefined});
@@ -126,7 +126,7 @@ export class ApiClient {
         }
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
-        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","dataVersion","wageSnapshot","reportSnapshot","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
+        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","dataVersion","wageSnapshot","reportSnapshot","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopDailyOptions","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
       }catch(error){
@@ -220,6 +220,8 @@ export class ApiClient {
   receiptCancel(session,billNo,reason){return this.request({action:"receiptCancel",session,billNo,reason},60000);}
   workshopBootstrap(session){return this.warmRead("workshopBootstrap",session,15_000,45000,1);}
   workshopSaveJob(session,data){return this.request({action:"workshopSaveJob",session,data},45000);}
+  workshopSaveDailyJob(session,data){return this.request({action:"workshopSaveDailyJob",session,data},60000);}
+  workshopDailyOptions(session){return this.request({action:"workshopDailyOptions",session},30000,{retries:1,retryLogical:true});}
   workshopAttendance(session,date){return this.request({action:"workshopAttendance",session,date},30000,{retries:1,retryLogical:true});}
   workshopMonthlyAttendance(session,year,month){return this.request({action:"workshopMonthlyAttendance",session,year,month},45000,{retries:1,retryLogical:true});}
   workshopSaveAttendance(session,data){return this.request({action:"workshopSaveAttendance",session,data},45000);}

@@ -134,3 +134,13 @@
 .pwa-att-fill:disabled{border-color:#d6d0ca;background:#f1eeeb;color:#9a918a;cursor:not-allowed}
 .pwa-att-fill:disabled:hover{background:#f1eeeb;color:#9a918a}
 .pwa-att-fill small{display:block;font-size:10px;font-weight:600}
+/* งานช่างรายวัน: third step button, and a full-width row under the three handoff columns */
+.pwa-workshop-step.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pwa-workshop-step.three button{padding:6px 4px;font-size:16px;line-height:1.25}
+@media(max-width:650px){.pwa-workshop-step.three button{font-size:13px}}
+.pwa-handoff-column.daily{grid-column:1/-1;border-left:0;border-top:2px solid #ead6c2;background:#f1f8f4}
+.pwa-handoff-column.daily .pwa-handoff-card{border-color:#9cc9ad;border-left-color:#2e7d57}
+.pwa-handoff-column.daily .pwa-handoff-card header{background:#f6fbf8}
+.pwa-handoff-column.daily .pwa-handoff-metrics div{background:#e9f5ee}
+.pwa-handoff-column.daily .pwa-handoff-column-list{grid-template-columns:repeat(3,minmax(0,1fr));max-height:none}
+@media(max-width:860px){.pwa-handoff-column.daily .pwa-handoff-column-list{grid-template-columns:1fr}}
