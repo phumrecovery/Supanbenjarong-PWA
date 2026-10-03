@@ -17,10 +17,10 @@ function onceRead(){try{return JSON.parse(sessionStorage.getItem(ONCE_STORE)||"{
 function onceWrite(all){try{sessionStorage.setItem(ONCE_STORE,JSON.stringify(all))}catch{}}
 
 // Last successful page data kept on the device (IndexedDB, same store as the
-// local wage/report snapshots) until logout, so Product, Stock, Settings and Receipts paint
+// local wage/report snapshots) until logout, so Product, Stock, Workshop, Preorder, Settings and Receipts paint
 // at once even right after the app is reopened, then refresh from GAS.
 const BOOT_DB="suphan-local-data",BOOT_STORE="snapshots",BOOT_PREFIX="boot:",BOOT_MAX_AGE=7*24*60*60*1000;
-const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap"]);
+const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap","workshopBootstrap","preorderBootstrap"]);
 function bootDb(){
   return new Promise((resolve,reject)=>{
     const request=indexedDB.open(BOOT_DB,1);
