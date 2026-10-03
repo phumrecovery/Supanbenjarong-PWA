@@ -126,7 +126,7 @@ export class ApiClient {
         }
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
-        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","dataVersion","wageSnapshot","reportSnapshot","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopDailyOptions","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl"].includes(payload.action))this.clearWarmCache();
+        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","dataVersion","wageSnapshot","reportSnapshot","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopDailyOptions","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl","settingsWorkerPinStatus","settingsResetWorkerPin"].includes(payload.action))this.clearWarmCache();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
       }catch(error){
@@ -155,6 +155,10 @@ export class ApiClient {
     // Keep worker identity separate from family/staff PIN resolution in GAS.
     return this.request({action:"login",pin,scope:"worker"},45000,{retries:1,retryLogical:true});
   }
+  // Worker personal PIN (43_WorkerPin.gs): the worker is not signed in yet, so
+  // these send their own short-lived token instead of a session.
+  workerPinSet(setupToken,pin){return this.request({action:"workerPinSet",setupToken,pin},60000);}
+  workerLinkLogin(linkToken){return this.request({action:"workerLinkLogin",linkToken},45000,{retries:1});}
   bootstrap(session){
     return this.request({action:"bootstrap",session});
   }
@@ -324,6 +328,8 @@ export class ApiClient {
   settingsStoreLayout(session){return this.request({action:"settingsStoreLayout",session},30000);}
   settingsSaveStoreLayout(session,data){return this.request({action:"settingsSaveStoreLayout",session,data},30000);}
   settingsSaveLocation(session,data){return this.request({action:"settingsSaveLocation",session,data},30000);}
+  settingsResetWorkerPin(session,workerName){return this.request({action:"settingsResetWorkerPin",session,workerName},60000);}
+  settingsWorkerPinStatus(session){return this.request({action:"settingsWorkerPinStatus",session},30000,{retries:1,retryLogical:true});}
   settingsResetDevice(session,workerName){return this.request({action:"settingsResetDevice",session,workerName},30000);}
   settingsClearCache(session){return this.request({action:"settingsClearCache",session},30000);}
   settingsUploadLogo(session,data,fileName){return this.request({action:"settingsUploadLogo",session,data,fileName},60000);}
