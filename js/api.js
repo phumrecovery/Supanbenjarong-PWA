@@ -16,6 +16,26 @@ function onceHash(payload){
 function onceRead(){try{return JSON.parse(sessionStorage.getItem(ONCE_STORE)||"{}")}catch{return {}}}
 function onceWrite(all){try{sessionStorage.setItem(ONCE_STORE,JSON.stringify(all))}catch{}}
 
+// Last successful page data kept on the device (IndexedDB, same store as the
+// local wage/report snapshots) until logout, so Product, Stock, Settings and Receipts paint
+// at once even right after the app is reopened, then refresh from GAS.
+const BOOT_DB="suphan-local-data",BOOT_STORE="snapshots",BOOT_PREFIX="boot:",BOOT_MAX_AGE=7*24*60*60*1000;
+const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap"]);
+function bootDb(){
+  return new Promise((resolve,reject)=>{
+    const request=indexedDB.open(BOOT_DB,1);
+    request.onupgradeneeded=()=>request.result.createObjectStore(BOOT_STORE);
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error);
+  });
+}
+async function bootTx(mode,run){
+  const db=await bootDb();
+  try{return await new Promise((resolve,reject)=>{const tx=db.transaction(BOOT_STORE,mode),out=run(tx.objectStore(BOOT_STORE));tx.oncomplete=()=>resolve(out?.result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+  finally{db.close();}
+}
+const bootRange=()=>IDBKeyRange.bound(BOOT_PREFIX,BOOT_PREFIX+"\uffff");
+
 export class ApiClient {
   constructor(){
     // Short-lived, memory-only master data. Session tokens remain in memory and
@@ -25,11 +45,34 @@ export class ApiClient {
     // Last successful bootstrap per key, kept across write invalidation so a
     // page can paint instantly and then refresh (see lastBootstrap).
     this.lastGood=new Map();
+    // Persisted copies for the signed-in user (see loadPersisted).
+    this.persisted=new Map();
+    this.owner="";
+  }
+  // Called after login/session restore: brings this user's saved page data
+  // into memory so lastBootstrap() can paint before the network answers.
+  async loadPersisted(owner){
+    this.owner=String(owner||"");this.persisted.clear();
+    if(!this.owner||!("indexedDB" in globalThis))return;
+    try{
+      const [keys,values]=await Promise.all([bootTx("readonly",store=>store.getAllKeys(bootRange())),bootTx("readonly",store=>store.getAll(bootRange()))]);
+      (keys||[]).forEach((key,i)=>{const rec=values?.[i];if(rec&&rec.owner===this.owner&&Date.now()-Number(rec.savedAt||0)<BOOT_MAX_AGE&&rec.result?.ok)this.persisted.set(String(key).slice(BOOT_PREFIX.length),rec.result);});
+    }catch{}
+  }
+  persistBoot(action,params,result){
+    if(!PERSIST_ACTIONS.has(action)||!this.owner||!result?.ok||!("indexedDB" in globalThis))return;
+    const id=action+":"+JSON.stringify(params||{});
+    this.persisted.set(id,result);
+    bootTx("readwrite",store=>store.put({owner:this.owner,savedAt:Date.now(),result},BOOT_PREFIX+id)).catch(()=>{});
+  }
+  async clearPersisted(){
+    this.persisted.clear();this.owner="";
+    try{await bootTx("readwrite",store=>store.delete(bootRange()));}catch{}
   }
   // Display-only: the most recent successful bootstrap of any age. Callers
   // must still fetch fresh data before relying on it.
   lastBootstrap(action,session,params={}){
-    return this.lastGood.get(action+":"+session+":"+JSON.stringify(params))||null;
+    return this.lastGood.get(action+":"+session+":"+JSON.stringify(params))||this.persisted.get(action+":"+JSON.stringify(params))||null;
   }
   clearWarmCache(){this.warmEpoch++;this.warmCache.clear();}
   peekWarm(action,session,params={}){
@@ -47,6 +90,7 @@ export class ApiClient {
         if(!result?.ok){if(epoch===this.warmEpoch)this.warmCache.delete(key);return result;}
         if(epoch===this.warmEpoch)this.warmCache.set(key,{value:result,expiresAt:Date.now()+ttlMs});
         this.lastGood.set(key,result);
+        this.persistBoot(action,params,result);
         return result;
       }).catch(error=>{if(epoch===this.warmEpoch)this.warmCache.delete(key);throw error;});
     this.warmCache.set(key,{promise,expiresAt:0});

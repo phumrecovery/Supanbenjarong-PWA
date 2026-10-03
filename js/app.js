@@ -1,6 +1,6 @@
-import {ApiClient} from "./api.js?v=api-v20";
+import {ApiClient} from "./api.js?v=api-v21";
 import {renderPos} from "./pos.js?v=pos-v26";
-import {renderProduct} from "./product.js?v=product-v2";
+import {renderProduct} from "./product.js?v=product-v3";
 import {renderStock} from "./stock.js?v=stock-v5";
 import {renderExpense} from "./expense.js?v=expense-v15";
 import {renderPreorder} from "./preorder.js?v=preorder-v20";
@@ -103,6 +103,9 @@ function fillDesktopWindow(){
 }
 fillDesktopWindow();
 
+// Never let a slow IndexedDB delay the first screen by more than a moment.
+function loadSavedPages(owner){return Promise.race([api.loadPersisted(owner).catch(()=>{}),new Promise(resolve=>setTimeout(resolve,400))]);}
+
 function schedulePriorityWarmup(token,flow){
   if(!token||!hasFamilyAccess()||priorityWarmupToken===token)return;
   priorityWarmupToken=token;
@@ -123,13 +126,14 @@ function schedulePriorityWarmup(token,flow){
       }
     };
     const pos=run([()=>api.posBootstrap(token)]);
-    const stock=()=>run([()=>api.stockBootstrap(token)]);
+    // Priority set by the shop: POS, then Product and Stock, then the rest.
+    // Receipts and stock-take come last. Three lanes at most, as before.
+    const stock=()=>run([()=>api.stockBootstrap(token),()=>api.receiptBootstrap(token),()=>api.stockTake(token,"getStockTakePageData")]);
     const others=()=>Promise.allSettled([
-      // Logout deletes the local Dashboard/wage rows, so fetch them again here
-      // (inside the same two lanes): the first visit after login then opens
-      // from the device at once.
-      run([()=>syncLocalReport(api,token,String(displayUser?.name||"")),()=>api.workshopBootstrap(token),()=>api.workerPortalOwnerQueue(token),()=>api.receiptBootstrap(token),()=>api.stockTake(token,"getStockTakePageData")]),
-      run([()=>api.expenseBootstrap(token),()=>api.preorderBootstrap(token),()=>api.productBootstrap(token,"store"),()=>syncLocalWage(api,token,String(displayUser?.name||"")),()=>api.settingsBootstrap(token)])
+      // Logout deletes the local Dashboard/wage rows, so fetch them again here:
+      // the first visit after login then opens from the device at once.
+      run([()=>api.productBootstrap(token,"store"),()=>api.productBootstrap(token,"whiteware"),()=>syncLocalReport(api,token,String(displayUser?.name||"")),()=>api.workshopBootstrap(token),()=>api.workerPortalOwnerQueue(token)]),
+      run([()=>api.expenseBootstrap(token),()=>api.preorderBootstrap(token),()=>syncLocalWage(api,token,String(displayUser?.name||"")),()=>api.settingsBootstrap(token)])
     ]);
     // If the user entered POS directly, let its catalog load before adding
     // competing background reads. Home has no foreground catalog to protect.
@@ -379,6 +383,7 @@ async function selectUser(user,selectedButton){
       currentSession={level:currentSession?.level||"",user:{name:user.name,role:user.role||""}};
       displayUser={name:user.name,role:user.role||""};
       sessionStorage.setItem(DISPLAY_USER_KEY,JSON.stringify(displayUser));
+      await loadSavedPages(displayUser.name);
       setAuthenticatedHeader();
       sound.success();
       navigate(currentRoute(),{replace:true,animate:true});
@@ -394,6 +399,7 @@ async function selectUser(user,selectedButton){
     // เพี้ยนระหว่าง response chain ของ gateway แม้สิทธิ์จริงยังยืนยันจาก token เดิม
     displayUser={name:user.name,role:user.role||""};
     sessionStorage.setItem(DISPLAY_USER_KEY,JSON.stringify(displayUser));
+    await loadSavedPages(displayUser.name);
     setAuthenticatedHeader();
     sound.success();
     navigate(currentRoute(),{replace:true,animate:true});
@@ -577,7 +583,7 @@ async function returnLimitedPosToLogin(){
   // A sales-only account has no permitted Home route. Its POS back button
   // ends the session instead of silently navigating back to #sales.
   const token=sessionToken;
-  sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();
+  sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();void api.clearPersisted();
   sessionStorage.removeItem(DISPLAY_USER_KEY);
   sessionToken="";
   api.clearWarmCache?.();
@@ -663,7 +669,7 @@ function logoutFromSidebar(){
   // request.  The server-side revoke is still sent immediately in background,
   // so an old token remains unusable once that request reaches the gateway.
   const token=sessionToken;
-  sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();
+  sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();void api.clearPersisted();
   sessionStorage.removeItem(DISPLAY_USER_KEY);
   sessionToken="";
   api.clearWarmCache?.();
@@ -685,8 +691,9 @@ async function initialize(){
     if(!result.ok||!result.session||!result.session.user)throw new Error("SESSION_EXPIRED");
     currentSession=result.session;
     try{displayUser=JSON.parse(sessionStorage.getItem(DISPLAY_USER_KEY)||"null");}catch(error){displayUser=null;}
+    await loadSavedPages(displayUser?.name);
     setAuthenticatedHeader();navigate(currentRoute(),{replace:true,animate:false});schedulePriorityWarmup(sessionToken,loginFlowId);
-  }catch(error){sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
+  }catch(error){sessionStorage.removeItem(SESSION_KEY);void clearLocalWage();void clearLocalReport();void api.clearPersisted();sessionStorage.removeItem(DISPLAY_USER_KEY);sessionToken="";currentSession=null;displayUser=null;showLogin("ไม่พบ session เดิมหรือการเชื่อมต่อหมดอายุ");}
 }
 
 if("serviceWorker" in navigator){
