@@ -35,7 +35,7 @@ function dailyAssign(){
       <label>🛠️ งานที่ทำ<select id="dailyTask">${DAILY_TASKS.map(x=>`<option ${task===x?"selected":""}>${x}</option>`).join("")}</select></label>
       <label>⚪ ของขาวที่ใช้ (หักสต๊อก)<button type="button" data-a="pick" class="pwa-workshop-picker ${q?"selected":""}">${q?`${e(product(q))} · เหลือ ${m(q.balance)}`:"🔍 กดเพื่อค้นหาและเลือกของขาว"}<b aria-hidden="true">›</b></button></label>
       <label>🏺 สินค้าหลังเผา (เข้าสต๊อกหน้าร้าน)<button type="button" data-a="dailyPick" class="pwa-workshop-picker ${d.finishedSku?"selected":""}">${d.finishedSku?(finished?`${e(finished.code)} · ${e(product(finished))}`:e(d.finishedSku)):"🔍 กดเพื่อค้นหาและเลือกสินค้า"}<b aria-hidden="true">›</b></button></label>
-      <div class="pwa-workshop-grid"><label>📦 จำนวนที่ทำ<input id="dailyQty" type="number" inputmode="numeric" min="1" value="${e(d.qty??"")}"></label><label>💔 ชำรุด (ถ้ามี)<input id="dailyDamaged" type="number" inputmode="numeric" min="0" value="${e(d.damaged??0)}"></label></div>
+      <div class="pwa-workshop-grid"><label>📦 จำนวนที่ทำ<input id="dailyQty" type="number" inputmode="numeric" min="1" value="${e(d.qty??"")}"></label><label>⚠️ ชำรุด (ถ้ามี)<input id="dailyDamaged" type="number" inputmode="numeric" min="0" value="${e(d.damaged??0)}"></label></div>
       ${short?`<p class="pwa-handoff-stock-warn">⚠️ ของขาวเหลือ ${m(q.balance)} แต่ใส่จำนวน ${m(d.qty)} — ระบบจะบันทึกไม่ผ่าน</p>`:""}
       <label>📅 วันที่ทำงาน<input id="dailyDate" type="date" value="${e(d.date||today())}" max="${today()}"></label>
       <p class="pwa-workshop-note">งานช่างรายวันไม่มีค่าจ้างรายชิ้น (ค่าแรงคิดจากการลงเวลา) · ระบบตัดของขาวแล้วส่งงานดีเข้าคิวเผาทันที</p>
