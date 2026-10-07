@@ -5,6 +5,12 @@
   <meta name="theme-color" content="#8b4b1f"><title>งานช่างสุพรรณเบญจรงค์</title>
 <link rel="manifest" href="./manifest.webmanifest?v=worker-manifest-v2"><link rel="icon" href="../assets/worker-app-icon.png" type="image/png"><link rel="apple-touch-icon" href="../assets/worker-app-icon.png"><link rel="stylesheet" href="./worker.css"><link rel="stylesheet" href="../css/loader.css?v=loader-v2"><link rel="stylesheet" href="./worker-save-feedback.css?v=save-v1">
 <style>
+  /* Keep the layout at its designed size: ignore the phone's browser text
+     scaling (it made text huge and broke the cards), and shrink the whole
+     page a little on phones whose display-size setting leaves a very narrow screen. */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  @media(max-width:359px){body{zoom:.9}}
+  @media(max-width:330px){body{zoom:.82}}
   /* tokens the shared loader (../css/loader.css) expects from the main app */
   :root{--font:Prompt,Sarabun,system-ui,sans-serif;--primary-dark:#086453;--text-muted:#5f726a;--border:#cfd8d4;--shadow:0 4px 14px #0002}
   .pin input::placeholder{letter-spacing:1px;font-size:17px}.pin input+input{margin-top:10px}
@@ -16,5 +22,5 @@
 </style>
 </head>
 <body><main id="app" aria-live="polite"></main><div id="toast" class="toast" role="status"></div>
-<script src="../js/runtime-config.js"></script><script type="module" src="./worker.js?v=worker-v29"></script>
+<script src="../js/runtime-config.js"></script><script type="module" src="./worker.js?v=worker-v30"></script>
 </body></html>
