@@ -15,7 +15,7 @@
 .bj-loader-text{font:500 14px var(--font);color:var(--text-muted)}
 .bj-loader.full{--bj-size:140px;gap:12px}
 .bj-loader.full .bj-loader-text{font-size:15px}
-.bj-overlay{position:fixed;inset:0;z-index:9990;display:grid;place-items:center;background:rgba(255,248,241,.96)}
+.bj-overlay{position:fixed;inset:0;z-index:9990;display:grid;place-items:center;background:#fff8f1}
 
 /* mini ring: pure CSS so it works inside any button or line of text */
 .bj-ring-mini{display:inline-block;width:1.05em;height:1.05em;margin-right:.4em;vertical-align:-.16em;border-radius:50%;border:.17em solid color-mix(in srgb,currentColor 28%,transparent);border-top-color:#c0392b;animation:bj-spin .9s linear infinite,bj-colors-top 5.5s linear infinite}
