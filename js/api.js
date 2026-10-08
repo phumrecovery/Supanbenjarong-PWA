@@ -110,6 +110,7 @@ export class ApiClient {
     for(let attempt=0;attempt<=retries;attempt++){
       const controller=new AbortController();
       const timeout=setTimeout(()=>controller.abort("REQUEST_TIMEOUT"),timeoutMs);
+      const startedAt=performance.now(); // temporary speed measurement (js/perf.js)
       try{
         const response=await fetch(GATEWAY_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),cache:"no-store",signal:controller.signal});
         if(!response.ok){
@@ -124,9 +125,10 @@ export class ApiClient {
           error.code="INVALID_RESPONSE";
           throw error;
         }
+        ApiClient.onTiming?.({action:payload.action,total:performance.now()-startedAt,server:result?._ms,ok:result?.ok===true,error:result?.ok?"":String(result?.error||"fail"),attempt,size:responseText.length});
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
-        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","dataVersion","wageSnapshot","reportSnapshot","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopDailyOptions","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl","settingsWorkerPinStatus","settingsResetWorkerPin"].includes(payload.action))this.clearWarmCache();
+        if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","dataVersion","wageSnapshot","reportSnapshot","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopDailyOptions","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl","settingsWorkerPinStatus","settingsResetWorkerPin","perfLog"].includes(payload.action))this.clearWarmCache();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
       }catch(error){
@@ -134,6 +136,7 @@ export class ApiClient {
         // without reason" on some Android builds.  Do not expose that
         // browser-internal message to shop staff.
         const timedOut=controller.signal.aborted;
+        ApiClient.onTiming?.({action:payload.action,total:performance.now()-startedAt,ok:false,error:timedOut?"timeout":String(error?.code||error?.message||"error").slice(0,40),attempt});
         const normalized=timedOut?new Error("การเชื่อมต่อใช้เวลานานเกินไป โปรดลองอีกครั้ง"):error;
         if(attempt>=retries)throw normalized;
         await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
@@ -348,3 +351,5 @@ export class ApiClient {
     return payload.result;
   }
 }
+// Set by the main app while the temporary speed measurement runs (js/perf.js).
+ApiClient.onTiming=null;

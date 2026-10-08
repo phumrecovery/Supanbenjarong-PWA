@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v24";
+import {ApiClient} from "./api.js?v=api-v25";
 import {renderPos} from "./pos.js?v=pos-v26";
 import {renderProduct} from "./product.js?v=product-v3";
 import {renderStock} from "./stock.js?v=stock-v5";
@@ -16,6 +16,8 @@ import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
 import {clearLocalWage,syncLocalWage} from "./wage-local.js?v=wage-local-v2";
 import {clearLocalReport,syncLocalReport} from "./report-local.js?v=report-local-v2";
 import {installLoader,loaderFull} from "./loader.js?v=loader-v1";
+// Temporary speed measurement; remove with js/perf.js after the analysis.
+import {perfStart,perfApi,perfPage} from "./perf.js?v=perf-v1";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
@@ -106,6 +108,7 @@ fillDesktopWindow();
 
 // Never let a slow IndexedDB delay the first screen by more than a moment.
 installLoader();
+ApiClient.onTiming=perfApi;perfStart(api,()=>sessionToken);
 
 function loadSavedPages(owner){return Promise.race([api.loadPersisted(owner).catch(()=>{}),new Promise(resolve=>setTimeout(resolve,400))]);}
 
@@ -532,6 +535,7 @@ function render(route,{animate=true,direction}={}){
   cancelHomeExit();
   if(!currentSession||!currentSession.user){showLogin("กรุณาเข้าสู่ระบบก่อนใช้งาน");return;}
   route=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
+  perfPage(route,main);
   route=allowedStartRoute(route);
   const travel=direction||pageDirection(route);activeRoute=route;if(animate)animatePage(travel);
   main._settingsAbort?.abort();
