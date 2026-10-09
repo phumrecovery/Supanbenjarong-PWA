@@ -32,14 +32,17 @@ let deviceInfo=null;
 function device(){
   if(deviceInfo)return deviceInfo;
   const ua=navigator.userAgent||"",shortSide=Math.min(screen.width||0,screen.height||0);
-  const kind=/Android/i.test(ua)?(shortSide>=600&&!/Mobile/i.test(ua)?"Tablet Android":shortSide>=600?"Tablet Android":"มือถือ Android"):/iPad/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1)?"iPad":/iPhone/i.test(ua)?"iPhone":"PC";
+  const kind=/Android/i.test(ua)?(shortSide>=600&&!/Mobile/i.test(ua)?"Tablet Android":shortSide>=600?"Tablet Android":"มือถือ Android"):/iPad/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1)?"iPad":/iPhone/i.test(ua)?"iPhone":
+    // Chrome on an Android tablet asks for the desktop site by default and then
+    // calls itself "X11; Linux" with no "Android": a touch screen gives it away.
+    /Linux/i.test(ua)&&navigator.maxTouchPoints>1?"Tablet Android (โหมดเดสก์ท็อป)":"PC";
   const c=navigator.connection||{};
   const model=(ua.match(/Android [\d.]+; ([^;)]+)/)||ua.match(/\(([^;)]+)/)||[])[1]||"";
   const chrome=(ua.match(/(?:Chrome|CriOS|Firefox|Version)\/(\d+)/)||[])[1]||"";
   const standalone=window.matchMedia?.("(display-mode: standalone)").matches?"ติดตั้ง":"เบราว์เซอร์";
   const version=(document.querySelector('script[src*="app.js"],script[src*="worker.js"]')?.src.match(/v=([\w-]+)/)||[])[1]||"";
   deviceInfo={id:deviceId(),kind,version,
-    detail:[model.trim(),`browser ${chrome}`,`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,`RAM ${navigator.deviceMemory||"?"}GB`,`CPU ${navigator.hardwareConcurrency||"?"} cores`,`cpuTest ${cpuScore()}ms`,standalone].join(" · ")};
+    detail:[model.trim(),`browser ${chrome}`,`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,`RAM ${navigator.deviceMemory||"?"}GB`,`CPU ${navigator.hardwareConcurrency||"?"} cores`,`touch ${navigator.maxTouchPoints||0}`,`viewport ${window.innerWidth}x${window.innerHeight}`,`cpuTest ${cpuScore()}ms`,standalone].join(" · ")};
   return deviceInfo;
 }
 function network(){
