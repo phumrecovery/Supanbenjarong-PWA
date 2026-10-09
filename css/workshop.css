@@ -144,3 +144,28 @@
 .pwa-handoff-column.daily .pwa-handoff-metrics div{background:#e9f5ee}
 .pwa-handoff-column.daily .pwa-handoff-column-list{grid-template-columns:repeat(3,minmax(0,1fr));max-height:none}
 @media(max-width:860px){.pwa-handoff-column.daily .pwa-handoff-column-list{grid-template-columns:1fr}}
+/* ประวัติงาน */
+.pwa-history-wrap{max-width:1180px}
+.pwa-history-kinds{display:flex;gap:6px;overflow-x:auto;margin:4px 0 10px;padding-bottom:4px}
+.pwa-history-kinds button{flex:0 0 auto;min-height:40px;padding:6px 14px;border:2px solid var(--border);border-radius:999px;background:#fff;color:var(--text-main);font:700 14px var(--font);cursor:pointer;white-space:nowrap}
+.pwa-history-kinds button.active{border-color:var(--primary);background:var(--primary);color:#fff}
+.pwa-history-filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.pwa-history-filters label{display:grid;gap:4px;font-weight:700;color:var(--primary-dark)}
+.pwa-history-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:6px}
+.pwa-history-summary div{padding:9px 6px;border:1px solid #ead6c2;border-radius:11px;background:#fffaf1;text-align:center}
+.pwa-history-summary span{display:block;font-size:12px;color:var(--text-sub)}
+.pwa-history-summary b{display:block;margin-top:2px;color:var(--primary-dark);font-size:17px}
+.pwa-history-day{margin:16px 0 8px;color:var(--primary-dark);font:700 15px var(--font)}
+.pwa-history-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pwa-history-card{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center;padding:10px;border:1px solid #ead6c2;border-left:5px solid #c48b4d;border-radius:12px;background:#fff}
+.pwa-history-card.color{border-left-color:#79419d}.pwa-history-card.gold{border-left-color:#a83d4b}.pwa-history-card.daily{border-left-color:#2e7d57}.pwa-history-card.fire{border-left-color:#d9772b;background:#fffaf5}
+.pwa-history-photo{display:block;width:96px;height:96px;padding:0;border:2px solid #ead6c2;border-radius:10px;background:#fff;overflow:hidden;cursor:zoom-in}
+.pwa-history-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.pwa-history-photo.empty{display:grid;place-items:center;cursor:default;color:var(--text-sub);font-size:12px;background:#faf6f0}
+.pwa-history-main{display:grid;gap:3px;min-width:0}
+.pwa-history-main strong{font-size:16px;color:var(--text-main);overflow-wrap:anywhere}
+.pwa-history-main span{font-size:13px;color:var(--text-sub)}
+.pwa-history-figures{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:3px}
+.pwa-history-figures b{font-size:14px;color:var(--primary-dark)}
+.pwa-history-figures em{padding:2px 8px;border-radius:999px;background:#f3ece2;color:var(--text-sub);font:600 12px var(--font);font-style:normal}
+@media(max-width:760px){.pwa-history-list{grid-template-columns:1fr}.pwa-history-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.pwa-history-card{grid-template-columns:80px minmax(0,1fr)}.pwa-history-photo{width:80px;height:80px}}
