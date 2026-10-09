@@ -20,7 +20,9 @@
   @keyframes update-pulse{50%{transform:scale(1.03);box-shadow:0 0 0 9px #ffc93c55}}
   body.has-update .page{padding-bottom:270px}
   /* job the owner sent back for correction */
-  .card.job.returned{border:2px solid #c62828;background:#fff8f7}
+  .card.job.returned{border:3px solid #e02020;background:#fff8f7;box-shadow:0 0 0 4px #e0202033,0 0 22px 6px #e0202099;animation:returned-glow 1.6s ease-in-out infinite}
+  @keyframes returned-glow{50%{box-shadow:0 0 0 6px #e0202055,0 0 34px 12px #e02020cc}}
+  @media(prefers-reduced-motion:reduce){.card.job.returned{animation:none}}
   .return-alert{display:grid;gap:6px;margin-bottom:12px;padding:12px;border-radius:12px;background:#c62828;color:#fff}
   .return-alert b{font-size:18px;line-height:1.35}.return-alert span{padding:9px 11px;border-radius:9px;background:#fff;color:#8e1b1b;font-size:17px;font-weight:700;line-height:1.45;overflow-wrap:anywhere}.return-alert small{font-size:13px;line-height:1.45}
   .badge.fix{background:#c62828;color:#fff;font-weight:800}
@@ -37,5 +39,5 @@
 </style>
 </head>
 <body><main id="app" aria-live="polite"></main><div id="toast" class="toast" role="status"></div>
-<script src="../js/runtime-config.js"></script><script type="module" src="./worker.js?v=worker-v33"></script>
+<script src="../js/runtime-config.js"></script><script type="module" src="./worker.js?v=worker-v34"></script>
 </body></html>
