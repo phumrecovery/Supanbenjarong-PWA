@@ -118,6 +118,7 @@ export class ApiClient {
           error.code=`HTTP_${response.status}`;
           throw error;
         }
+        const headersAt=performance.now();
         const responseText=await response.text();
         try{result=JSON.parse(responseText);}
         catch(parseError){
@@ -125,7 +126,7 @@ export class ApiClient {
           error.code="INVALID_RESPONSE";
           throw error;
         }
-        ApiClient.onTiming?.({action:payload.action,total:performance.now()-startedAt,server:result?._ms,ok:result?.ok===true,error:result?.ok?"":String(result?.error||"fail"),attempt,size:responseText.length});
+        ApiClient.onTiming?.({action:payload.action,total:performance.now()-startedAt,wait:headersAt-startedAt,receive:performance.now()-headersAt,server:result?._ms,ok:result?.ok===true,error:result?.ok?"":String(result?.error||"fail"),attempt,size:responseText.length});
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
         if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","dataVersion","wageSnapshot","reportSnapshot","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopDailyOptions","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl","settingsWorkerPinStatus","settingsResetWorkerPin","perfLog"].includes(payload.action))this.clearWarmCache();

@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v25";
+import {ApiClient} from "./api.js?v=api-v26";
 import {renderPos} from "./pos.js?v=pos-v26";
 import {renderProduct} from "./product.js?v=product-v3";
 import {renderStock} from "./stock.js?v=stock-v5";
@@ -17,7 +17,7 @@ import {clearLocalWage,syncLocalWage} from "./wage-local.js?v=wage-local-v2";
 import {clearLocalReport,syncLocalReport} from "./report-local.js?v=report-local-v2";
 import {installLoader,loaderFull} from "./loader.js?v=loader-v1";
 // Temporary speed measurement; remove with js/perf.js after the analysis.
-import {perfStart,perfApi,perfPage} from "./perf.js?v=perf-v1";
+import {perfStart,perfApi,perfPage} from "./perf.js?v=perf-v2";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");

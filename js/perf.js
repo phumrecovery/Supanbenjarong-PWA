@@ -53,19 +53,44 @@ function push(row){
 }
 
 // Called by ApiClient for every attempt of every request.
-export function perfApi({action,total,server,ok,error,attempt,size}){
+// wait = until the reply starts arriving; receive = downloading the body and
+// turning it into data on this device (large on a slow device or big reply).
+export function perfApi({action,total,server,ok,error,attempt,size,wait,receive}){
   if(action==="perfLog")return;
   const s=Number.isFinite(Number(server))?round(server):"";
-  push([now(),"api",String(action||""),round(total),s,s===""?"":Math.max(0,round(total)-s),ok?"ok":String(error||"fail"),Number(attempt)||0,size?Math.round(size/102.4)/10:"",network()]);
+  push([now(),"api",String(action||""),round(total),s,s===""?"":Math.max(0,round(total)-s),ok?"ok":String(error||"fail"),Number(attempt)||0,size?Math.round(size/102.4)/10:"",network(),wait===undefined?"":round(wait),receive===undefined?"":round(receive)]);
 }
+
+// Baseline of the connection itself, with no Google involved:
+//   net/static  = a tiny file from the app's own host (GitHub Pages)
+//   net/gateway = the Cloudflare gateway answering by itself
+// API total − server − gateway baseline ≈ time spent on Google's side.
+async function timeFetch(url,options){
+  const t0=performance.now();
+  try{await fetch(url,{cache:"no-store",...options});return [round(performance.now()-t0),"ok"];}
+  catch{return [round(performance.now()-t0),"fail"];}
+}
+async function baseline(){
+  if(!perfOn()||document.visibilityState!=="visible")return;
+  const [staticMs,staticOk]=await timeFetch(`./manifest.webmanifest?ping=${Date.now()}`);
+  push([now(),"net","static",staticMs,"","",staticOk,0,"",network()]);
+  const gateway=String(globalThis.SUPANBENJARONG_RUNTIME_CONFIG?.gatewayApiUrl||"");
+  if(gateway){
+    const [gatewayMs,gatewayOk]=await timeFetch(gateway.replace(new RegExp("/api$"),"/ping")+`?t=${Date.now()}`,{mode:"no-cors"});
+    push([now(),"net","gateway",gatewayMs,"","",gatewayOk,0,"",network()]);
+  }
+}
+// Main-thread stalls of 50 ms or more: taps and scrolling feel stuck during these.
+let longCount=0,longTotal=0;
+try{new PerformanceObserver(list=>{for(const e of list.getEntries()){longCount++;longTotal+=e.duration;}}).observe({entryTypes:["longtask"]});}catch{}
 
 // Called on every navigation. "shown" = content visible (maybe from the
 // device); "fresh" = the background update finished as well.
 export function perfPage(route,main){
   if(!perfOn()||!main)return;
-  const token=++pageToken,t0=performance.now();
+  const token=++pageToken,t0=performance.now(),long0=longCount,longMs0=longTotal;
   let shown=0,sawRefresh=false,quietSince=0;
-  const finish=(note)=>{clearInterval(poll);push([now(),"page",String(route),round(shown||performance.now()-t0),"",round(performance.now()-t0),note,0,"",`${sawRefresh?"อัปเดตเบื้องหลัง":"ไม่มีอัปเดตเบื้องหลัง"} · ${network()}`]);};
+  const finish=(note)=>{clearInterval(poll);push([now(),"page",String(route),round(shown||performance.now()-t0),"",round(performance.now()-t0),note,0,"",`${sawRefresh?"อัปเดตเบื้องหลัง":"ไม่มีอัปเดตเบื้องหลัง"} · จอค้าง ${longCount-long0} ครั้ง รวม ${round(longTotal-longMs0)}ms · ${network()}`]);};
   const poll=setInterval(()=>{
     const elapsed=performance.now()-t0;
     if(token!==pageToken)return finish(shown?"ออกก่อนอัปเดตเสร็จ":"ออกก่อนแสดงผล");
@@ -100,5 +125,6 @@ export function perfStart(api,session){
   sender={api,session};
   device();
   timer=setInterval(()=>{if(!perfOn()){clearInterval(timer);return;}void flush();},FLUSH_MS);
+  setTimeout(()=>void baseline(),4000);setInterval(()=>void baseline(),5*60000);
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")void flush();});
 }
