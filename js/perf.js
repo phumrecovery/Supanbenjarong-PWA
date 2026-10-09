@@ -37,7 +37,7 @@ function device(){
   const model=(ua.match(/Android [\d.]+; ([^;)]+)/)||ua.match(/\(([^;)]+)/)||[])[1]||"";
   const chrome=(ua.match(/(?:Chrome|CriOS|Firefox|Version)\/(\d+)/)||[])[1]||"";
   const standalone=window.matchMedia?.("(display-mode: standalone)").matches?"ติดตั้ง":"เบราว์เซอร์";
-  const version=(document.querySelector('script[src*="app.js"]')?.src.match(/v=([\w-]+)/)||[])[1]||"";
+  const version=(document.querySelector('script[src*="app.js"],script[src*="worker.js"]')?.src.match(/v=([\w-]+)/)||[])[1]||"";
   deviceInfo={id:deviceId(),kind,version,
     detail:[model.trim(),`browser ${chrome}`,`${screen.width}x${screen.height}@${window.devicePixelRatio||1}`,`RAM ${navigator.deviceMemory||"?"}GB`,`CPU ${navigator.hardwareConcurrency||"?"} cores`,`cpuTest ${cpuScore()}ms`,standalone].join(" · ")};
   return deviceInfo;
