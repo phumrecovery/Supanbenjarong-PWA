@@ -5,7 +5,7 @@ const GATEWAY_API_URL=String(globalThis.SUPANBENJARONG_RUNTIME_CONFIG?.gatewayAp
 // Create-style writes deduplicated by GAS (PWA_API_ONCE_ACTIONS_). The same
 // payload keeps one requestId until it succeeds, so a retry after an
 // ambiguous gateway error replays the stored result instead of saving twice.
-const ONCE_ACTIONS=new Set(["workshopSaveJob","workshopSaveDailyJob","workshopSaveAttendance","workshopConfirmFiring","stockSaveMovement","expenseAdd","expensePurchase","preorderQuotationSave","preorderPoSave","productAdd","productDuplicate"]);
+const ONCE_ACTIONS=new Set(["workshopSaveJob","workshopSaveDailyJob","workshopSaveAttendance","workshopConfirmFiring","stockSaveMovement","expenseAdd","expenseAddMany","expensePurchase","preorderQuotationSave","preorderPoSave","productAdd","productDuplicate"]);
 const ONCE_STORE="suphanbenjarong.pwa.pending-writes";
 function onceHash(payload){
   const text=JSON.stringify({...payload,session:undefined});
@@ -274,6 +274,7 @@ export class ApiClient {
   expenseTransactions(session){return this.request({action:"expenseTransactions",session},45000,{retries:1,retryLogical:true});}
   expenseSupport(session){return this.request({action:"expenseSupport",session});}
   expenseAdd(session,expense){return this.request({action:"expenseAdd",session,expense});}
+  expenseAddMany(session,expenses){return this.request({action:"expenseAddMany",session,expenses},60000);}
   async confirmExpenseEdit(kind,session,row,expected,write){
     try{return await write();}
     catch(error){

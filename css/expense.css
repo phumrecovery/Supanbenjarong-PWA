@@ -10,3 +10,13 @@
 .expense-recent-words{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px}
 .expense-recent-words span{color:var(--text-sub);font:700 13px var(--font)}
 .expense-recent-words button{min-height:34px;padding:4px 12px;border:1px solid var(--border);border-radius:999px;background:#fff;color:var(--text-main);font:600 14px var(--font);cursor:pointer}
+
+/* several material lines in one save */
+.expense-cart-add{width:100%;min-height:46px;margin-top:4px;border:2px dashed var(--primary);border-radius:12px;background:#fff;color:var(--primary-dark);font:700 15px var(--font);cursor:pointer}
+.expense-cart{display:grid;gap:6px;margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:12px;background:#fff}
+.expense-cart-title{color:var(--primary-dark);font-size:14px}
+.expense-cart article{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-light,#f1e9dc)}
+.expense-cart article div{min-width:0}.expense-cart article div b{display:block;font-size:15px;overflow-wrap:anywhere}.expense-cart article small{color:var(--text-sub);font-size:12.5px}
+.expense-cart article>button{width:34px;height:34px;border:1.5px solid #efc3be;border-radius:10px;background:#fbeceb;color:#b42318;font:700 15px var(--font);cursor:pointer}
+.expense-cart-total{display:flex;justify-content:space-between;padding-top:4px;font-size:16px}.expense-cart-total b{color:var(--primary-dark)}
+.expense-cart-hint{color:var(--text-sub);font-size:12.5px;line-height:1.5}
