@@ -1138,6 +1138,7 @@ function escapeHtml_(value){
 }
 
 function toastStockTake(message){
+  if(window.pwaIsError&&window.pwaIsError(message)){window.pwaShowError(message);return;}
   var element=byId("stockTakeToast");
   element.textContent=message;
   element.classList.add("show");

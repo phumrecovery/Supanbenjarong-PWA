@@ -1,9 +1,9 @@
 import {ApiClient} from "./api.js?v=api-v27";
 import {renderPos} from "./pos.js?v=pos-v27";
-import {renderProduct} from "./product.js?v=product-v3";
+import {renderProduct} from "./product.js?v=product-v4";
 import {renderStock} from "./stock.js?v=stock-v6";
 import {renderExpense} from "./expense.js?v=expense-v16";
-import {renderPreorder} from "./preorder.js?v=preorder-v21";
+import {renderPreorder} from "./preorder.js?v=preorder-v22";
 import {renderOutsource} from "./outsource.js?v=outsource-v5";
 import {renderReport} from "./report.js?v=report-v20";
 import {renderSettings} from "./settings.js?v=settings-v14";
@@ -11,7 +11,7 @@ import {renderWorkshop} from "./workshop.js?v=workshop-v51";
 import {renderClaim} from "./claim.js?v=claim-v5";
 import {renderBarcode} from "./barcode.js?v=barcode-v5";
 import {renderReceipt} from "./receipt.js?v=receipt-v3";
-import {renderStocktake} from "./stocktake.js?v=stocktake-v2";
+import {renderStocktake} from "./stocktake.js?v=stocktake-v3";
 import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
 import {clearLocalWage,syncLocalWage} from "./wage-local.js?v=wage-local-v2";
 import {clearLocalReport,syncLocalReport} from "./report-local.js?v=report-local-v2";
@@ -226,7 +226,12 @@ function animatePage(direction){
   },{once:true});
 }
 function setShell(visible){appHeader.hidden=!visible;appHeader.style.display=visible?"":"none";}
-function showToast(message){toast.textContent=message;toast.classList.add("show");try{sound.notify();}catch(error){}clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
+// Errors must be read: they open a dialog with an acknowledge button instead of a
+// toast that disappears. Background refresh notices stay as toasts.
+function isErrorMessage(message){const text=String(message||"").trim();if(/^(อัปเดต|แสดงโครง)/.test(text))return false;return text.startsWith("❌")||/ไม่สำเร็จ|ไม่พอ/.test(text);}
+function showErrorDialog(message){const text=String(message||"").trim().replace(/^❌\s*/,"")||"ทำรายการไม่สำเร็จ";document.querySelector(".pwa-error-dialog")?.remove();const box=document.createElement("div");box.className="pwa-error-dialog";box.setAttribute("role","alertdialog");box.setAttribute("aria-modal","true");box.innerHTML=`<section><h2>❌ ทำรายการไม่สำเร็จ</h2><p></p><button type="button">รับทราบ</button></section>`;box.querySelector("p").textContent=text;box.querySelector("button").addEventListener("click",()=>box.remove());document.body.append(box);box.querySelector("button").focus();try{sound.notify();}catch(error){}}
+window.pwaIsError=isErrorMessage;window.pwaShowError=showErrorDialog;
+function showToast(message){if(isErrorMessage(message))return showErrorDialog(message);toast.textContent=message;toast.classList.add("show");try{sound.notify();}catch(error){}clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
 function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;sidebarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};sidebarLogo.onerror=()=>{sidebarLogo.src="./assets/main-app-icon.png?v=icon-v2";};}
 
 function openSidebar(){sidebar.classList.add("open");sidebarOverlay.classList.add("show");}
