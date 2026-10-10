@@ -1,5 +1,5 @@
 import {ApiClient} from "./api.js?v=api-v27";
-import {renderPos} from "./pos.js?v=pos-v26";
+import {renderPos} from "./pos.js?v=pos-v27";
 import {renderProduct} from "./product.js?v=product-v3";
 import {renderStock} from "./stock.js?v=stock-v6";
 import {renderExpense} from "./expense.js?v=expense-v16";
@@ -10,7 +10,7 @@ import {renderSettings} from "./settings.js?v=settings-v14";
 import {renderWorkshop} from "./workshop.js?v=workshop-v51";
 import {renderClaim} from "./claim.js?v=claim-v5";
 import {renderBarcode} from "./barcode.js?v=barcode-v5";
-import {renderReceipt} from "./receipt.js?v=receipt-v2";
+import {renderReceipt} from "./receipt.js?v=receipt-v3";
 import {renderStocktake} from "./stocktake.js?v=stocktake-v2";
 import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
 import {clearLocalWage,syncLocalWage} from "./wage-local.js?v=wage-local-v2";
