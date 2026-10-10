@@ -710,12 +710,22 @@ if("serviceWorker" in navigator){
   const hadController=!!navigator.serviceWorker.controller;
   const showUpdateNotice=()=>{
     if(document.querySelector("#pwaUpdateNotice"))return;
-    const notice=document.createElement("button");
+    // Nobody is signed in: nothing can be lost, so update silently (the bar
+    // would cover the PIN pad on a phone). At most once a minute, never a loop.
+    if(!sessionToken){
+      try{
+        const last=Number(sessionStorage.getItem("suphan.pwa.auto-update")||0);
+        if(Date.now()-last>60000){sessionStorage.setItem("suphan.pwa.auto-update",String(Date.now()));location.reload();return;}
+      }catch(error){}
+    }
+    // Same big bar as the worker app: nobody should miss a new version.
+    const notice=document.createElement("section");
     notice.id="pwaUpdateNotice";
-    notice.type="button";
     notice.className="pwa-update-notice";
-    notice.textContent="✨ มีเวอร์ชันใหม่ · แตะเพื่ออัปเดต";
-    notice.addEventListener("click",()=>location.reload());
+    notice.setAttribute("role","alert");
+    notice.innerHTML=`<b>🔔 แอปมีเวอร์ชันใหม่</b><span>กรุณากดปุ่มสีเหลืองด้านล่างนี้เพื่ออัปเดต ใช้เวลาไม่กี่วินาที</span><button type="button">🔄 กดที่นี่เพื่ออัปเดตแอป</button><small>ถ้ากรอกข้อมูลค้างอยู่ ให้กดบันทึกให้เสร็จก่อน แล้วค่อยกดอัปเดต</small>`;
+    notice.querySelector("button").addEventListener("click",event=>{event.currentTarget.disabled=true;event.currentTarget.textContent="⏳ รอสักครู่...";location.reload();});
+    document.body.classList.add("pwa-has-update");
     document.body.appendChild(notice);
   };
   if(hadController)navigator.serviceWorker.addEventListener("controllerchange",showUpdateNotice);
