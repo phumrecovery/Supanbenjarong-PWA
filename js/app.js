@@ -510,9 +510,14 @@ let filterWarning=[];
 function filterWarningMarkup(){return filterWarning.length?`<section class="home-filter-warning" role="alert"><b>⚠️ มีการเปิด filter ค้างไว้ในชีต</b><span>แท็บ ${escapeHtml(filterWarning.join(", "))} — ระบบอาจบันทึกข้อมูลลงแท็บนี้ไม่สำเร็จ กรุณาปิด filter แล้วใช้ “Filter view” (ข้อมูล › สร้าง Filter view) แทน</span></section>`:"";}
 function checkSheetFilters(token){if(!token||!hasFamilyAccess())return;api.sheetFilterCheck(token).then(r=>{if(!r?.ok||token!==sessionToken)return;filterWarning=r.result?.filtered||[];const old=main.querySelector(".home-filter-warning");if(old)old.remove();if(activeRoute==="home"&&filterWarning.length)main.querySelector(".home-hero")?.insertAdjacentHTML("afterend",filterWarningMarkup());}).catch(()=>{});}
 
+// One request at a time: Home can be drawn many times in a burst (measured:
+// 80 draws in under a second), and each used to start its own request.
+let homeLoadingToken="";
 async function loadHomeData(){
   const requestedToken=sessionToken;
   const requestedFlow=loginFlowId;
+  if(homeLoadingToken&&homeLoadingToken===requestedToken)return;
+  homeLoadingToken=requestedToken;
   try{
     const data=await api.homeBootstrap(requestedToken);
     if(!data.ok)throw new Error(data.error);
@@ -528,6 +533,7 @@ async function loadHomeData(){
     // Uncached, the scan takes ~13s of GAS time; start after the login warm-up.
     setTimeout(()=>checkSheetFilters(requestedToken),25000);
   }catch(error){if(requestedFlow===loginFlowId&&activeRoute==="home"&&main.dataset.route==="home")showToast("แสดงโครงหน้าแรกแล้ว กำลังเชื่อมข้อมูลล่าสุด");}
+  finally{if(homeLoadingToken===requestedToken)homeLoadingToken="";}
 }
 
 function renderPlaceholder(route){const [title,body]=PAGES[route]||["กำลังพัฒนา",""];main.innerHTML=`<section class="card"><h1>${title}</h1><p>${body}</p><p class="hint">ระบบเดิมบน GAS ยังใช้งานได้ตามปกติระหว่างย้ายโมดูล</p></section>`;}
