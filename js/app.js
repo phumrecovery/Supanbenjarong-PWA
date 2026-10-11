@@ -1,5 +1,5 @@
 import {ApiClient} from "./api.js?v=api-v28";
-import {renderPos} from "./pos.js?v=pos-v28";
+import {renderPos} from "./pos.js?v=pos-v29";
 import {renderProduct} from "./product.js?v=product-v4";
 import {renderStock} from "./stock.js?v=stock-v6";
 import {renderExpense} from "./expense.js?v=expense-v17";

@@ -74,6 +74,8 @@ function draw(root){
   // The cart sheet is rebuilt on every draw: remember how far it was scrolled
   // (choosing a payment or pressing save used to jump it back to the top).
   const cartScroll=floatingLayer?[...floatingLayer.querySelectorAll("*")].filter(el=>el.scrollTop>0&&el.classList.length).map(el=>[el.classList[0],el.scrollTop]):[];
+  // An already open sheet must not replay its slide-in animation on every tap.
+  const cartWasOpen=!!floatingLayer?.querySelector(".mobile-cart-overlay");
   if(floatingLayer)floatingLayer.replaceChildren();
   if(cartPieces&&!state.mobileCartOpen&&floatingLayer){
     floatingLayer.innerHTML=`<button class="cart-floating" type="button">🛒 ฿${money(totals().net)} <span class="cart-count">${cartPieces} ชิ้น</span></button>`;
@@ -83,7 +85,7 @@ function draw(root){
   // the animated POS page lets a transformed ancestor place it after a long
   // product list, where it can be present but outside the visible viewport.
   if(state.mobileCartOpen&&floatingLayer){
-    floatingLayer.innerHTML=mobileCartMarkup();
+    floatingLayer.innerHTML=mobileCartMarkup(cartWasOpen);
     bindFloatingCart(floatingLayer);
     cartScroll.forEach(([name,top])=>{const el=floatingLayer.querySelector("."+CSS.escape(name));if(el)el.scrollTop=top;});
   }
@@ -99,7 +101,7 @@ function draw(root){
 }
 
 function backdatePicker(){return `<div class="legacy-pos-modal"><section><h2>🕘 บันทึกยอดขายย้อนหลัง</h2><label>วันที่ขายจริง<input type="date" data-backdate-input value="${escAttr(state.backdateValue)}"></label><p>ใช้สำหรับยอดขายย้อนหลังเท่านั้น</p><div><button type="button" data-action="cancel-backdate">ยกเลิก</button><button type="button" data-action="apply-backdate">ตกลง</button></div></section></div>`;}
-function mobileCartMarkup(){return `<div class="mobile-cart-overlay"><section class="mobile-cart-sheet"><header><strong>🛒 ตะกร้าสินค้า</strong><button type="button" data-action="close-mobile-cart" aria-label="ปิดตะกร้า">×</button></header><div class="cart-step ${state.animation}">${cartMarkup()}</div></section></div>`;}
+function mobileCartMarkup(steady){return `<div class="mobile-cart-overlay${steady?" steady":""}"><section class="mobile-cart-sheet"><header><strong>🛒 ตะกร้าสินค้า</strong><button type="button" data-action="close-mobile-cart" aria-label="ปิดตะกร้า">×</button></header><div class="cart-step ${state.animation}">${cartMarkup()}</div></section></div>`;}
 
 function bindFloatingCart(layer){
   if(layer.dataset.posCartBound)return;
