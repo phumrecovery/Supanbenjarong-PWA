@@ -71,6 +71,9 @@ function draw(root){
   // Keep the mobile cart control outside the animated/scrolled POS page.
   // This makes it truly viewport-pinned on mobile regardless of list length.
   const floatingLayer=document.querySelector("#floatingLayer");
+  // The cart sheet is rebuilt on every draw: remember how far it was scrolled
+  // (choosing a payment or pressing save used to jump it back to the top).
+  const cartScroll=floatingLayer?[...floatingLayer.querySelectorAll("*")].filter(el=>el.scrollTop>0&&el.classList.length).map(el=>[el.classList[0],el.scrollTop]):[];
   if(floatingLayer)floatingLayer.replaceChildren();
   if(cartPieces&&!state.mobileCartOpen&&floatingLayer){
     floatingLayer.innerHTML=`<button class="cart-floating" type="button">🛒 ฿${money(totals().net)} <span class="cart-count">${cartPieces} ชิ้น</span></button>`;
@@ -82,6 +85,7 @@ function draw(root){
   if(state.mobileCartOpen&&floatingLayer){
     floatingLayer.innerHTML=mobileCartMarkup();
     bindFloatingCart(floatingLayer);
+    cartScroll.forEach(([name,top])=>{const el=floatingLayer.querySelector("."+CSS.escape(name));if(el)el.scrollTop=top;});
   }
   if(state.submitError)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",errorMarkup(state.submitError));
   if(state.successOpen)root.querySelector(".legacy-pos-page")?.insertAdjacentHTML("beforeend",successMarkup());
