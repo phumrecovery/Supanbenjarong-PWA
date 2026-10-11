@@ -59,6 +59,12 @@ function draw(root){
   const channels=(data.channels&&data.channels.length?data.channels:DEFAULT_CHANNELS);
   if(!channels.includes(state.channel))state.channel=channels[0]||"หน้าร้าน";
   const products=filteredProducts(data.products||[]);
+  // The whole page is rebuilt on every tap. Remember where the user had scrolled
+  // (page, product list, category bar, desktop cart) and put it back afterwards;
+  // only a new category or search starts the product list from the top again.
+  const listKey=`${state.category||""}|${state.query||""}`,sameList=state.drawnListKey===listKey;
+  state.drawnListKey=listKey;
+  const pageScroll=window.scrollY,keptScroll=[".legacy-product-grid",".legacy-pos-cart",".category-bar"].map(selector=>{const el=root.querySelector(selector);return el?[selector,el.scrollTop,el.scrollLeft]:null;}).filter(Boolean);
   root.innerHTML=`<section class="legacy-pos-page ${family?"pos-family-tools":""}">
     <header class="legacy-pos-topbar"><div class="legacy-pos-heading"><button class="legacy-back-btn" type="button" data-action="back">← กลับ</button><h1>🧾 ขายของ</h1></div><div class="legacy-pos-actions"><select data-channel aria-label="ช่องทางการขาย">${channels.map(value=>`<option value="${escAttr(value)}" ${state.channel===value?"selected":""}>${esc(value)}</option>`).join("")}</select>${family?`<button class="legacy-lock-btn ${state.unlockStock?"active":""}" type="button" data-action="unlock">🔓 ${state.unlockStock?"ปิดปลดล็อก":"ปลดล็อกสต๊อก"}</button><button class="legacy-history-btn ${state.backdate?"active":""}" type="button" data-action="backdate">🕘 ย้อนหลัง</button>`:""}</div></header>
     ${state.unlockStock?'<div class="stock-unlock-banner show">🔓 เปิดขายสินค้าที่สต๊อกไม่พอ ระบบจะปรับเฉพาะจำนวนที่ขาดให้อัตโนมัติก่อนออกบิล</div>':""}
@@ -67,6 +73,8 @@ function draw(root){
     ${state.showBackdatePicker?backdatePicker() : ""}
     <div class="legacy-pos-content"><div class="legacy-pos-layout"><section class="legacy-pos-products"><div class="category-tools">${family?`<button type="button" class="${state.categoryOrderMode?"active":""}" data-action="category-order" ${state.categorySaving?"disabled":""}>${state.categorySaving?"⏳ กำลังบันทึก...":state.categoryOrderMode?"✅ เสร็จสิ้น":"⚙️ จัดเรียงหมวด"}</button>`:""}</div>${state.categoryOrderMode?'<div class="category-order-hint show">กดหมวดค้างประมาณ 1 วินาที แล้วลากซ้ายหรือขวา · กดเสร็จสิ้นเพื่อบันทึก</div>':""}<div class="category-bar ${state.categoryOrderMode?"order-mode":""}" role="tablist">${categoryButtons(data.categories||[])}</div><label class="legacy-search"><span>🔍</span><input data-search type="search" placeholder="ค้นหาสินค้า..." value="${escAttr(state.query)}"></label><div class="legacy-results"><span>${products.length.toLocaleString("th-TH")} รายการ</span><span>ข้อมูลล่าสุดจาก GAS</span></div><div class="legacy-product-grid">${products.map(productCard).join("")||'<div class="legacy-empty">🔎<br>ไม่พบสินค้า</div>'}</div></section><aside class="legacy-pos-cart pos-cart-desktop" aria-label="ตะกร้าสินค้า"><div class="cart-step ${state.animation}">${cartMarkup()}</div></aside></div></div>
   </section>`;
+  keptScroll.forEach(([selector,top,left])=>{const el=root.querySelector(selector);if(!el)return;if(selector!==".legacy-product-grid"||sameList)el.scrollTop=top;el.scrollLeft=left;});
+  if(sameList&&pageScroll>0&&Math.abs(window.scrollY-pageScroll)>1)window.scrollTo(0,pageScroll);
   const cartPieces=state.cart.reduce((sum,item)=>sum+(Number(item.qty)||0),0);
   // Keep the mobile cart control outside the animated/scrolled POS page.
   // This makes it truly viewport-pinned on mobile regardless of list length.
