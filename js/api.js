@@ -104,7 +104,7 @@ export class ApiClient {
     if(result?.ok){const done=onceRead();delete done[slot];onceWrite(done);}
     return result;
   }
-  async send(payload,timeoutMs=15000,{retries=0,retryLogical=false}={}){
+  async send(payload,timeoutMs=15000,{retries=0,retryLogical=false,keepalive=false}={}){
     if(!GATEWAY_API_URL)throw new Error("ยังไม่ได้ตั้งค่า API ของระบบ");
     let result;
     for(let attempt=0;attempt<=retries;attempt++){
@@ -112,7 +112,7 @@ export class ApiClient {
       const timeout=setTimeout(()=>controller.abort("REQUEST_TIMEOUT"),timeoutMs);
       const startedAt=performance.now(); // temporary speed measurement (js/perf.js)
       try{
-        const response=await fetch(GATEWAY_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),cache:"no-store",signal:controller.signal});
+        const response=await fetch(GATEWAY_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),cache:"no-store",signal:controller.signal,...(keepalive?{keepalive:true}:{})});
         if(!response.ok){
           const error=new Error(response.status>=500?"การเชื่อมต่อกับระบบขัดข้องชั่วคราว":`เชื่อมต่อระบบไม่สำเร็จ (${response.status})`);
           error.code=`HTTP_${response.status}`;
@@ -250,7 +250,7 @@ export class ApiClient {
   workerPortalLegacyPreview(session){return this.request({action:"workerPortalLegacyPreview",session},30000);}
   workerPortalLegacyImport(session,data){return this.request({action:"workerPortalLegacyImport",session,data},45000);}
   workerPortalBootstrap(session){return this.request({action:"workerPortalBootstrap",session},30000,{retries:1,retryLogical:true});}
-  workerPortalCreateJob(session,data){return this.request({action:"workerPortalCreateJob",session,data},30000);}
+  workerPortalCreateJob(session,data,options={}){return this.request({action:"workerPortalCreateJob",session,data},30000,options);}
   workerPortalSubmit(session,data){return this.request({action:"workerPortalSubmit",session,data},60000);}
   workerPortalUpdateJob(session,data){return this.request({action:"workerPortalUpdateJob",session,data},30000);}
   workerPortalDeleteJob(session,data){return this.request({action:"workerPortalDeleteJob",session,data},30000);}

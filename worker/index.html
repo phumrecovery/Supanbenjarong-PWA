@@ -30,6 +30,11 @@
   .tab-dot{display:inline-grid;place-items:center;min-width:22px;height:22px;margin-left:5px;padding:0 6px;border-radius:999px;background:#c62828;color:#fff;font-size:13px;font-weight:800;font-style:normal;line-height:1;vertical-align:middle}
   .history-reason{display:block;margin-top:3px;color:#c62828;font-size:13px;font-weight:700;font-style:normal;overflow-wrap:anywhere}.history-reason.cancelled{color:#78827e}
   .worker-history-row strong.fix{color:#c62828}.worker-history-row strong.cancelled{color:#78827e}
+  /* job saved on the phone, still being sent */
+  .card.job.queued{border:2px dashed #c99637;background:#fffaf0}
+  .badge.saving{background:#ffe08a;color:#5b4300;font-weight:800}
+  .queue-note{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:#fff3cd;color:#5b4300;font-size:15px;line-height:1.5}
+  .confirm-actions.single{grid-template-columns:1fr}.queue-failed h2{color:#c62828}.queue-failed #queue-ok{border:0;background:#c62828;color:#fff}
   .pin input::placeholder{letter-spacing:1px;font-size:17px}.pin input+input{margin-top:10px}
   .confirm-modal{width:min(100%,420px);padding:24px;border-radius:20px;background:#fff;box-shadow:0 24px 58px #052d2640}
   .confirm-modal h2{margin:0;color:#086453;font-size:22px}.confirm-modal p{margin:10px 0 20px;line-height:1.55;color:#4d5b55}
@@ -39,5 +44,5 @@
 </style>
 </head>
 <body><main id="app" aria-live="polite"></main><div id="toast" class="toast" role="status"></div>
-<script src="../js/runtime-config.js"></script><script type="module" src="./worker.js?v=worker-v34"></script>
+<script src="../js/runtime-config.js"></script><script type="module" src="./worker.js?v=worker-v35"></script>
 </body></html>
