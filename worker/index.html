@@ -35,6 +35,12 @@
   .badge.saving{background:#ffe08a;color:#5b4300;font-weight:800}
   .queue-note{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:#fff3cd;color:#5b4300;font-size:15px;line-height:1.5}
   .confirm-actions.single{grid-template-columns:1fr}.queue-failed h2{color:#c62828}.queue-failed #queue-ok{border:0;background:#c62828;color:#fff}
+  /* "please wait, do not close the app" while a job and its photo are being sent */
+  .wait-overlay{z-index:60}
+  .wait-box{text-align:center}.wait-box h2{margin-top:14px;font-size:22px}.wait-box p{margin:8px 0 0;font-size:16px;line-height:1.5}
+  .wait-box .wait-warning{margin-top:14px;padding:11px 12px;border-radius:12px;background:#fff3cd;color:#5b4300;font-size:17px;font-weight:800}
+  .wait-spinner{display:inline-block;width:58px;height:58px;border:6px solid #d7e9e1;border-top-color:#086453;border-radius:50%;animation:worker-spin .8s linear infinite}
+  .wait-done{font-size:54px;line-height:1}.wait-overlay.done .wait-box h2{color:#086453}.wait-box .confirm-actions{margin-top:18px}.wait-box #wait-ok{border:0;background:#086453;color:#fff}
   .pin input::placeholder{letter-spacing:1px;font-size:17px}.pin input+input{margin-top:10px}
   .confirm-modal{width:min(100%,420px);padding:24px;border-radius:20px;background:#fff;box-shadow:0 24px 58px #052d2640}
   .confirm-modal h2{margin:0;color:#086453;font-size:22px}.confirm-modal p{margin:10px 0 20px;line-height:1.55;color:#4d5b55}
@@ -44,5 +50,5 @@
 </style>
 </head>
 <body><main id="app" aria-live="polite"></main><div id="toast" class="toast" role="status"></div>
-<script src="../js/runtime-config.js"></script><script type="module" src="./worker.js?v=worker-v35"></script>
+<script src="../js/runtime-config.js"></script><script type="module" src="./worker.js?v=worker-v36"></script>
 </body></html>
