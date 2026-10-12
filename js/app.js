@@ -7,7 +7,7 @@ import {renderPreorder} from "./preorder.js?v=preorder-v22";
 import {renderOutsource} from "./outsource.js?v=outsource-v5";
 import {renderReport} from "./report.js?v=report-v21";
 import {renderSettings} from "./settings.js?v=settings-v14";
-import {renderWorkshop} from "./workshop.js?v=workshop-v51";
+import {renderWorkshop,resumeWorkshopQueue} from "./workshop.js?v=workshop-v52";
 import {renderClaim} from "./claim.js?v=claim-v5";
 import {renderBarcode} from "./barcode.js?v=barcode-v5";
 import {renderReceipt} from "./receipt.js?v=receipt-v3";
@@ -115,6 +115,8 @@ function loadSavedPages(owner){return Promise.race([api.loadPersisted(owner).cat
 function schedulePriorityWarmup(token,flow){
   if(!token||!hasFamilyAccess()||priorityWarmupToken===token)return;
   priorityWarmupToken=token;
+  // Confirmations queued on this device last time continue in the background.
+  try{resumeWorkshopQueue(api,token,displayUser?.name,showToast);}catch(error){}
   setWarmupStatus("⚡ กำลังเตรียมข้อมูลหมวดที่ใช้บ่อย · เข้าใช้งานได้เลย");
   const eligible=()=>flow===loginFlowId&&sessionToken===token&&!!currentSession?.user&&["home","sales"].includes(activeRoute);
   setTimeout(()=>{

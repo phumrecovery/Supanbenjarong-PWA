@@ -169,3 +169,19 @@
 .pwa-history-figures b{font-size:14px;color:var(--primary-dark)}
 .pwa-history-figures em{padding:2px 8px;border-radius:999px;background:#f3ece2;color:var(--text-sub);font:600 12px var(--font);font-style:normal}
 @media(max-width:760px){.pwa-history-list{grid-template-columns:1fr}.pwa-history-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.pwa-history-card{grid-template-columns:80px minmax(0,1fr)}.pwa-history-photo{width:80px;height:80px}}
+
+/* level 2: confirmations queued on the device */
+.pwa-hq-banner{display:grid;gap:3px;margin:0 0 12px;padding:11px 14px;border:2px solid #e3b23c;border-radius:12px;background:#fff8e1;color:#5b4300}
+.pwa-hq-banner b{font-size:16px}.pwa-hq-banner span{font-size:13px;line-height:1.5}
+.pwa-hq-pill{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:950;max-width:calc(100vw - 24px);padding:7px 14px;border-radius:999px;background:#5b4300;color:#fff;font:700 13px/1.35 var(--font);box-shadow:0 6px 18px rgba(0,0,0,.25);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pwa-hq-chip{margin:0 13px 6px;padding:5px 10px;border-radius:999px;background:#fff3cd;color:#5b4300;font:700 13px/1.35 var(--font);text-align:center}
+.pwa-hq-chip.sending{background:#ffe08a}
+.pwa-handoff-card.queued{opacity:.72;cursor:default}
+.pwa-handoff-card.queued:disabled{color:inherit}
+.pwa-handoff-sub.queued{background:#fff8e1;border-color:#e3b23c}
+.pwa-hq-failure-list{display:grid;gap:8px;margin:0 0 12px;text-align:left}
+.pwa-hq-failure-list article{padding:9px 11px;border:1px solid #efc3be;border-radius:10px;background:#fff8f7}
+.pwa-hq-failure-list b{display:block;color:#2b211a;font-size:15px}.pwa-hq-failure-list p{margin:4px 0 0;color:#8e1b1b;font-size:15px;line-height:1.5;white-space:pre-line;text-align:left}
+.pwa-error-dialog .pwa-hq-failure-hint{font-size:13.5px;color:#5f5347;margin-bottom:14px}
+/* the board already shows the same status in its banner */
+body:has(.pwa-hq-banner) .pwa-hq-pill{display:none}
