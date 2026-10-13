@@ -713,7 +713,7 @@ ApiClient.onSessionExpired=token=>{
   currentSession=null;
   homeData=null;
   history.replaceState({route:"home"},"","#home");
-  showLogin("หมดเวลาใช้งาน (เกิน 6 ชั่วโมง) กรุณาใส่ PIN อีกครั้ง");
+  showLogin("หมดเวลาใช้งาน (เกิน 12 ชั่วโมง) กรุณาใส่ PIN อีกครั้ง");
 };
 
 async function initialize(){
