@@ -554,14 +554,15 @@ function hqShowFailures(){if(!S.hqFailures.length)return;document.querySelector(
 function hqEnqueue(card,sub,payload){if(hqItem(sub.id))return false;S.hq.push({id:String(sub.id),jobId:String(card.id||""),payload,info:handoffDoneInfo(card,sub,""),owner:S.owner||"",attempts:0,state:"waiting"});hqSave();hqBadge();setTimeout(hqPump,0);return true;}
 function hqMarkConfirmed(item){const card=(S.handoff?.cards||[]).find(x=>String(x.id)===item.jobId),sub=(card?.submissions||[]).find(x=>String(x.id)===item.id);if(sub)sub.status="ยืนยันแล้ว";delete S.handoffReviewDrafts[item.id];}
 async function hqPump(){
-  if(S.hqBusy||!S.api||!S.token)return;
+  const hqToken=S.hqToken||S.token;
+  if(S.hqBusy||!S.api||!hqToken)return;
   const now=Date.now(),ready=S.hq.filter(x=>x.state==="waiting"&&hqMine(x)),item=ready.find(x=>(x.retryAt||0)<=now);
   // An item waiting to be asked again must not hold up the ones behind it.
   if(!item){hqBadge();if(ready.length){clearTimeout(S.hqTimer);S.hqTimer=setTimeout(hqPump,Math.max(500,Math.min(...ready.map(x=>x.retryAt||0))-now));}return;}
   S.hqBusy=true;item.state="sending";hqBadge();hqRender();
   let outcome="retry",message="";
   try{
-    const r=await S.api.workerPortalConfirmToFiring(S.token,item.payload);
+    const r=await S.api.workerPortalConfirmToFiring(hqToken,item.payload);
     if(r?.ok&&r.result?.success){outcome="done";message=String(r.result.message||"");}
     else if(/SESSION|USER_REQUIRED|FORBIDDEN/.test(String(r?.error||""))){outcome="pause";}
     else{
@@ -589,7 +590,7 @@ async function hqPump(){
   setTimeout(hqPump,0);
 }
 // Called by the app shell after sign-in so a queue left from last time continues without opening this page.
-export function resumeWorkshopQueue(api,token,owner,toast){if(!S.hq.length||!api||!token)return;S.api=S.api||api;if(!S.token)S.token=token;if(owner&&!S.owner)S.owner=String(owner);if(toast&&!S.hqToastSet){S.hqToastSet=true;if(!S.back)S.toast=toast;}hqBadge();setTimeout(hqPump,1500);}
+export function resumeWorkshopQueue(api,token,owner,toast){if(!S.hq.length||!api||!token)return;S.api=S.api||api;S.hqToken=token;if(!S.token)S.token=token;if(owner&&!S.owner)S.owner=String(owner);if(toast&&!S.hqToastSet){S.hqToastSet=true;if(!S.back)S.toast=toast;}hqBadge();setTimeout(hqPump,1500);}
 window.addEventListener("beforeunload",event=>{if(S.hq.length){event.preventDefault();event.returnValue="";}});
 function handoffPendingCount(){return (S.handoff?.cards||[]).filter(c=>(c.submissions||[]).some(s=>s.status==="รอตรวจ")).length;}
 function refreshHandoff(root){if(!S.handoff||S.handoffLoading||Date.now()-(S.handoffAt||0)<10000)return;void loadHandoff(root,true);}
@@ -665,7 +666,7 @@ async function saveHandoffFromReview(root,button){
   const more=(card.submissions||[]).some(x=>x.status==="รอตรวจ"&&!hqItem(x.id));if(!more)S.handoffReview=null;
   S.toast("รับเข้าคิวบันทึกแล้ว · ทำรายการถัดไปได้เลย");render(root);
 }
-export function renderWorkshop(root,api,token,onBack,context={}){if(S.token&&S.token!==token){S.monthGeneration++;clearTimeout(S.monthPrefetchTimer);S.monthRequests={};S.months={};S.monthFetchedAt={};S.monthErrors={};S.daily={};invalidateWages();S.handoff=null;S.data=null;S.tab=savedTab();S.monthKey="";S.localLoaded=false;}S.api=api;S.token=token;S.owner=String(context.displayUser?.name||"");S.back=onBack;S.toast=context.toast||(()=>{});S.hqRoot=root;hqBadge();setTimeout(hqPump,0);if(!S.day)S.day=today();if(S.step!=="วนทอง"&&S.step!=="รายวัน")S.step="เขียนลาย";if(!S.data){const last=api.lastBootstrap?.("workshopBootstrap",token);if(last?.ok)S.data=last.result||{};}render(root);if(S.tab==="receive")refreshHandoff(root);if(!S.data){load(root);/* the wage summary does not need workshop data: start it in parallel */if(S.tab==="wage")void loadWage(root);return;}load(root,true);loadTabData(root);}
+export function renderWorkshop(root,api,token,onBack,context={}){if(S.token&&S.token!==token){S.monthGeneration++;clearTimeout(S.monthPrefetchTimer);S.monthRequests={};S.months={};S.monthFetchedAt={};S.monthErrors={};S.daily={};invalidateWages();S.handoff=null;S.data=null;S.tab=savedTab();S.monthKey="";S.localLoaded=false;}S.api=api;S.token=token;S.owner=String(context.displayUser?.name||"");S.back=onBack;S.toast=context.toast||(()=>{});S.hqRoot=root;S.hqToken=token;hqBadge();setTimeout(hqPump,0);if(!S.day)S.day=today();if(S.step!=="วนทอง"&&S.step!=="รายวัน")S.step="เขียนลาย";if(!S.data){const last=api.lastBootstrap?.("workshopBootstrap",token);if(last?.ok)S.data=last.result||{};}render(root);if(S.tab==="receive")refreshHandoff(root);if(!S.data){load(root);/* the wage summary does not need workshop data: start it in parallel */if(S.tab==="wage")void loadWage(root);return;}load(root,true);loadTabData(root);}
 // The page can now open directly on a remembered tab, so fetch that tab's own
 // data here; previously only a tab click loaded the wage or daily view.
 function loadTabData(root){if(S.tab==="wage")void loadWage(root);else if(S.tab==="history")loadHistory(root);else if(S.tab==="daily")loadDay(root);else if(S.tab!=="receive")queueInitialWage(root);}

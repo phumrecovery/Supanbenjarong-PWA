@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v28";
+import {ApiClient} from "./api.js?v=api-v29";
 import {renderPos} from "./pos.js?v=pos-v30";
 import {renderProduct} from "./product.js?v=product-v4";
 import {renderStock} from "./stock.js?v=stock-v6";
@@ -7,7 +7,7 @@ import {renderPreorder} from "./preorder.js?v=preorder-v22";
 import {renderOutsource} from "./outsource.js?v=outsource-v5";
 import {renderReport} from "./report.js?v=report-v21";
 import {renderSettings} from "./settings.js?v=settings-v14";
-import {renderWorkshop,resumeWorkshopQueue} from "./workshop.js?v=workshop-v52";
+import {renderWorkshop,resumeWorkshopQueue} from "./workshop.js?v=workshop-v53";
 import {renderClaim} from "./claim.js?v=claim-v5";
 import {renderBarcode} from "./barcode.js?v=barcode-v5";
 import {renderReceipt} from "./receipt.js?v=receipt-v3";
@@ -703,6 +703,18 @@ function logoutFromSidebar(){
   if(token) api.logout(token).catch(()=>{});
 }
 document.querySelector("#logout").addEventListener("click",logoutFromSidebar);
+// The server refused the session (it lasts 6 hours). Back to the PIN screen with a clear reason.
+// Pages kept on this device are NOT cleared: the same user signs in again and continues.
+ApiClient.onSessionExpired=token=>{
+  if(!sessionToken||token!==sessionToken)return;
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionToken="";
+  api.clearWarmCache?.();
+  currentSession=null;
+  homeData=null;
+  history.replaceState({route:"home"},"","#home");
+  showLogin("หมดเวลาใช้งาน (เกิน 6 ชั่วโมง) กรุณาใส่ PIN อีกครั้ง");
+};
 
 async function initialize(){
   // Never leave a blank canvas while the gateway is slow or unavailable.

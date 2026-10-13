@@ -126,6 +126,9 @@ export class ApiClient {
           error.code="INVALID_RESPONSE";
           throw error;
         }
+        // A session lasts 6 hours. Tell the app shell once so it can ask for the PIN again
+        // instead of every page failing with its own vague message.
+        if(result&&result.ok===false&&result.error==="SESSION_EXPIRED"&&payload.session&&payload.action!=="bootstrap"&&payload.action!=="logout"){try{ApiClient.onSessionExpired?.(payload.session);}catch(hookError){}}
         ApiClient.onTiming?.({action:payload.action,total:performance.now()-startedAt,wait:headersAt-startedAt,receive:performance.now()-headersAt,server:result?._ms,ok:result?.ok===true,error:result?.ok?"":String(result?.error||"fail"),attempt,size:responseText.length});
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
