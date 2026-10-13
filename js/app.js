@@ -1,10 +1,10 @@
 import {ApiClient} from "./api.js?v=api-v29";
-import {renderPos} from "./pos.js?v=pos-v30";
+import {renderPos} from "./pos.js?v=pos-v31";
 import {renderProduct} from "./product.js?v=product-v4";
-import {renderStock} from "./stock.js?v=stock-v6";
-import {renderExpense} from "./expense.js?v=expense-v17";
+import {renderStock} from "./stock.js?v=stock-v7";
+import {renderExpense} from "./expense.js?v=expense-v18";
 import {renderPreorder} from "./preorder.js?v=preorder-v22";
-import {renderOutsource} from "./outsource.js?v=outsource-v5";
+import {renderOutsource} from "./outsource.js?v=outsource-v6";
 import {renderReport} from "./report.js?v=report-v21";
 import {renderSettings} from "./settings.js?v=settings-v14";
 import {renderWorkshop,resumeWorkshopQueue} from "./workshop.js?v=workshop-v53";
@@ -16,6 +16,7 @@ import {MENU_ICONS} from "./menu-icons.js?v=menu-icons-v1";
 import {clearLocalWage,syncLocalWage} from "./wage-local.js?v=wage-local-v2";
 import {clearLocalReport,syncLocalReport} from "./report-local.js?v=report-local-v2";
 import {installLoader,loaderFull} from "./loader.js?v=loader-v1";
+import "./recent.js?v=recent-v1";
 // Temporary speed measurement; remove with js/perf.js after the analysis.
 import {perfStart,perfApi,perfPage} from "./perf.js?v=perf-v5";
 
