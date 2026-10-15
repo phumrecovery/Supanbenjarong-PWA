@@ -19,4 +19,7 @@ body.pwa-refreshing::after{content:"กำลังอัปเดตข้อ�
 .pwa-error-dialog section{box-sizing:border-box;width:min(100%,440px);max-height:88vh;overflow:auto;padding:22px 20px;border-radius:18px;background:#fff;box-shadow:0 18px 70px rgba(0,0,0,.32);text-align:center;font-family:var(--font)}
 .pwa-error-dialog h2{margin:0 0 12px;color:#c62828;font-size:21px}
 .pwa-error-dialog p{margin:0 0 18px;color:#2b211a;font-size:17px;line-height:1.6;white-space:pre-line;overflow-wrap:anywhere;text-align:left}
+.pwa-error-todo{display:grid;gap:3px;margin:0 0 16px;padding:12px 14px;border-radius:12px;background:#fff6db;color:#5b4300;font-size:16px;line-height:1.55;text-align:left}
+.pwa-error-todo b{font-size:15px}
+.pwa-error-detail{display:block;margin:-6px 0 14px;color:#8a7d72;font-size:12.5px;line-height:1.45;text-align:left;overflow-wrap:anywhere}
 .pwa-error-dialog button{min-width:170px;min-height:50px;border:0;border-radius:12px;background:#c62828;color:#fff;font:700 17px var(--font);cursor:pointer}

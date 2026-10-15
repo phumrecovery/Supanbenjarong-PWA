@@ -36,7 +36,13 @@ async function bootTx(mode,run){
 }
 const bootRange=()=>IDBKeyRange.bound(BOOT_PREFIX,BOOT_PREFIX+"\uffff");
 
+// Actions that change shop data. Used to give saves more time, to word a timeout honestly
+// (the save may have gone through) and to let the app keep the screen where it was.
+const WRITE_ACTION=/(Save|Add|Many|Update|Delete|Status|Star|Duplicate|Confirm|Complete|Cancel|Upload|Record|Set[A-Z]|Toggle|Edit|Purchase|Order)|^saveSale$|^stockTake$/;
+function isWriteAction(payload){const action=String(payload?.action||"");if(!payload?.session||!WRITE_ACTION.test(action))return false;return !(action==="stockTake"&&String(payload.operation||"").startsWith("get"));}
+
 export class ApiClient {
+  static isWrite(payload){return isWriteAction(payload);}
   constructor(){
     // Short-lived, memory-only master data. Session tokens remain in memory and
     // never enter IndexedDB, localStorage, or the service-worker cache.
@@ -106,6 +112,11 @@ export class ApiClient {
   }
   async send(payload,timeoutMs=15000,{retries=0,retryLogical=false,keepalive=false}={}){
     if(!GATEWAY_API_URL)throw new Error("ยังไม่ได้ตั้งค่า API ของระบบ");
+    const write=isWriteAction(payload);
+    // A save can wait up to 30 s for another save to finish on the server, so 15 s gave up on
+    // saves that then went through anyway (and people saved the same thing twice).
+    if(write&&timeoutMs<45000)timeoutMs=45000;
+    if(write){try{ApiClient.onWriteStart?.(payload);}catch(hookError){}}
     let result;
     for(let attempt=0;attempt<=retries;attempt++){
       const controller=new AbortController();
@@ -132,6 +143,7 @@ export class ApiClient {
         ApiClient.onTiming?.({action:payload.action,total:performance.now()-startedAt,wait:headersAt-startedAt,receive:performance.now()-headersAt,server:result?._ms,ok:result?.ok===true,error:result?.ok?"":String(result?.error||"fail"),attempt,size:responseText.length});
         // Successful writes may change master data on the next screen. Keep
         // this broad rather than maintaining a fragile per-module write list.
+        if(write&&result?.ok){try{ApiClient.onWriteDone?.(payload);}catch(hookError){}}
         if(result?.ok&&payload.session&&!(payload.action==="stockTake"&&String(payload.operation||"").startsWith("get"))&&!["bootstrap","sheetFilterCheck","dataVersion","wageSnapshot","reportSnapshot","posBootstrap","homeBootstrap","productBootstrap","stockBootstrap","barcodeBootstrap","receiptBootstrap","workshopBootstrap","workshopDailyOptions","workshopHistory","workshopAttendance","workshopMonthlyAttendance","workshopWageSummary","workerPortalOwnerQueue","workerPortalLegacyPreview","workerPortalBootstrap","reportBootstrap","reportDaily","reportMonthly","reportYearly","reportCost","reportCashflow","reportPrint","expenseBootstrap","expenseTransactions","expenseMonthSummary","expenseSupport","expenseUpdateStatus","preorderBootstrap","preorderPrintDocument","outsourceBootstrap","claimBootstrap","claimSupport","settingsBootstrap","settingsStoreLayout","settingsWebAppUrl","settingsWorkerPinStatus","settingsResetWorkerPin","perfLog"].includes(payload.action))this.clearWarmCache();
         if(!result?.ok&&retryLogical&&attempt<retries){await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));continue;}
         return result;
@@ -141,7 +153,8 @@ export class ApiClient {
         // browser-internal message to shop staff.
         const timedOut=controller.signal.aborted;
         ApiClient.onTiming?.({action:payload.action,total:performance.now()-startedAt,ok:false,error:timedOut?"timeout":String(error?.code||error?.message||"error").slice(0,40),attempt});
-        const normalized=timedOut?new Error("การเชื่อมต่อใช้เวลานานเกินไป โปรดลองอีกครั้ง"):error;
+        const normalized=timedOut?new Error(write?"ระบบตอบกลับช้ากว่าปกติ รายการนี้อาจบันทึกสำเร็จแล้ว":"การเชื่อมต่อใช้เวลานานเกินไป โปรดลองอีกครั้ง"):error;
+        if(timedOut)normalized.code=write?"WRITE_TIMEOUT":"REQUEST_TIMEOUT";
         if(attempt>=retries)throw normalized;
         await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
       }finally{clearTimeout(timeout);}

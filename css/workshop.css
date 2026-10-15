@@ -183,5 +183,7 @@
 .pwa-hq-failure-list article{padding:9px 11px;border:1px solid #efc3be;border-radius:10px;background:#fff8f7}
 .pwa-hq-failure-list b{display:block;color:#2b211a;font-size:15px}.pwa-hq-failure-list p{margin:4px 0 0;color:#8e1b1b;font-size:15px;line-height:1.5;white-space:pre-line;text-align:left}
 .pwa-error-dialog .pwa-hq-failure-hint{font-size:13.5px;color:#5f5347;margin-bottom:14px}
+.pwa-error-dialog .pwa-hq-todo{margin:6px 0 0;padding:8px 10px;border-radius:9px;background:#fff6db;color:#5b4300;font-size:14.5px;line-height:1.5}
+.pwa-handoff-refreshing{color:#8a5a00;font-weight:700}
 /* the board already shows the same status in its banner */
 body:has(.pwa-hq-banner) .pwa-hq-pill{display:none}

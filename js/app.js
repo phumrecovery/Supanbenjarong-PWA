@@ -1,14 +1,14 @@
-import {ApiClient} from "./api.js?v=api-v29";
+import {ApiClient} from "./api.js?v=api-v30";
 import {renderPos} from "./pos.js?v=pos-v31";
-import {renderProduct} from "./product.js?v=product-v4";
+import {renderProduct} from "./product.js?v=product-v5";
 import {renderStock} from "./stock.js?v=stock-v7";
-import {renderExpense} from "./expense.js?v=expense-v18";
+import {renderExpense} from "./expense.js?v=expense-v19";
 import {renderPreorder} from "./preorder.js?v=preorder-v22";
-import {renderOutsource} from "./outsource.js?v=outsource-v6";
+import {renderOutsource} from "./outsource.js?v=outsource-v7";
 import {renderReport} from "./report.js?v=report-v21";
 import {renderSettings} from "./settings.js?v=settings-v14";
-import {renderWorkshop,resumeWorkshopQueue} from "./workshop.js?v=workshop-v53";
-import {renderClaim} from "./claim.js?v=claim-v5";
+import {renderWorkshop,resumeWorkshopQueue} from "./workshop.js?v=workshop-v54";
+import {renderClaim} from "./claim.js?v=claim-v6";
 import {renderBarcode} from "./barcode.js?v=barcode-v5";
 import {renderReceipt} from "./receipt.js?v=receipt-v3";
 import {renderStocktake} from "./stocktake.js?v=stocktake-v3";
@@ -72,6 +72,7 @@ let sessionToken=sessionStorage.getItem(SESSION_KEY)||"";
 let currentSession=null;
 let displayUser=null;
 let activeRoute="";
+const scrollKeep={active:false,y:0,route:"",until:0};
 let pinInput="";
 let pinSubmitting=false;
 let homeData=null;
@@ -232,7 +233,19 @@ function setShell(visible){appHeader.hidden=!visible;appHeader.style.display=vis
 // Errors must be read: they open a dialog with an acknowledge button instead of a
 // toast that disappears. Background refresh notices stay as toasts.
 function isErrorMessage(message){const text=String(message||"").trim();if(/^(อัปเดต|แสดงโครง)/.test(text))return false;return text.startsWith("❌")||/ไม่สำเร็จ|ไม่พอ/.test(text);}
-function showErrorDialog(message){const text=String(message||"").trim().replace(/^❌\s*/,"")||"ทำรายการไม่สำเร็จ";document.querySelector(".pwa-error-dialog")?.remove();const box=document.createElement("div");box.className="pwa-error-dialog";box.setAttribute("role","alertdialog");box.setAttribute("aria-modal","true");box.innerHTML=`<section><h2>❌ ทำรายการไม่สำเร็จ</h2><p></p><button type="button">รับทราบ</button></section>`;box.querySelector("p").textContent=text;box.querySelector("button").addEventListener("click",()=>box.remove());document.body.append(box);box.querySelector("button").focus();try{sound.notify();}catch(error){}}
+// Messages from Google or the network are rewritten into what happened and what to do next.
+// The original text stays in small print so it can still be reported.
+const FRIENDLY_ERRORS=[
+  [/หมดเวลาการล็อก|ล็อกไว้นานเกินไป|lock timeout|lock.*too long/i,"ระบบกำลังบันทึกรายการอื่นอยู่นานผิดปกติ รายการนี้จึงยังไม่ถูกบันทึก","รอประมาณ 1–2 นาที แล้วกดบันทึกอีกครั้ง"],
+  [/อาจบันทึกสำเร็จแล้ว/,"ระบบตอบกลับช้ากว่าปกติ รายการนี้อาจบันทึกสำเร็จแล้ว","ตรวจดูในรายการก่อนว่ามีรายการนี้แล้วหรือยัง ถ้ายังไม่มีจึงบันทึกอีกครั้ง (ถ้ากดซ้ำทันทีอาจได้รายการซ้ำ)"],
+  [/การเชื่อมต่อใช้เวลานานเกินไป/,"ระบบตอบกลับช้ากว่าปกติ","ตรวจสัญญาณอินเทอร์เน็ต แล้วลองอีกครั้ง"],
+  [/Failed to fetch|NetworkError|Load failed|เชื่อมต่อระบบไม่สำเร็จ \(/i,"เชื่อมต่อระบบไม่ได้","ตรวจสัญญาณอินเทอร์เน็ต แล้วลองอีกครั้ง"],
+  [/Service (Spreadsheets|invoked)|server error occurred|Exceeded maximum execution|ขัดข้องชั่วคราว|ระบบตอบกลับผิดรูปแบบ|Internal error|Service unavailable/i,"ระบบ Google ขัดข้องชั่วคราว","รอสักครู่แล้วลองใหม่ ถ้าเป็นการบันทึก ให้ตรวจในรายการก่อนว่าบันทึกแล้วหรือยัง"],
+  [/มีรายการ .+ อยู่แล้ว/,"","รายการนี้มีในระบบแล้ว ไม่ต้องเพิ่มใหม่ ค้นหาชื่อหรือรหัสนี้ในรายการ แล้วแก้ไขรายการเดิมแทน"]
+];
+function friendlyError(raw){const text=String(raw||"").trim().replace(/^❌\s*/,"");for(const [pattern,message,todo] of FRIENDLY_ERRORS)if(pattern.test(text))return {message:message||text,todo,detail:message&&message!==text?text:""};return {message:text,todo:"",detail:""};}
+window.pwaFriendlyError=friendlyError;
+function showErrorDialog(message){const plain=friendlyError(String(message||"").trim()||"ทำรายการไม่สำเร็จ");document.querySelector(".pwa-error-dialog")?.remove();const box=document.createElement("div");box.className="pwa-error-dialog";box.setAttribute("role","alertdialog");box.setAttribute("aria-modal","true");box.innerHTML=`<section><h2>❌ ทำรายการไม่สำเร็จ</h2><p></p>${plain.todo?'<div class="pwa-error-todo"><b>ควรทำอย่างไร</b><span></span></div>':""}${plain.detail?'<small class="pwa-error-detail"></small>':""}<button type="button">รับทราบ</button></section>`;box.querySelector("p").textContent=plain.message||"ทำรายการไม่สำเร็จ";if(plain.todo)box.querySelector(".pwa-error-todo span").textContent=plain.todo;if(plain.detail)box.querySelector(".pwa-error-detail").textContent=`ข้อความจากระบบ: ${plain.detail}`;box.querySelector("button").addEventListener("click",()=>box.remove());document.body.append(box);box.querySelector("button").focus();try{sound.notify();}catch(error){}}
 window.pwaIsError=isErrorMessage;window.pwaShowError=showErrorDialog;
 function showToast(message){if(isErrorMessage(message))return showErrorDialog(message);toast.textContent=message;toast.classList.add("show");try{sound.notify();}catch(error){}clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),2800);}
 function setLogo(url){const src=url||LOGO_FALLBACK;topbarLogo.src=src;sidebarLogo.src=src;topbarLogo.onerror=()=>{topbarLogo.src=LOGO_FALLBACK;};sidebarLogo.onerror=()=>{sidebarLogo.src="./assets/main-app-icon.png?v=icon-v2";};}
@@ -551,7 +564,7 @@ function render(route,{animate=true,direction}={}){
   route=["home","sales",...Object.keys(PAGES)].includes(route)?route:"home";
   perfPage(route,main);
   route=allowedStartRoute(route);
-  const travel=direction||pageDirection(route);activeRoute=route;if(animate)animatePage(travel);
+  const travel=direction||pageDirection(route);scrollKeep.active=false;activeRoute=route;if(animate)animatePage(travel);
   main._settingsAbort?.abort();
   main.onclick=main.oninput=main.onchange=main.onsubmit=null;
   document.querySelector("#preorder-modal-portal")?.replaceChildren();
@@ -706,6 +719,30 @@ function logoutFromSidebar(){
 document.querySelector("#logout").addEventListener("click",logoutFromSidebar);
 // The server refused the session (it lasts 6 hours). Back to the PIN screen with a clear reason.
 // Pages kept on this device are NOT cleared: the same user signs in again and continues.
+// After a save, pages redraw and some briefly empty their list while fresh data loads, which
+// threw the page back to the top. Keep the place the user was working at until the redrawn
+// page is long enough again. Stops on the user's own scrolling, on leaving the page, or when a
+// page asks for the top itself (window.pwaScrollTop, used after finishing a new-entry form).
+// (scrollKeep is declared next to activeRoute at the top of this file.)
+function scrollKeepCheck(){
+  if(!scrollKeep.active)return;
+  if(Date.now()>scrollKeep.until||activeRoute!==scrollKeep.route){scrollKeep.active=false;return;}
+  const y=scrollKeep.y,room=document.documentElement.scrollHeight-window.innerHeight;
+  if(window.scrollY<y-40&&room>=y-40)window.scrollTo(0,Math.min(y,room));
+}
+function scrollKeepStop(){scrollKeep.active=false;}
+ApiClient.onWriteStart=()=>{if(!sessionToken||activeRoute==="login")return;const y=window.scrollY;if(y<80){scrollKeep.active=false;return;}Object.assign(scrollKeep,{active:true,y,route:activeRoute,until:Date.now()+60000});};
+ApiClient.onWriteDone=payload=>{
+  if(scrollKeep.active)scrollKeep.until=Date.now()+15000;
+  // Stock, whiteware and job data are cached by several pages; tell them it changed.
+  try{window.dispatchEvent(new CustomEvent("suphan-stock-changed",{detail:{action:String(payload?.action||"")}}));}catch(error){}
+};
+window.pwaScrollTop=()=>{scrollKeep.active=false;setTimeout(()=>window.scrollTo({top:0,behavior:"smooth"}),0);};
+new MutationObserver(()=>{if(scrollKeep.active)setTimeout(scrollKeepCheck,0);}).observe(main,{childList:true,subtree:true});
+window.addEventListener("scroll",()=>{if(scrollKeep.active)setTimeout(scrollKeepCheck,0);},{passive:true});
+["wheel","touchmove"].forEach(type=>window.addEventListener(type,scrollKeepStop,{passive:true,capture:true}));
+window.addEventListener("mousedown",event=>{if(event.target===document.documentElement)scrollKeepStop();},{capture:true});
+window.addEventListener("keydown",event=>{if(/^(PageUp|PageDown|Home|End|ArrowUp|ArrowDown| )$/.test(event.key)&&!/^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName||""))scrollKeepStop();},{capture:true});
 ApiClient.onSessionExpired=token=>{
   if(!sessionToken||token!==sessionToken)return;
   sessionStorage.removeItem(SESSION_KEY);
