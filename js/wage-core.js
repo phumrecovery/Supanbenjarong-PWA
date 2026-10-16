@@ -414,7 +414,7 @@ var WageCore=(function(){
       if(String(rec.present||"").trim()!=="มา")continue;
       out.push({date:String(Number(String(item.iso).slice(8,10))),name:rec.name,type:rec.type,rate:rec.rate,
         timeIn:rec.timeIn,timeOut:rec.timeOut,dayFactor:rec.dayFactor,dayType:rec.dayType,
-        otStart:rec.otStart,otEnd:rec.otEnd,otReason:rec.otReason});
+        otHours:Number(rec.otHours)||0,otStart:rec.otStart,otEnd:rec.otEnd,otReason:rec.otReason});
     }
     return out;
   }
