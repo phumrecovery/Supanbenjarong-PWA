@@ -179,13 +179,22 @@ var WageCore=(function(){
         var rate=Number(row[4])||0;
         var overtimePay=Number(row[11])||0;
         var dayFactor=Number(row[12])===0.5?0.5:1;
+        var overtimeHours=Number(row[10])||0;
         if(!name)continue;
-        if(!dailyMap[name])dailyMap[name]={name:name,days:0,total:0,normalTotal:0,socialSecurityBase:0,rate:rate,ot:0};
-        dailyMap[name].days+=dayFactor;
-        dailyMap[name].normalTotal+=rate*dayFactor;
-        dailyMap[name].total+=rate*dayFactor+overtimePay;
-        dailyMap[name].ot+=overtimePay;
-        if(socialEligible(employeeSocialMap[name],attendanceDate))dailyMap[name].socialSecurityBase+=rate*dayFactor;
+        if(!dailyMap[name])dailyMap[name]={name:name,days:0,total:0,normalTotal:0,socialSecurityBase:0,rate:rate,ot:0,
+          fullDays:0,fullTotal:0,fullOtHours:0,fullOtTotal:0,halfDays:0,halfTotal:0,halfExtraHours:0,halfExtraTotal:0,rates:[],entries:[]};
+        var dailyItem=dailyMap[name];
+        dailyItem.days+=dayFactor;
+        dailyItem.normalTotal+=rate*dayFactor;
+        dailyItem.total+=rate*dayFactor+overtimePay;
+        dailyItem.ot+=overtimePay;
+        // Full days and half days are listed separately on the wage slip. Paid hours on a half day
+        // (the shop pays 50 baht an hour after 13:00) are kept apart from overtime on a full day.
+        if(dayFactor===0.5){dailyItem.halfDays+=1;dailyItem.halfTotal+=rate*0.5;dailyItem.halfExtraHours+=overtimeHours;dailyItem.halfExtraTotal+=overtimePay;}
+        else{dailyItem.fullDays+=1;dailyItem.fullTotal+=rate;dailyItem.fullOtHours+=overtimeHours;dailyItem.fullOtTotal+=overtimePay;}
+        if(dailyItem.rates.indexOf(rate)<0)dailyItem.rates.push(rate);
+        dailyItem.entries.push({date:formatDate(attendanceDate,"yyyy-MM-dd"),dayFactor:dayFactor,rate:rate,otHours:overtimeHours,otPay:overtimePay,amount:rate*dayFactor+overtimePay});
+        if(socialEligible(employeeSocialMap[name],attendanceDate))dailyItem.socialSecurityBase+=rate*dayFactor;
       }
       var dailyNames=Object.keys(dailyMap).sort(function(a,b){return a.localeCompare(b,"th");});
       for(var d=0;d<dailyNames.length;d++)result.dailyWork.push(dailyMap[dailyNames[d]]);

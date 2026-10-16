@@ -187,3 +187,10 @@
 .pwa-handoff-refreshing{color:#8a5a00;font-weight:700}
 /* the board already shows the same status in its banner */
 body:has(.pwa-hq-banner) .pwa-hq-pill{display:none}
+/* daily attendance: half day with paid extra hours, and today's pay for each worker */
+.pwa-att-edit-field[hidden]{display:none!important}
+.pwa-att-half-end select{border-color:#e0a800!important;background:#fffaf0}
+.pwa-att-pay{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:#f1f8f4;color:#1f4d3a;font-size:14px;line-height:1.5}
+.pwa-att-pay b{color:#086453}
+.pwa-daily-brief{display:block;color:#6b5a4c;font-size:12px;font-weight:400}
+.pf-daily-days{margin-top:10px}
