@@ -193,7 +193,6 @@ body:has(.pwa-hq-banner) .pwa-hq-pill{display:none}
 .pwa-att-pay{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:#f1f8f4;color:#1f4d3a;font-size:14px;line-height:1.5}
 .pwa-att-pay b{color:#086453}
 .pwa-daily-brief{display:block;color:#6b5a4c;font-size:12px;font-weight:400}
-.pf-daily-days{margin-top:10px}
 /* day type: big buttons instead of drop-downs (tablet friendly) */
 .pwa-daytype{display:grid;gap:8px;margin-top:10px}
 .pwa-daytype-label{color:var(--primary-dark);font-size:12px;font-weight:700}
@@ -209,3 +208,4 @@ body:has(.pwa-hq-banner) .pwa-hq-pill{display:none}
 .pwa-halfend{display:grid;gap:6px;padding:10px;border-radius:12px;background:#fffaf0;border:1px dashed #e0a800}
 .pwa-att-ot-toggle{margin-top:10px;min-height:42px;padding:0 14px;border:1px dashed #b9a28c;border-radius:10px;background:#fff;color:#6b5a4c;font:600 14px var(--font);cursor:pointer}
 .pwa-chips button small{white-space:nowrap}
+.pf-days{margin-top:3px;color:#555;font-size:11.5px;line-height:1.45}
