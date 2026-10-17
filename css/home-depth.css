@@ -136,3 +136,5 @@ body.pwa-has-update{padding-bottom:230px}
   .home-menu-btn,.home-menu-btn:hover,.home-menu-btn:active{transform:none;transition:none}
   .home-menu-icon,.home-menu-btn:hover .home-menu-icon,.home-menu-btn:active .home-menu-icon{transform:none;transition:none}
 }
+
+.summary-updated{flex-basis:100%;margin-top:6px;color:var(--text-muted,#7a6656);font-size:12.5px;text-align:center}

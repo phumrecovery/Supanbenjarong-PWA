@@ -76,6 +76,17 @@ const scrollKeep={active:false,y:0,route:"",until:0};
 let pinInput="";
 let pinSubmitting=false;
 let homeData=null;
+// Home's sales box used to load once per sign-in, so sales made later (on this or any other device)
+// and the change of day never showed. It is now fetched again whenever Home is shown and the copy is
+// older than HOME_FRESH_MS or something was saved, every HOME_POLL_MS while Home stays on screen,
+// and when the app comes back to the front. The old figures stay visible while the new ones load.
+let homeDataAt=0,homeDirty=false,homePollTimer=0;
+const HOME_FRESH_MS=30000,HOME_POLL_MS=120000;
+function localDay(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;}
+// Day the figures were fetched, by this device's clock (a copy fetched before midnight is not today's).
+function homeDay(){return homeDataAt?localDay(new Date(homeDataAt)):"";}
+function homeIsStale(){return !homeData||homeDirty||Date.now()-homeDataAt>HOME_FRESH_MS||homeDay()!==localDay();}
+function keepHomeData(data){homeData=data;homeDataAt=Date.now();homeDirty=false;}
 let homeExitTimer=0;
 let toastTimer=0;
 let audioContext=null;
@@ -158,7 +169,7 @@ function preloadHomeData(token){
   const requestedFlow=loginFlowId;
   if(!token||homeData)return;
   api.homeBootstrap(token).then(data=>{
-    if(data?.ok&&requestedFlow===loginFlowId)homeData=data;
+    if(data?.ok&&requestedFlow===loginFlowId)keepHomeData(data);
   }).catch(()=>{});
 }
 
@@ -488,8 +499,8 @@ function renderHome(){
   const data=homeData||{};
   const shop=data.shop||{};
   const name=shop.name||"สุพรรณบุรีเบญจรงค์";
-  const daily=data.daily||{};
-  main.innerHTML=`<section class="home-hero"><img id="homeLogo" class="home-logo" src="${escapeHtml(shop.logo||LOGO_FALLBACK)}" alt="โลโก้"><h1 class="home-name">${escapeHtml(name)}</h1><p class="home-tagline">งานฝีมือไทยแท้ ✨</p><p id="homeWarmupStatus" class="home-warmup-status" role="status"${warmupStatus?"":" hidden"}>${escapeHtml(warmupStatus)}</p></section>${filterWarningMarkup()}<section class="home-summary"><div><div class="welcome-title">สวัสดีครับ 🙏</div><div class="welcome-date">${thaiDate()}</div></div><div class="summary-values"><div class="summary-stat"><div class="stat-value">฿${money(daily.totalSales)}</div><div class="stat-label">ยอดขายวันนี้</div></div><div class="summary-stat"><div class="stat-value">${money(daily.billCount)} บิล</div><div class="stat-label">จำนวนบิล</div></div></div></section><h2 class="section-title">📋 เมนูหลัก</h2><section class="home-menu-grid">${menuMarkup()}</section><h2 class="section-title">⭐ สินค้าขายดี</h2><section class="featured-grid">${featuredMarkup(data.starred)}</section><footer class="home-footer"><div>🏺 ${escapeHtml(name)} — งานฝีมือไทยแท้</div><div>${escapeHtml([shop.address,shop.phone?`โทร ${shop.phone}`:""].filter(Boolean).join(" | "))}</div><div>Version 2.0</div></footer>`;
+  const daily=data.daily||{},todayKnown=!!homeData&&homeDay()===localDay();
+  main.innerHTML=`<section class="home-hero"><img id="homeLogo" class="home-logo" src="${escapeHtml(shop.logo||LOGO_FALLBACK)}" alt="โลโก้"><h1 class="home-name">${escapeHtml(name)}</h1><p class="home-tagline">งานฝีมือไทยแท้ ✨</p><p id="homeWarmupStatus" class="home-warmup-status" role="status"${warmupStatus?"":" hidden"}>${escapeHtml(warmupStatus)}</p></section>${filterWarningMarkup()}<section class="home-summary"><div><div class="welcome-title">สวัสดีครับ 🙏</div><div class="welcome-date">${thaiDate()}</div></div><div class="summary-values"><div class="summary-stat"><div class="stat-value">${todayKnown?`฿${money(daily.totalSales)}`:"…"}</div><div class="stat-label">ยอดขายวันนี้</div></div><div class="summary-stat"><div class="stat-value">${todayKnown?`${money(daily.billCount)} บิล`:"…"}</div><div class="stat-label">จำนวนบิล</div></div></div><div class="summary-updated" id="homeUpdated">${homeUpdatedText()}</div></section><h2 class="section-title">📋 เมนูหลัก</h2><section class="home-menu-grid">${menuMarkup()}</section><h2 class="section-title">⭐ สินค้าขายดี</h2><section class="featured-grid">${featuredMarkup(data.starred)}</section><footer class="home-footer"><div>🏺 ${escapeHtml(name)} — งานฝีมือไทยแท้</div><div>${escapeHtml([shop.address,shop.phone?`โทร ${shop.phone}`:""].filter(Boolean).join(" | "))}</div><div>Version 2.0</div></footer>`;
   const homeLogo=main.querySelector("#homeLogo");if(homeLogo)homeLogo.onerror=()=>{homeLogo.src=LOGO_FALLBACK;};
   main.querySelectorAll("[data-route]").forEach(button=>{
     button.addEventListener("click",()=>openHomeMenu(button));
@@ -523,8 +534,11 @@ function renderHome(){
       for(const suffix of ["tilt-x","tilt-y","glow-x","glow-y"])card.style.removeProperty(`--summary-${suffix}`);
     });
   });
-  if(!homeData)loadHomeData();
+  if(homeIsStale())loadHomeData();
+  scheduleHomePoll();
 }
+function homeUpdatedText(){if(!homeData||!homeDataAt)return "กำลังโหลดยอดล่าสุด…";const at=new Date(homeDataAt);return `${homeLoadingToken?"🔄 กำลังอัปเดต · ":""}ข้อมูล ณ ${String(at.getHours()).padStart(2,"0")}:${String(at.getMinutes()).padStart(2,"0")} น.`;}
+function scheduleHomePoll(){clearTimeout(homePollTimer);homePollTimer=setTimeout(()=>{if(activeRoute==="home"&&main.dataset.route==="home"&&document.visibilityState==="visible"&&sessionToken)loadHomeData();if(activeRoute==="home")scheduleHomePoll();},HOME_POLL_MS);}
 
 // Tabs left with a basic filter silently lose app writes; warn the owner.
 let filterWarning=[];
@@ -539,6 +553,7 @@ async function loadHomeData(){
   const requestedFlow=loginFlowId;
   if(homeLoadingToken&&homeLoadingToken===requestedToken)return;
   homeLoadingToken=requestedToken;
+  const updated=main.querySelector("#homeUpdated");if(updated)updated.textContent=homeUpdatedText();
   try{
     const data=await api.homeBootstrap(requestedToken);
     if(!data.ok)throw new Error(data.error);
@@ -546,7 +561,7 @@ async function loadHomeData(){
     // response redraw Home over the PIN screen; that old shell has no family
     // session and misleadingly shows only the POS menu.
     if(!requestedToken||requestedToken!==sessionToken||requestedFlow!==loginFlowId||!currentSession?.user||activeRoute!=="home"||main.dataset.route!=="home")return;
-    homeData=data;
+    keepHomeData(data);
     const name=data.shop&&data.shop.name;
     if(name)topbarTitle.textContent=name;
     setLogo(data.shop&&data.shop.logo);
@@ -554,7 +569,7 @@ async function loadHomeData(){
     // Uncached, the scan takes ~13s of GAS time; start after the login warm-up.
     setTimeout(()=>checkSheetFilters(requestedToken),25000);
   }catch(error){if(requestedFlow===loginFlowId&&activeRoute==="home"&&main.dataset.route==="home")showToast("แสดงโครงหน้าแรกแล้ว กำลังเชื่อมข้อมูลล่าสุด");}
-  finally{if(homeLoadingToken===requestedToken)homeLoadingToken="";}
+  finally{if(homeLoadingToken===requestedToken){homeLoadingToken="";const shown=main.querySelector("#homeUpdated");if(shown)shown.textContent=homeUpdatedText();}}
 }
 
 function renderPlaceholder(route){const [title,body]=PAGES[route]||["กำลังพัฒนา",""];main.innerHTML=`<section class="card"><h1>${title}</h1><p>${body}</p><p class="hint">ระบบเดิมบน GAS ยังใช้งานได้ตามปกติระหว่างย้ายโมดูล</p></section>`;}
@@ -633,7 +648,9 @@ async function returnLimitedPosToLogin(){
 }
 window.addEventListener("popstate",()=>{render(currentRoute(),{animate:true});window.scrollTo(0,0);});
 // Product mutations must never leave dashboard/POS master data looking current.
-window.addEventListener("suphan-data-mutated",()=>{homeData=null;});
+window.addEventListener("suphan-data-mutated",()=>{homeDirty=true;});
+window.addEventListener("suphan-stock-changed",()=>{homeDirty=true;});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&activeRoute==="home"&&main.dataset.route==="home"&&sessionToken&&homeIsStale())loadHomeData();});
 function barcodeChar(event){
   if(event.key&&event.key.length===1&&/[A-Za-z0-9\-_]/.test(event.key))return event.key;
   const code=event.code||"";
