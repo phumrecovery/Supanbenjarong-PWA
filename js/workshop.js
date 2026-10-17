@@ -138,7 +138,9 @@ function syncAttCard(card,changed){
   const toggle=card.querySelector("[data-ot-toggle]");if(toggle)toggle.disabled=!present;
   const pay=card.querySelector(".pwa-att-pay");if(pay)pay.innerHTML=attendancePayText(present,Number(card.dataset.rate)||0,half?.5:1,Number(q("ot").value)||0);
 }
-function bindAttendanceCards(root){root.querySelectorAll(".pwa-att-card").forEach(card=>{
+// What a card holds, to tell whether the owner changed it.
+function attCardState(card){const q=k=>card.querySelector(`[data-k="${k}"]`)?.value||"";return JSON.stringify([card.dataset.present==="true",q("in"),q("out"),Number(q("factor"))===.5?.5:1,Number(q("ot"))||0,hhmm(q("otStart")),hhmm(q("otEnd")),q("note").trim()]);}
+function bindAttendanceCards(root){root.querySelectorAll(".pwa-att-card").forEach(card=>{card.dataset.initial=attCardState(card);
   card.addEventListener("click",ev=>{const b=ev.target.closest("[data-day-factor],[data-half-end],[data-ot-toggle]");if(!b||b.disabled)return;const q=k=>card.querySelector(`[data-k="${k}"]`);
     if(b.dataset.dayFactor){q("factor").value=b.dataset.dayFactor;syncAttCard(card,"factor");}
     else if(b.dataset.halfEnd){q("halfEnd").value=b.dataset.halfEnd;syncAttCard(card,"halfEnd");}
@@ -219,9 +221,9 @@ function captureAttendanceEdit(root){
   if(root.querySelector("#attEditIn")){x.timeIn=v("#attEditIn")||"";x.timeOut=v("#attEditOut")||"";}
   x.note=v("#attEditNote")??x.note;x.reason=v("#attEditReason")??x.reason;
 }
-// saveAttendance replaces every row of the date with the items it receives,
-// so send the whole day: every other record exactly as stored (including
-// OT), plus the one being added or edited.
+// saveAttendance replaces only the workers it receives (since 17 Oct), so only
+// the worker being added or edited is sent. The day is still read first for
+// that worker's stored OT.
 async function saveAttendanceEdit(root){
   captureAttendanceEdit(root);
   const x=S.attEdit;if(!x||S.attSaving)return;
@@ -239,9 +241,7 @@ async function saveAttendanceEdit(root){
     // Without stored OT hours the other workers' OT would be reset to 0.
     if(records.some(r=>!Object.prototype.hasOwnProperty.call(r,"otHours")))throw Error("ระบบฝั่งเซิร์ฟเวอร์ยังไม่อัปเดต กรุณาลองใหม่ภายหลัง");
     const old=records.find(r=>r.name===x.name)||{};
-    const items=records.filter(r=>r.name!==x.name).map(r=>({name:r.name,type:r.type,rate:Number(r.rate)||0,present:r.present==="มา",
-      timeIn:r.timeIn||"",timeOut:r.timeOut||"",dayFactor:Number(r.dayFactor)===.5?.5:1,dayType:r.dayType||"",
-      otHours:Number(r.otHours)||0,otStart:hhmm(r.otStart),otEnd:hhmm(r.otEnd),otReason:r.otReason||"",note:r.note||"",location:r.location||""}));
+    const items=[];
     // Half day: the chosen leaving time decides the paid extra hours. Otherwise ordinary OT that was
     // approved on the daily page is kept, while extra hours of a former half day are dropped.
     const halfHours=x.present&&x.dayFactor===.5?hoursAfterHalfDay(x.halfEnd):0,oldHalfExtra=hhmm(old.otStart)===HALF_DAY_END;
@@ -326,7 +326,7 @@ function loadMonth(root,key,{prefetch=false}={}){
   S.monthRequests[key]=request;
   return request;
 }
-async function saveDay(root){let reason=root.querySelector("#reason")?.value.trim()||"";if(S.day<today()&&!reason)return S.toast("กรุณาระบุเหตุผลการแก้ไขย้อนหลัง");let items=[...root.querySelectorAll(".pwa-att-card")].map(c=>{const dayFactor=Number(c.querySelector('[data-k="factor"]')?.value)||1;return {name:c.dataset.name,type:c.dataset.type,rate:Number(c.dataset.rate)||0,present:c.dataset.present==="true",timeIn:c.querySelector('[data-k="in"]')?.value||"",timeOut:c.querySelector('[data-k="out"]')?.value||"",dayFactor,dayType:dayFactor===.5?"ครึ่งวัน":"เต็มวัน",otHours:Number(c.querySelector('[data-k="ot"]')?.value)||0,otStart:c.querySelector('[data-k="otStart"]')?.value||"",otEnd:c.querySelector('[data-k="otEnd"]')?.value||"",otReason:reason||(dayFactor===.5&&hhmm(c.querySelector('[data-k="otStart"]')?.value)===HALF_DAY_END?`ครึ่งวัน ทำงานเพิ่มถึง ${c.querySelector('[data-k="otEnd"]')?.value||""} น.`:""),note:c.querySelector('[data-k="note"]')?.value||""};});for(let x of items){if(x.timeIn&&x.timeOut&&x.timeOut<x.timeIn)return S.toast(`เวลาออกของ ${x.name} ต้องไม่ก่อนเวลาเข้า`);if(x.otHours>0&&!x.present)return S.toast(`ไม่สามารถบันทึก OT ให้ ${x.name} ที่ไม่มาทำงานได้`)}S.saving=true;render(root);try{let r=await S.api.workshopSaveAttendance(S.token,{targetDate:S.day,items,reason}),o=r.result;if(!r.ok||!o?.success)throw Error(o?.message||r.message);delete S.daily[S.day];const changedMonth=S.day.slice(0,7);S.monthGeneration++;clearTimeout(S.monthPrefetchTimer);S.monthRequests={};delete S.months[changedMonth];delete S.monthFetchedAt[changedMonth];invalidateWages();S.toast(o.message||"บันทึกสำเร็จ");loadDay(root)}catch(x){S.toast(`❌ ${x.message||x}`)}finally{S.saving=false;render(root)}}
+async function saveDay(root){let reason=root.querySelector("#reason")?.value.trim()||"";if(S.day<today()&&!reason)return S.toast("กรุณาระบุเหตุผลการแก้ไขย้อนหลัง");/* Only cards the owner changed are sent: the server replaces just those workers, so a QR check-in made after this page was opened is kept. */const changed=[...root.querySelectorAll(".pwa-att-card")].filter(c=>attCardState(c)!==c.dataset.initial);if(!changed.length)return S.toast("ยังไม่มีการเปลี่ยนแปลง");let items=changed.map(c=>{const dayFactor=Number(c.querySelector('[data-k="factor"]')?.value)||1;return {name:c.dataset.name,type:c.dataset.type,rate:Number(c.dataset.rate)||0,present:c.dataset.present==="true",timeIn:c.querySelector('[data-k="in"]')?.value||"",timeOut:c.querySelector('[data-k="out"]')?.value||"",dayFactor,dayType:dayFactor===.5?"ครึ่งวัน":"เต็มวัน",otHours:Number(c.querySelector('[data-k="ot"]')?.value)||0,otStart:c.querySelector('[data-k="otStart"]')?.value||"",otEnd:c.querySelector('[data-k="otEnd"]')?.value||"",otReason:reason||(dayFactor===.5&&hhmm(c.querySelector('[data-k="otStart"]')?.value)===HALF_DAY_END?`ครึ่งวัน ทำงานเพิ่มถึง ${c.querySelector('[data-k="otEnd"]')?.value||""} น.`:""),note:c.querySelector('[data-k="note"]')?.value||""};});for(let x of items){if(x.timeIn&&x.timeOut&&x.timeOut<x.timeIn)return S.toast(`เวลาออกของ ${x.name} ต้องไม่ก่อนเวลาเข้า`);if(x.otHours>0&&!x.present)return S.toast(`ไม่สามารถบันทึก OT ให้ ${x.name} ที่ไม่มาทำงานได้`)}S.saving=true;render(root);try{let r=await S.api.workshopSaveAttendance(S.token,{targetDate:S.day,items,reason}),o=r.result;if(!r.ok||!o?.success)throw Error(o?.message||r.message);delete S.daily[S.day];const changedMonth=S.day.slice(0,7);S.monthGeneration++;clearTimeout(S.monthPrefetchTimer);S.monthRequests={};delete S.months[changedMonth];delete S.monthFetchedAt[changedMonth];invalidateWages();S.toast(o.message||"บันทึกสำเร็จ");loadDay(root)}catch(x){S.toast(`❌ ${x.message||x}`)}finally{S.saving=false;render(root)}}
 function invalidateWages(){S.wageGeneration++;clearTimeout(S.wagePrefetchTimer);clearTimeout(S.wageInitialTimer);S.wages={};S.wageRequests={};S.wageLoadedAt={};S.wageStale={};S.wageErrors={};S.wageLocal={};S.localNeedsSync=true;document.body.classList.remove("pwa-refreshing");}
 function queueInitialWage(root){
   clearTimeout(S.wageInitialTimer);

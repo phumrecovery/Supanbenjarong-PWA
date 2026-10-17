@@ -29,3 +29,5 @@
 /* Keep the mobile POS cart control attached to the viewport.  It is mounted
    in the shared floating layer rather than after the scrolling product grid. */
 @media(max-width:767px){.floating-layer .cart-floating{position:fixed!important;inset:auto 0 0!important;bottom:env(safe-area-inset-bottom,0)!important;transform:translateZ(0);min-height:76px;padding:13px 20px;font-size:20px}}
+
+.product-saving{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:#fff3cd;color:#5b4300;font-size:11px;font-weight:700;vertical-align:middle}
