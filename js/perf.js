@@ -6,7 +6,7 @@
 // Records are sent in small batches to the "วัดความเร็วแอป" sheet. Nothing a
 // user typed, no PIN and no page data is included. It switches itself off at
 // PERF_UNTIL; remove this module and its hooks after the analysis.
-const PERF_UNTIL=Date.parse("2026-10-20T00:00:00+07:00");
+const PERF_UNTIL=Date.parse("2026-10-27T00:00:00+07:00");
 const MAX_QUEUE=300,BATCH=60,FLUSH_MS=45000;
 export const perfOn=()=>Date.now()<PERF_UNTIL;
 
