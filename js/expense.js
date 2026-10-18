@@ -41,10 +41,15 @@ const matByCode=(d,mode,code)=>(mode==="ของขาว"?d.whitewares:d.rawMa
 export async function renderExpense(root,api,session,onBack,context={}){
   runtime={api,session,back:onBack,toast:context.toast||(()=>{}),root,user:(context.displayUser||{}).name||""};
   const appHeader=document.querySelector("#appHeader");if(appHeader){appHeader.setAttribute("hidden","");appHeader.style.display="none";}
+  // Level 1: open at once from the copy kept on this device (lists, latest entries, month
+  // summary), then take Google's copy in the background. Saving still goes to Google.
+  let fromDevice=false;
+  if(!state.data){const last=api.lastBootstrap?.("expenseBootstrap",session);if(last?.ok){const tx=api.lastBootstrap?.("expenseTransactions",session);state.data={...(last.result||{}),...(tx?.ok?(tx.result||{}):{})};fromDevice=true;}}
   if(!state.data){state.loading=true;draw();try{const r=await api.expenseBootstrap(session);if(!r.ok)throw new Error(r.message||"โหลดข้อมูลไม่สำเร็จ");state.data=r.result||{};}catch(error){if(!active())return;root.innerHTML=`<section class="expense-failure"><h1>เปิดหน้าค่าใช้จ่ายไม่สำเร็จ</h1><p>${esc(error.message||error)}</p><button data-exp="back">← กลับ</button></section>`;root.onclick=evt=>onClick(evt);return;}finally{state.loading=false;}draw();queueTransactions();queueSupport();return;}
   // Render cached master data immediately, then quietly revalidate it.
   draw();
-  api.expenseBootstrap(session).then(r=>{if(r.ok&&runtime.root===root){state.data={...state.data,...(r.result||{})};draw();queueTransactions();queueSupport();}}).catch(()=>{});
+  if(fromDevice)document.body.classList.add("pwa-refreshing");
+  api.expenseBootstrap(session).then(r=>{if(r.ok&&runtime.root===root){state.data={...state.data,...(r.result||{})};draw();return queueTransactions();}}).catch(()=>{}).finally(()=>{if(fromDevice)document.body.classList.remove("pwa-refreshing");queueSupport();});
 }
 
 function queueTransactions(){

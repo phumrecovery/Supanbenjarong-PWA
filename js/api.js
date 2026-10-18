@@ -20,7 +20,7 @@ function onceWrite(all){try{sessionStorage.setItem(ONCE_STORE,JSON.stringify(all
 // local wage/report snapshots) until logout, so Product, Stock, Workshop, Preorder, Settings and Receipts paint
 // at once even right after the app is reopened, then refresh from GAS.
 const BOOT_DB="suphan-local-data",BOOT_STORE="snapshots",BOOT_PREFIX="boot:",BOOT_MAX_AGE=7*24*60*60*1000;
-const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap","workshopBootstrap","preorderBootstrap"]);
+const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap","workshopBootstrap","preorderBootstrap","expenseBootstrap","expenseTransactions","outsourceBootstrap"]);
 function bootDb(){
   return new Promise((resolve,reject)=>{
     const request=indexedDB.open(BOOT_DB,1);
@@ -287,7 +287,8 @@ export class ApiClient {
   // recent records.  It is read-only and can exceed the generic 15s timeout
   // when Apps Script is cold, so allow one safe retry instead of leaving the
   // Receive/Pay list in its perpetual loading state.
-  expenseTransactions(session){return this.request({action:"expenseTransactions",session},45000,{retries:1,retryLogical:true});}
+  // Kept on the device (see PERSIST_ACTIONS) so the expense page can open from it at once.
+  expenseTransactions(session){return this.warmRead("expenseTransactions",session,15_000,45000,1);}
   expenseSupport(session){return this.request({action:"expenseSupport",session});}
   expenseAdd(session,expense){return this.request({action:"expenseAdd",session,expense});}
   expenseAddMany(session,expenses){return this.request({action:"expenseAddMany",session,expenses},60000);}
@@ -317,7 +318,7 @@ export class ApiClient {
   investmentDelete(session,row){return this.request({action:"investmentDelete",session,row});}
   expenseMonthSummary(session,month,year){return this.request({action:"expenseMonthSummary",session,month,year});}
   expenseUploadImage(session,data,fileName){return this.request({action:"expenseUploadImage",session,data,fileName},60000);}
-  outsourceBootstrap(session){return this.request({action:"outsourceBootstrap",session},30000);}
+  outsourceBootstrap(session){return this.warmRead("outsourceBootstrap",session,15_000,30000,0);}
   outsourceOrderSave(session,data){return this.request({action:"outsourceOrderSave",session,data},30000);}
   outsourcePurchaseSave(session,data){return this.request({action:"outsourcePurchaseSave",session,data},30000);}
   outsourceReceiveSave(session,data){return this.request({action:"outsourceReceiveSave",session,data},30000);}
