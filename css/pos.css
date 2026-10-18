@@ -134,3 +134,6 @@
 
 /* the cart sheet is rebuilt on every tap: only its first appearance slides in */
 .mobile-cart-overlay.steady,.mobile-cart-overlay.steady .mobile-cart-sheet{animation:none!important}
+.pwa-bill-pending{color:#8a5a00}
+.pwa-bill-note{margin:4px 0 12px;color:#5f5347;font-size:13.5px;line-height:1.5}
+.pwa-success-modal button[disabled]{opacity:.55;cursor:wait}

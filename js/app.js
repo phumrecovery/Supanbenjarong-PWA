@@ -1,5 +1,5 @@
 import {ApiClient} from "./api.js?v=api-v30";
-import {renderPos} from "./pos.js?v=pos-v31";
+import {renderPos,resumePosQueue,posQueueSignOut} from "./pos.js?v=pos-v32";
 import {renderProduct} from "./product.js?v=product-v8";
 import {renderStock} from "./stock.js?v=stock-v7";
 import {renderExpense} from "./expense.js?v=expense-v20";
@@ -126,6 +126,8 @@ ApiClient.onTiming=perfApi;perfStart(api,()=>sessionToken);
 function loadSavedPages(owner){return Promise.race([api.loadPersisted(owner).catch(()=>{}),new Promise(resolve=>setTimeout(resolve,400))]);}
 
 function schedulePriorityWarmup(token,flow){
+  // Bills kept on this device continue for every user (sales-only staff included).
+  try{resumePosQueue(api,token,showToast,currentSession?.level);}catch(error){}
   if(!token||!hasFamilyAccess()||priorityWarmupToken===token)return;
   priorityWarmupToken=token;
   // Confirmations queued on this device last time continue in the background.
@@ -644,7 +646,7 @@ async function returnLimitedPosToLogin(){
   homeData=null;
   history.replaceState({route:"home"},"","#home");
   showLogin("");
-  try{if(token)await api.logout(token);}catch(error){}
+  if(token)posQueueSignOut(token,()=>api.logout(token).catch(()=>{}));
 }
 window.addEventListener("popstate",()=>{render(currentRoute(),{animate:true});window.scrollTo(0,0);});
 // Product mutations must never leave dashboard/POS master data looking current.
@@ -731,7 +733,7 @@ function logoutFromSidebar(){
   displayUser=null;
   homeData=null;
   showLogin("ออกจากระบบแล้ว");
-  if(token) api.logout(token).catch(()=>{});
+  if(token) posQueueSignOut(token,()=>api.logout(token).catch(()=>{}));
 }
 document.querySelector("#logout").addEventListener("click",logoutFromSidebar);
 // The server refused the session (it lasts 6 hours). Back to the PIN screen with a clear reason.

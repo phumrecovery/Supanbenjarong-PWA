@@ -9,16 +9,17 @@ let runtime={api:null,session:"",onBack:null,level:"",userName:"",root:null};
 export async function renderPos(root,api,session,onBack,context={}){
   if(runtime.session&&runtime.session!==session)state=initialState();
   runtime={api,session,onBack,level:context.level||"",userName:(context.displayUser&&context.displayUser.name)||(context.user&&context.user.name)||"",root};
+  resumePosQueue(api,session,null,runtime.level);
   const header=document.querySelector("#appHeader");
   if(header){header.hidden=true;header.style.display="none";}
   // Paint the warm-up/last catalog at once, then refresh it: the kept catalog
   // used to be reused unchanged for the whole login, so stock counts drifted.
   const lastPos=!state.data&&api.lastBootstrap?.("posBootstrap",session);
-  if(lastPos)state.data=lastPos;
+  if(lastPos)state.data=withPending(lastPos,0);
   const shownCached=!!state.data;
   if(!state.data){
     root.innerHTML='<section class="pos-loading"><span class="spinner"></span><p>กำลังโหลดข้อมูล...</p></section>';
-    try{state.data=await api.posBootstrap(session);}catch(error){if(!root.isConnected||root.dataset.route!=="sales")return;root.innerHTML='<section class="card pos-load-failure"><h1>เปิดหน้าขายของไม่สำเร็จ</h1><p class="hint">ไม่สามารถโหลดสินค้าหน้าร้านได้ โปรดลองใหม่อีกครั้ง</p><button type="button" data-pos-retry>ลองโหลดอีกครั้ง</button></section>';root.querySelector("[data-pos-retry]")?.addEventListener("click",()=>{state.data=null;void renderPos(root,api,session,onBack,context);});return;}
+    try{const since=Date.now();state.data=withPending(await api.posBootstrap(session),since);}catch(error){if(!root.isConnected||root.dataset.route!=="sales")return;root.innerHTML='<section class="card pos-load-failure"><h1>เปิดหน้าขายของไม่สำเร็จ</h1><p class="hint">ไม่สามารถโหลดสินค้าหน้าร้านได้ โปรดลองใหม่อีกครั้ง</p><button type="button" data-pos-retry>ลองโหลดอีกครั้ง</button></section>';root.querySelector("[data-pos-retry]")?.addEventListener("click",()=>{state.data=null;void renderPos(root,api,session,onBack,context);});return;}
   }
   draw(root);
   if(shownCached)refreshPosInBackground(root,session);
@@ -33,16 +34,133 @@ function posIdle(root){
   if(active&&root.contains(active)&&/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))return false;
   return state.step===0&&!state.submitting&&!state.printOpen&&!state.shippingOpen&&!state.showBackdatePicker&&!state.editingDiscount&&!state.categoryOrderMode&&!root.querySelector(".legacy-pos-modal");
 }
-function refreshPosInBackground(root,session){
+function refreshPosInBackground(root,session,force){
   if(state.refreshing)return;
   state.refreshing=true;
+  if(force)runtime.api.clearWarmCache?.();
   document.body.classList.add("pwa-refreshing");
+  const since=Date.now();
   runtime.api.posBootstrap(session).then(data=>{
     if(runtime.session!==session||!data||data.ok===false)return;
-    state.data=data;
+    state.data=withPending(data,since);
     if(root.isConnected&&root.dataset.route==="sales"&&posIdle(root))draw(root);
   }).catch(()=>{}).finally(()=>{state.refreshing=false;document.body.classList.remove("pwa-refreshing");});
 }
+
+// ── Level 2 (Oct 2026): today's sale is kept on this device first ──
+// Pressing pay writes the bill here and the cashier carries on at once (the save used to keep
+// them waiting 5-15 s). Bills go to Google one at a time in the order they were sold. Google
+// still checks and deducts stock and is the only issuer of bill numbers, so the print button
+// waits for the number. The request id makes a repeated send safe: Google answers with the bill
+// it already saved. The queue survives closing the app and continues after the next sign-in,
+// with the token of the person who sold it or, once that has ended, whoever is signed in.
+// Backdated sales still wait for Google (owner only, rare, nobody waiting at the counter).
+const SQ_KEY="suphan.pos.saleQueue.v1";
+const sq={items:sqLoad(),busy:false,api:null,token:"",toast:null,level:"",timer:0,recent:[]};
+function sqLoad(){try{const v=JSON.parse(localStorage.getItem(SQ_KEY)||"[]");return Array.isArray(v)?v.filter(x=>x&&x.id&&x.sale).map(x=>({...x,state:x.state==="failed"?"failed":"waiting"})):[];}catch{return [];}}
+function sqSave(){try{localStorage.setItem(SQ_KEY,JSON.stringify(sq.items.map(x=>({...x,state:x.state==="failed"?"failed":"waiting"}))));return true;}catch{return false;}}
+// Like Google, made-to-order products are not taken out of stock.
+function saleNeed(items){const need={},made=code=>String((state.data?.products||[]).find(p=>p.code===code)?.biz||"").includes("สั่งทำ");items.forEach(i=>{const qty=Number(i.qty)||0,pkg=Number(i.pkgQty)||0;if(i.code&&qty>0&&!made(i.code))need[i.code]=(need[i.code]||0)+qty;if(i.pkgCode&&pkg>0)need[i.pkgCode]=(need[i.pkgCode]||0)+pkg;});return need;}
+function takeStock(data,need){if(!data?.ok||!Object.keys(need).length)return data;const take=list=>Array.isArray(list)?list.map(p=>need[p.code]?{...p,stock:Math.max(0,(Number(p.stock)||0)-need[p.code])}:p):list;return {...data,products:take(data.products),packaging:take(data.packaging)};}
+// Stock shown = Google's figure minus the bills Google had not counted when it was read: every
+// bill still on this device, plus bills saved after that read started.
+function withPending(data,since){
+  const need={},add=n=>Object.entries(n||{}).forEach(([code,qty])=>{need[code]=(need[code]||0)+(Number(qty)||0);});
+  sq.recent=sq.recent.filter(x=>x.doneAt>Date.now()-10*60000);
+  sq.items.forEach(x=>add(x.need));
+  sq.recent.forEach(x=>{if(x.doneAt>=since)add(x.need);});
+  return takeStock(data,need);
+}
+function sqWaiting(){return sq.items.filter(x=>x.state!=="failed");}
+function sqFailed(){return sq.items.filter(x=>x.state==="failed");}
+function sqText(){const waiting=sqWaiting().length,failed=sqFailed().length;return [waiting?(sq.items.some(x=>x.state==="sending")?"📤 กำลังส่งบิลเข้าระบบ":"📤 รอส่งบิลเข้าระบบ")+` ${waiting} บิล`:"",failed?`⚠️ ส่งบิลไม่สำเร็จ ${failed} บิล · แตะเพื่อดู`:""].filter(Boolean).join(" · ");}
+function sqBadge(){
+  let el=document.querySelector("#pwaSaleQueue");const text=sqText();
+  if(!text){el?.remove();return;}
+  if(!el){el=document.createElement("button");el.type="button";el.id="pwaSaleQueue";el.className="pwa-sq-pill";el.setAttribute("role","status");el.addEventListener("click",sqShowFailures);document.body.append(el);}
+  el.textContent=text;el.classList.toggle("has-failed",sqFailed().length>0);
+}
+function sqTransient(code,message){return /WRITE_TIMEOUT|REQUEST_TIMEOUT|INVALID_RESPONSE|NETWORK|GATEWAY|HTTP_5|RATE/i.test(String(code||""))||/Failed to fetch|NetworkError|Load failed|network|ขัดข้องชั่วคราว|ตอบกลับผิดรูปแบบ|ช้ากว่าปกติ|นานเกินไป|หมดเวลาการล็อก|lock|Service invoked too many|Exceeded maximum execution|ลองใหม่/i.test(String(message||""));}
+async function sqPump(){
+  if(sq.busy||!sq.api)return;
+  const item=sq.items.find(x=>x.state==="waiting");
+  clearTimeout(sq.timer);
+  if(!item){sqBadge();return;}
+  const wait=(item.retryAt||0)-Date.now();
+  if(wait>0){sq.timer=setTimeout(sqPump,wait);sqBadge();return;}
+  const token=item.useCurrent?sq.token:(item.token||sq.token);
+  if(!token){sqBadge();return;}
+  if(navigator.onLine===false){sqBadge();return;}
+  sq.busy=true;item.state="sending";sqBadge();
+  let outcome="retry",message="",result=null;
+  try{
+    const r=await sq.api.request({action:"saveSale",session:token,sale:{...item.sale,soldBy:item.seller||""},requestId:item.id},45000);
+    if(r?.ok&&r.result?.billNo){outcome="done";result=r.result;}
+    else if(/SESSION|USER_REQUIRED/.test(String(r?.error||""))){
+      // The seller's sign-in has ended (or they signed out): send it with whoever is signed in.
+      if(!item.useCurrent&&sq.token&&sq.token!==item.token){item.useCurrent=true;outcome="again";}
+      else{item.useCurrent=true;outcome="pause";}
+    }else{
+      message=String(r?.message||r?.error||"บันทึกบิลไม่สำเร็จ");
+      outcome=sqTransient(r?.error,message)?"retry":"failed";
+    }
+  }catch(error){
+    // No answer: Google may or may not have saved it. Sending the same request id again is safe.
+    message=String(error?.message||error||"เชื่อมต่อไม่สำเร็จ");outcome="retry";
+  }
+  sq.busy=false;
+  if(outcome==="again"||outcome==="pause"){item.state="waiting";sqSave();sqBadge();if(outcome==="again")setTimeout(sqPump,0);return;}
+  if(outcome==="retry"){item.attempts=(item.attempts||0)+1;item.retryAt=Date.now()+Math.min(60000,5000*item.attempts);item.message=message;item.state="waiting";sqSave();sqBadge();setTimeout(sqPump,0);return;}
+  if(outcome==="failed"){item.state="failed";item.message=message;sqSave();sqBadge();sqShowFailures();setTimeout(sqPump,0);return;}
+  sq.items=sq.items.filter(x=>x!==item);sq.recent.push({need:item.need,doneAt:Date.now()});sqSave();sqBadge();
+  sqDone(item,result);
+  setTimeout(sqPump,0);
+}
+// Google gave the bill its number: show it where the cashier can still see the bill.
+function sqDone(item,result){
+  const showing=state.lastBill&&state.lastBill.queueId===item.id;
+  if(showing){Object.assign(state.lastBill,{billNo:result.billNo,date:result.date||state.lastBill.date,time:result.time||"",pending:false});const root=runtime.root;if(state.successOpen&&root?.isConnected&&root.dataset.route==="sales"&&!state.printOpen)draw(root);}
+  const fixed=Array.isArray(result.adjustedItems)&&result.adjustedItems.length&&result.stockShortageFixed;
+  const names=fixed?result.adjustedItems.map(x=>`${(state.data?.products||[]).find(p=>p.code===x.code)?.name||x.code} ${x.qty} ชิ้น`).join(", "):"";
+  if(fixed)sq.toast?.(`ℹ️ บิล ${result.billNo}: ยอดสต๊อกในระบบน้อยกว่าที่ขายจริง ระบบเพิ่มสต๊อกให้อัตโนมัติ (${names})`);
+  else if(!showing&&(item.attempts||item.useCurrent))sq.toast?.(`✅ ส่งบิล ${result.billNo} (฿${money(item.netTotal)}) เข้าระบบแล้ว`);
+}
+function sqShowFailures(){
+  const failed=sqFailed();document.querySelector(".pwa-sq-failures")?.remove();
+  if(!failed.length)return;
+  const family=(sq.level||runtime.level)==="family";
+  const box=document.createElement("div");box.className="pwa-error-dialog pwa-sq-failures";box.setAttribute("role","alertdialog");box.setAttribute("aria-modal","true");
+  const when=x=>{const d=new Date(x.soldAt);return isNaN(d)?"":d.toLocaleString("th-TH",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+" น.";};
+  box.innerHTML=`<section><h2>⚠️ ส่งบิลเข้าระบบไม่สำเร็จ ${failed.length} บิล</h2><p class="pwa-sq-hint">บิลเหล่านี้ยังเก็บอยู่ในเครื่องนี้ ยังไม่มีเลขบิลและยังไม่ได้ตัดสต๊อก</p><div class="pwa-sq-list">${failed.map(x=>{const plain=window.pwaFriendlyError?.(x.message)||{message:x.message,todo:""};let items=[];try{items=JSON.parse(x.sale.itemsJSON||"[]");}catch{}return `<article data-id="${escAttr(x.id)}"><b>ขายเมื่อ ${esc(when(x))} · ฿${money(x.netTotal)} · ${esc(x.seller||"")}</b><span>${esc(items.map(i=>`${i.name} x${i.qty}`).join(", "))}</span><p>${esc(plain.message||x.message)}</p>${plain.todo?`<p class="pwa-hq-todo"><b>ควรทำอย่างไร:</b> ${esc(plain.todo)}</p>`:""}<div><button type="button" data-sq="retry">🔁 ส่งใหม่</button>${family?'<button type="button" data-sq="drop" class="danger">🗑 ลบบิลนี้</button>':""}</div></article>`;}).join("")}</div>${family?"":'<p class="pwa-sq-hint">ถ้าส่งใหม่แล้วยังไม่สำเร็จ กรุณาแจ้งเจ้าของร้าน</p>'}<button type="button" data-sq="close">ปิด</button></section>`;
+  box.addEventListener("click",event=>{
+    const button=event.target.closest("button[data-sq]");if(!button)return;
+    const act=button.dataset.sq,id=button.closest("article")?.dataset.id,item=sq.items.find(x=>x.id===id);
+    if(act==="close"){box.remove();return;}
+    if(!item)return;
+    if(act==="retry"){item.state="waiting";item.attempts=0;item.retryAt=0;item.useCurrent=item.useCurrent||!item.token;sqSave();box.remove();sqBadge();void sqPump();return;}
+    if(act==="drop"){
+      // Two taps: the bill is money taken at the counter.
+      if(button.dataset.confirm!=="1"){button.dataset.confirm="1";button.textContent="แตะอีกครั้งเพื่อยืนยันลบ (ไม่ได้ขายจริง)";return;}
+      sq.items=sq.items.filter(x=>x!==item);sqSave();box.remove();sqBadge();sqShowFailures();
+      const root=runtime.root;if(root?.isConnected&&root.dataset.route==="sales")refreshPosInBackground(root,runtime.session,true);
+    }
+  });
+  document.body.append(box);
+}
+// Called by the app shell after every sign-in, and when this page opens.
+export function resumePosQueue(api,token,toast,level){sq.api=api||sq.api;if(token)sq.token=token;if(toast)sq.toast=toast;if(level)sq.level=level;sqBadge();if(sq.items.length)setTimeout(sqPump,800);}
+// Signing out must not cut off bills still waiting under that sign-in: the server-side sign-out
+// waits until they are sent (at most 10 minutes), then runs.
+export function posQueueSignOut(token,revoke){
+  if(sq.token===token)sq.token="";
+  const holds=()=>sq.items.some(x=>x.state!=="failed"&&!x.useCurrent&&x.token===token);
+  if(!holds()){revoke();return;}
+  const until=Date.now()+10*60000,check=()=>{if(!holds()||Date.now()>until){revoke();return;}setTimeout(check,3000);};
+  setTimeout(check,3000);
+}
+window.addEventListener("online",()=>void sqPump());
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")void sqPump();});
+window.addEventListener("beforeunload",event=>{if(sqWaiting().length){event.preventDefault();event.returnValue="";}});
 
 function closeEmptyCart(){
   if(state.cart.length)return;
@@ -139,7 +257,7 @@ function bindFloatingCart(layer){
   },true);
 }
 function errorMarkup(message){return `<div class="legacy-pos-modal pwa-result-modal"><section><h2>⚠️ บันทึกบิลไม่สำเร็จ</h2><p>${esc(message)}</p><div><button type="button" data-action="close-error">รับทราบ</button></div></section></div>`;}
-function successMarkup(){const bill=state.lastBill||{},change=state.payIndex===0&&Number(state.cash)>0?Math.max(0,Number(state.cash)-Number(bill.netTotal||0)):null;return `<div class="legacy-pos-modal pwa-success-modal"><section><div class="success-icon">✅</div><h2>บันทึกสำเร็จ!</h2><div class="pwa-bill-info"><strong>เลขบิล: ${esc(bill.billNo||"-")}</strong><span>วันที่ขาย: ${esc(bill.date||"")}</span><b>฿${money(bill.netTotal)}</b><span>${Number(bill.pcs)||0} ชิ้น | ${esc(bill.payment||"")}</span>${change!==null?`<em>💰 เงินทอน ฿${money(change)}</em>`:""}</div><div><button type="button" data-action="open-print">🖨️ พิมพ์ใบเสร็จ</button><button type="button" data-action="new-sale">🧾 ขายต่อ</button></div></section></div>`;}
+function successMarkup(){const bill=state.lastBill||{},change=state.payIndex===0&&Number(state.cash)>0?Math.max(0,Number(state.cash)-Number(bill.netTotal||0)):null;return `<div class="legacy-pos-modal pwa-success-modal"><section><div class="success-icon">✅</div><h2>บันทึกสำเร็จ!</h2><div class="pwa-bill-info"><strong>เลขบิล: ${bill.pending?'<span class="pwa-bill-pending">⏳ กำลังขอเลขบิลจากระบบ…</span>':esc(bill.billNo||"-")}</strong><span>วันที่ขาย: ${esc(bill.date||"")}</span><b>฿${money(bill.netTotal)}</b><span>${Number(bill.pcs)||0} ชิ้น | ${esc(bill.payment||"")}</span>${change!==null?`<em>💰 เงินทอน ฿${money(change)}</em>`:""}</div>${bill.pending?'<p class="pwa-bill-note">บิลเก็บในเครื่องแล้ว ขายบิลต่อไปได้เลย · ปุ่มพิมพ์จะกดได้เมื่อได้เลขบิล (ถ้าขายต่อไปก่อน พิมพ์ได้ที่เมนูพิมพ์/ยกเลิกใบเสร็จย้อนหลัง)</p>':""}<div><button type="button" data-action="open-print"${bill.pending?" disabled":""}>${bill.pending?"⏳ รอเลขบิล…":"🖨️ พิมพ์ใบเสร็จ"}</button><button type="button" data-action="new-sale">🧾 ขายต่อ</button></div></section></div>`;}
 function printOptionsMarkup(){return `<div class="legacy-pos-modal pwa-print-modal"><section><h2>🖨️ พิมพ์ใบเสร็จ</h2><label class="pwa-buyer-toggle"><input type="checkbox" data-buyer-enabled ${state.buyerEnabled?"checked":""}> ใส่ข้อมูลผู้ซื้อ</label><div class="pwa-buyer-fields ${state.buyerEnabled?"":"hidden"}"><label>ชื่อผู้ซื้อ / บริษัท<input type="text" data-buyer-name data-recent="buyer" autocomplete="off" placeholder="เช่น บริษัท ABC จำกัด"></label><label>ที่อยู่<input type="text" data-buyer-addr placeholder="ที่อยู่ออกใบเสร็จ"></label><label>เลขผู้เสียภาษี<input type="text" data-buyer-tax placeholder="(ถ้ามี)"></label><label>เบอร์โทร<input type="text" data-buyer-phone placeholder="(ถ้ามี)"></label></div><p class="pwa-print-label">📄 ขนาดกระดาษ</p><div class="pwa-print-sizes">${[["size-a4","A4"],["size-a5","A5"],["size-80mm","🧾 80mm"]].map(([value,label])=>`<button type="button" class="${state.printSize===value?"active":""}" data-print-size="${value}">${label}</button>`).join("")}</div><div><button type="button" data-action="close-print">ยกเลิก</button><button type="button" data-action="print-bill">🖨️ พิมพ์</button></div></section></div>`;}
 function categoryButtons(categories){if(state.categoryOrderMode)return `<button class="legacy-category-btn order-all" type="button" disabled>ทั้งหมด</button>${categories.map(value=>`<button class="legacy-category-btn" type="button" data-category-order="${escAttr(value)}" role="tab">☰ ${esc(value)}</button>`).join("")}`;return ["",...categories].map(value=>`<button class="legacy-category-btn ${state.category===value?"active":""}" type="button" data-category="${escAttr(value)}" role="tab">${value?esc(value):"ทั้งหมด"}</button>`).join("");}
 function filteredProducts(products){const term=state.query.trim().toLocaleLowerCase("th");return products.filter(product=>{if(state.category&&product.category!==state.category)return false;return !term||[product.code,product.name,product.pattern,product.size,product.category].join(" ").toLocaleLowerCase("th").includes(term);}).slice(0,120);}
@@ -310,7 +428,7 @@ function handleClick(button,root){
   const action=button.dataset.action;
   if(action==="submit-sale"){void submitSale(root);return;}
   if(action==="close-error"){state.submitError="";draw(root);return;}
-  if(action==="open-print"){state.printOpen=true;draw(root);return;}
+  if(action==="open-print"){if(state.lastBill?.pending)return;state.printOpen=true;draw(root);return;}
   if(action==="close-print"){state.printOpen=false;draw(root);return;}
   if(action==="print-bill"){printBill(root);return;}
   if(action==="new-sale"){void newSale(root);return;}
@@ -352,6 +470,7 @@ async function submitSale(root){
   try{window.SuphanSound?.success();}catch(error){}
   if(!state.cart.length){state.submitError="ยังไม่มีสินค้าในตะกร้า";try{window.SuphanSound?.error();}catch(error){}draw(root);return;}
   if(state.backdate&&!state.backdateValue){state.submitError="กรุณาเลือกวันที่ขายย้อนหลัง";try{window.SuphanSound?.error();}catch(error){}draw(root);return;}
+  if(!state.backdate&&queueSale(root))return;
   state.submitting=true;state.submitError="";state.requestId=state.requestId||newRequestId();draw(root);
   const sale=buildSalePayload();
   try{
@@ -361,8 +480,25 @@ async function submitSale(root){
     state.successOpen=true;draw(root);
   }catch(error){state.submitting=false;state.submitError=String(error&&error.message?error.message:error);try{window.SuphanSound?.error();}catch(ignore){}draw(root);}
 }
+// Keep the bill on this device and move on; returns false when the device cannot store it
+// (private window / storage full), and the sale then waits for Google as before.
+function queueSale(root){
+  const total=totals(),items=buildSaleItems(),id=state.requestId||newRequestId();
+  state.requestId=id;
+  const sale={...buildSalePayload(),queued:true,soldAt:new Date().toISOString()};
+  const item={id,sale,token:runtime.session,seller:runtime.userName||"",soldAt:sale.soldAt,netTotal:total.net,need:saleNeed(items),attempts:0,state:"waiting"};
+  sq.items.push(item);
+  if(!sqSave()){sq.items.pop();return false;}
+  state.data=takeStock(state.data,item.need);
+  const d=new Date(),pad=n=>String(n).padStart(2,"0");
+  state.requestId="";state.mobileCartOpen=false;state.submitError="";
+  state.lastBill={pending:true,queueId:id,billNo:"",date:pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear(),netTotal:total.net,seller:runtime.userName||"ไม่ระบุ",items,pcs:total.pieces,payment:sale.payment,channel:sale.channel,shippingCost:total.shipping,discountType:state.discountType,lumpSum:state.discountType===1?(Number(state.lumpDiscount)||0):0,cash:state.cash};
+  state.successOpen=true;draw(root);
+  sqBadge();void sqPump();
+  return true;
+}
 async function newSale(root){
-  state.cart=[];state.step=0;state.cash=0;state.shipping=0;state.shippingOpen=false;state.discountType=0;state.discountAll=0;state.lumpDiscount=0;state.editingDiscount=null;state.unlockStock=false;state.backdate=false;state.backdateValue="";state.successOpen=false;state.printOpen=false;state.receiptHtml="";state.lastBill=null;state.data=null;
+  state.cart=[];state.step=0;state.cash=0;state.shipping=0;state.shippingOpen=false;state.discountType=0;state.discountAll=0;state.lumpDiscount=0;state.editingDiscount=null;state.unlockStock=false;state.backdate=false;state.backdateValue="";state.successOpen=false;state.printOpen=false;state.receiptHtml="";state.lastBill=null;
   await renderPos(root,runtime.api,runtime.session,runtime.onBack,{level:runtime.level,displayUser:{name:runtime.userName}});
 }
 function receiptMarkup(buyer){
