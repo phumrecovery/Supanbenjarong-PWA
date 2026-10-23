@@ -20,7 +20,7 @@ function onceWrite(all){try{sessionStorage.setItem(ONCE_STORE,JSON.stringify(all
 // local wage/report snapshots) until logout, so Product, Stock, Workshop, Preorder, Settings and Receipts paint
 // at once even right after the app is reopened, then refresh from GAS.
 const BOOT_DB="suphan-local-data",BOOT_STORE="snapshots",BOOT_PREFIX="boot:",BOOT_MAX_AGE=7*24*60*60*1000;
-const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap","workshopBootstrap","preorderBootstrap","expenseBootstrap","expenseTransactions","outsourceBootstrap"]);
+const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap","workshopBootstrap","preorderBootstrap","expenseBootstrap","expenseTransactions","outsourceBootstrap","homeBootstrap"]);
 function bootDb(){
   return new Promise((resolve,reject)=>{
     const request=indexedDB.open(BOOT_DB,1);
@@ -192,8 +192,12 @@ export class ApiClient {
   posCategoryOrder(session,categories){
     return this.request({action:"posCategoryOrder",session,categories},30000);
   }
-  homeBootstrap(session){
-    return this.request({action:"homeBootstrap",session});
+  // Home keeps its last answer on the device (with the time it was fetched, _at) so the sales
+  // box can show the latest known figures at once while the fresh ones load.
+  async homeBootstrap(session){
+    const result=await this.request({action:"homeBootstrap",session});
+    if(result?.ok){result._at=Date.now();this.lastGood.set("homeBootstrap:"+session+":{}",result);this.persistBoot("homeBootstrap",{},result);}
+    return result;
   }
   productBootstrap(session,layer="store"){
     // This is a read-only request: GAS/Sheets can briefly be cold or busy,

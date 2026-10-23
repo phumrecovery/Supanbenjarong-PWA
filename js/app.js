@@ -1,4 +1,4 @@
-import {ApiClient} from "./api.js?v=api-v31";
+import {ApiClient} from "./api.js?v=api-v32";
 import {renderPos,resumePosQueue,posQueueSignOut} from "./pos.js?v=pos-v32";
 import {renderProduct} from "./product.js?v=product-v8";
 import {renderStock} from "./stock.js?v=stock-v7";
@@ -86,7 +86,7 @@ function localDay(date=new Date()){return `${date.getFullYear()}-${String(date.g
 // Day the figures were fetched, by this device's clock (a copy fetched before midnight is not today's).
 function homeDay(){return homeDataAt?localDay(new Date(homeDataAt)):"";}
 function homeIsStale(){return !homeData||homeDirty||Date.now()-homeDataAt>HOME_FRESH_MS||homeDay()!==localDay();}
-function keepHomeData(data){homeData=data;homeDataAt=Date.now();homeDirty=false;}
+function keepHomeData(data){homeData=data;homeDataAt=Number(data?._at)||Date.now();homeDirty=false;}
 let homeExitTimer=0;
 let toastTimer=0;
 let audioContext=null;
@@ -498,6 +498,9 @@ function featuredMarkup(items){
   return items.map(item=>`<article class="featured-card">${item.img?`<img class="featured-image" loading="lazy" src="${escapeHtml(item.img)}" alt="" onerror="this.outerHTML='<div class=&quot;featured-fallback&quot;>🏺</div>'">`:'<div class="featured-fallback">🏺</div>'}<div class="featured-info"><div class="featured-name">${escapeHtml(item.name)}${item.size?` ${escapeHtml(item.size)}`:""}</div><div class="featured-pattern">${escapeHtml(item.pattern||"")}</div><div class="featured-price">฿${money(item.priceRetail)}</div></div></article>`).join("");
 }
 function renderHome(){
+  // Level 1: no figures yet in this sign-in, so show the copy kept on this device; the time line
+  // says how old it is (another day shows "…"), and the fresh figures load right after.
+  if(!homeData){const last=api.lastBootstrap?.("homeBootstrap",sessionToken);if(last?.ok&&last._at)keepHomeData(last);}
   const data=homeData||{};
   const shop=data.shop||{};
   const name=shop.name||"สุพรรณบุรีเบญจรงค์";
@@ -539,7 +542,7 @@ function renderHome(){
   if(homeIsStale())loadHomeData();
   scheduleHomePoll();
 }
-function homeUpdatedText(){if(!homeData||!homeDataAt)return "กำลังโหลดยอดล่าสุด…";const at=new Date(homeDataAt);return `${homeLoadingToken?"🔄 กำลังอัปเดต · ":""}ข้อมูล ณ ${String(at.getHours()).padStart(2,"0")}:${String(at.getMinutes()).padStart(2,"0")} น.`;}
+function homeUpdatedText(){if(!homeData||!homeDataAt)return "⏳ รอยอดล่าสุด…";const at=new Date(homeDataAt);return `${homeLoadingToken?"🔄 กำลังอัปเดต · ":""}ข้อมูล ณ ${String(at.getHours()).padStart(2,"0")}:${String(at.getMinutes()).padStart(2,"0")} น.`;}
 function scheduleHomePoll(){clearTimeout(homePollTimer);homePollTimer=setTimeout(()=>{if(activeRoute==="home"&&main.dataset.route==="home"&&document.visibilityState==="visible"&&sessionToken)loadHomeData();if(activeRoute==="home")scheduleHomePoll();},HOME_POLL_MS);}
 
 // Tabs left with a basic filter silently lose app writes; warn the owner.
