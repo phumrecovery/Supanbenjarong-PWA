@@ -18,7 +18,7 @@ import {clearLocalReport,syncLocalReport} from "./report-local.js?v=report-local
 import {installLoader,loaderFull} from "./loader.js?v=loader-v1";
 import "./recent.js?v=recent-v1";
 // Temporary speed measurement; remove with js/perf.js after the analysis.
-import {perfStart,perfApi,perfPage} from "./perf.js?v=perf-v7";
+import {perfStart,perfApi,perfPage} from "./perf.js?v=perf-v8";
 
 const api=new ApiClient();
 const main=document.querySelector("#main");
