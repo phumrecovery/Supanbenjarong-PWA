@@ -20,7 +20,7 @@ function onceWrite(all){try{sessionStorage.setItem(ONCE_STORE,JSON.stringify(all
 // local wage/report snapshots) until logout, so Product, Stock, Workshop, Preorder, Settings and Receipts paint
 // at once even right after the app is reopened, then refresh from GAS.
 const BOOT_DB="suphan-local-data",BOOT_STORE="snapshots",BOOT_PREFIX="boot:",BOOT_MAX_AGE=7*24*60*60*1000;
-const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap","workshopBootstrap","preorderBootstrap","expenseBootstrap","expenseTransactions","outsourceBootstrap","homeBootstrap"]);
+const PERSIST_ACTIONS=new Set(["productBootstrap","stockBootstrap","settingsBootstrap","receiptBootstrap","workshopBootstrap","preorderBootstrap","expenseBootstrap","expenseTransactions","outsourceBootstrap","homeBootstrap","workerPortalOwnerQueue"]);
 function bootDb(){
   return new Promise((resolve,reject)=>{
     const request=indexedDB.open(BOOT_DB,1);

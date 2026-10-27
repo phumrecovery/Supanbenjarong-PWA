@@ -44,7 +44,7 @@ export async function renderExpense(root,api,session,onBack,context={}){
   // Level 1: open at once from the copy kept on this device (lists, latest entries, month
   // summary), then take Google's copy in the background. Saving still goes to Google.
   let fromDevice=false;
-  if(!state.data){const last=api.lastBootstrap?.("expenseBootstrap",session);if(last?.ok){const tx=api.lastBootstrap?.("expenseTransactions",session);state.data={...(last.result||{}),...(tx?.ok?(tx.result||{}):{})};fromDevice=true;}}
+  if(!state.data){const last=api.lastBootstrap?.("expenseBootstrap",session);if(last?.ok){const tx=api.lastBootstrap?.("expenseTransactions",session);state.data={...(last.result||{}),...(tx?.ok?{...(tx.result||{}),_transactionsFromDevice:true}:{})};fromDevice=true;}}
   if(!state.data){state.loading=true;draw();try{const r=await api.expenseBootstrap(session);if(!r.ok)throw new Error(r.message||"โหลดข้อมูลไม่สำเร็จ");state.data=r.result||{};}catch(error){if(!active())return;root.innerHTML=`<section class="expense-failure"><h1>เปิดหน้าค่าใช้จ่ายไม่สำเร็จ</h1><p>${esc(error.message||error)}</p><button data-exp="back">← กลับ</button></section>`;root.onclick=evt=>onClick(evt);return;}finally{state.loading=false;}draw();queueTransactions();queueSupport();return;}
   // Render cached master data immediately, then quietly revalidate it.
   draw();
@@ -97,7 +97,7 @@ function transactions(d,s){const kind=state.direction,cat=(state.editExpense&&st
     <label class="expense-field"><span>หมวด *</span><select name="cat" data-exp-change="category">${select(kind==="รายรับ"?d.incomeCategories:d.categories,cat,"-- เลือกหมวด --")}</select></label>
     ${advance?advanceFields(d,x):purchase?purchaseFields(d):mode?materialFields(d,x,mode):regularFields(x)}
     <label class="expense-field"><span>วันที่</span><input type="date" name="date" value="${ymd(x.date)}"></label><label class="expense-field"><span>หมายเหตุ</span><input name="note" value="${esc(x.note||"")}"></label>${imageField(x.img)}${purchase?"":`<button class="expense-save">${x.row?"✅ บันทึกการแก้ไข":"✅ บันทึก"}</button>`}${x.row?`<button type="button" class="expense-cancel" data-exp="cancel-expense">ยกเลิกการแก้ไข</button>`:""}
-  </form><div class="expense-group-title">📋 รายรับ-รายจ่ายล่าสุด</div><div class="expense-list">${d._transactionsLoaded?expenseRows(d.expenses||[]):'<div class="expense-empty compact">กำลังโหลดรายการล่าสุด…</div>'}</div>`;}
+  </form><div class="expense-group-title">📋 รายรับ-รายจ่ายล่าสุด</div><div class="expense-list">${d._transactionsLoaded||d._transactionsFromDevice?expenseRows(d.expenses||[]):'<div class="expense-empty compact">กำลังโหลดรายการล่าสุด…</div>'}</div>`;}
 function regularFields(x){return `<label class="expense-field"><span>รายละเอียด</span><input name="detail" data-recent="exp-detail" autocomplete="off" value="${esc(x.detail||"")}"></label><label class="expense-field"><span>จำนวนเงิน (บาท) *</span><input class="expense-amount" type="number" min="0" step="0.01" name="amount" value="${esc(x.amount||"")}"></label>`;}
 function advanceFields(d,x){return `<div class="expense-note">เบิกค่าจ้างล่วงหน้า ระบบจะผูกยอดกับช่างโดยตรง</div><label class="expense-field"><span>ชื่อช่าง *</span><select name="workerName">${select((d.workshopEmployees||[]).map(w=>w.name||w),x.workerName,"-- เลือกช่าง --")}</select></label><label class="expense-field"><span>จำนวนเงิน (บาท) *</span><input class="expense-amount" type="number" min="0" step="0.01" name="amount" value="${esc(x.amount||"")}"></label>`;}
 function materialFields(d,x,mode){
