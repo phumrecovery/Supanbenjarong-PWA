@@ -224,3 +224,6 @@ body:has(.pwa-hq-banner) .pwa-hq-pill{display:none}
 .pwa-damage-table tr.has-bad td.bad{color:#a3261b;font-weight:700}
 .pwa-damage-table tr.active td{background:#fff1dc}
 .pwa-damage-stats p{margin:6px 12px 10px;font-size:12px;color:var(--text-sub)}
+
+/* Overview page of "print every worker" (workshop.js wageOverviewMarkup) */
+@media print{.pwa-wage-print-sheet.pf-overview .pf-table{font-size:12.5px!important}.pwa-wage-print-sheet.pf-overview .pf-table th{font-size:12px!important;padding:6px!important}.pwa-wage-print-sheet.pf-overview .pf-table td{padding:6px 7px!important}.pwa-wage-print-sheet .pf-overview-sign{height:30px}.pwa-wage-print-sheet .pf-overview-total td{background:#f5f5f5!important}.pwa-wage-print-sheet.pf-overview .pf-days{font-size:11px!important;color:#555!important}.pwa-wage-print-sheet.pf-overview .pf-sign{justify-content:flex-end!important}}
