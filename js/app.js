@@ -75,6 +75,8 @@ let activeRoute="";
 const scrollKeep={active:false,y:0,route:"",until:0};
 let pinInput="";
 let pinSubmitting=false;
+// Last tap on the PIN pad: a new app version waits for the pad to be idle (see showUpdateNotice).
+let lastPinAt=0,updateWaitTimer=0;
 let homeData=null;
 // Home's sales box used to load once per sign-in, so sales made later (on this or any other device)
 // and the change of day never showed. It is now fetched again whenever Home is shown and the copy is
@@ -317,6 +319,7 @@ function renderPin(){
 }
 
 function enterPin(key){
+  lastPinAt=Date.now();
   if(pinSubmitting)return;
   const error=document.querySelector("#pinError");
   if(key==="del")pinInput=pinInput.slice(0,-1);
@@ -798,6 +801,10 @@ if("serviceWorker" in navigator){
     // Nobody is signed in: nothing can be lost, so update silently (the bar
     // would cover the PIN pad on a phone). At most once a minute, never a loop.
     if(!sessionToken){
+      // ...but never while a PIN is being typed or checked: the reload wiped the digits already
+      // entered (reported 29 Oct, first open after an update). Wait until the pad is empty and idle;
+      // if the person signs in meanwhile, the bar below is shown instead.
+      if(pinInput||pinSubmitting||Date.now()-lastPinAt<4000){clearTimeout(updateWaitTimer);updateWaitTimer=setTimeout(showUpdateNotice,1000);return;}
       try{
         const last=Number(sessionStorage.getItem("suphan.pwa.auto-update")||0);
         if(Date.now()-last>60000){sessionStorage.setItem("suphan.pwa.auto-update",String(Date.now()));location.reload();return;}
